@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Dumbbell glyph centered in the adaptive-icon safe zone -->
+    <path android:fillColor="#FFFFFF" android:pathData="M48,51h12v6h-12z" />
+    <path android:fillColor="#FFFFFF" android:pathData="M40,44h6v20h-6z" />
+    <path android:fillColor="#FFFFFF" android:pathData="M32,40h6v28h-6z" />
+    <path android:fillColor="#FFFFFF" android:pathData="M62,44h6v20h-6z" />
+    <path android:fillColor="#FFFFFF" android:pathData="M70,40h6v28h-6z" />
+</vector>
