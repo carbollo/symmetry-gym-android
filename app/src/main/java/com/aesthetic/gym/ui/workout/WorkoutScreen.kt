@@ -19,6 +19,8 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -26,7 +28,6 @@ import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.DeleteOutline
-import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
@@ -34,14 +35,19 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -180,8 +186,8 @@ fun WorkoutScreen(navController: NavController, sessionId: Long) {
                         sets.forEach { set ->
                             SetRow(
                                 set = set,
-                                onWeight = { d -> vm.changeWeight(set, d) },
-                                onReps = { d -> vm.changeReps(set, d) },
+                                onWeightSet = { vm.setWeight(set, it) },
+                                onRepsSet = { vm.setReps(set, it) },
                                 onToggle = { vm.toggleCompleted(set) },
                                 onDelete = { vm.deleteSet(set) }
                             )
@@ -299,12 +305,15 @@ private fun targetText(item: RoutineItemWithExercise): String {
 @Composable
 private fun SetRow(
     set: SetLogEntity,
-    onWeight: (Double) -> Unit,
-    onReps: (Int) -> Unit,
+    onWeightSet: (Double) -> Unit,
+    onRepsSet: (Int) -> Unit,
     onToggle: () -> Unit,
     onDelete: () -> Unit
 ) {
     val bg = if (set.completed) Success.copy(alpha = 0.10f) else SurfaceVariant.copy(alpha = 0.5f)
+    var weightText by remember(set.id) { mutableStateOf(formatWeightValue(set.weightKg, WeightUnit.KG)) }
+    var repsText by remember(set.id) { mutableStateOf(set.reps.toString()) }
+
     Row(
         Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)).background(bg)
             .padding(horizontal = 8.dp, vertical = 8.dp),
@@ -314,12 +323,26 @@ private fun SetRow(
             "${set.setNumber}",
             color = if (set.completed) Success else TextMuted,
             fontSize = 13.sp, fontWeight = FontWeight.Bold,
-            modifier = Modifier.width(20.dp)
+            modifier = Modifier.width(22.dp)
         )
-        Spacer(Modifier.width(4.dp))
-        Stepper(formatWeightValue(set.weightKg, WeightUnit.KG), "KG", { onWeight(-2.5) }, { onWeight(2.5) })
         Spacer(Modifier.width(6.dp))
-        Stepper("${set.reps}", "REPS", { onReps(-1) }, { onReps(1) })
+        NumberField(
+            value = weightText,
+            unit = "KG",
+            onValueChange = {
+                weightText = it
+                it.replace(',', '.').toDoubleOrNull()?.let { w -> onWeightSet(w) }
+            }
+        )
+        Spacer(Modifier.width(10.dp))
+        NumberField(
+            value = repsText,
+            unit = "REPS",
+            onValueChange = {
+                repsText = it
+                it.toIntOrNull()?.let { r -> onRepsSet(r) }
+            }
+        )
         Spacer(Modifier.weight(1f))
         IconButton(onClick = onDelete, modifier = Modifier.size(30.dp)) {
             Icon(Icons.Filled.DeleteOutline, "Eliminar", tint = TextMuted, modifier = Modifier.size(16.dp))
@@ -341,26 +364,25 @@ private fun SetRow(
 }
 
 @Composable
-private fun Stepper(value: String, unit: String, onMinus: () -> Unit, onPlus: () -> Unit) {
-    Row(verticalAlignment = Alignment.CenterVertically) {
-        StepButton(Icons.Filled.Remove, onMinus)
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier.width(40.dp)
+private fun NumberField(value: String, unit: String, onValueChange: (String) -> Unit) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Box(
+            Modifier.width(64.dp).height(40.dp).clip(RoundedCornerShape(10.dp)).background(Surface),
+            contentAlignment = Alignment.Center
         ) {
-            Text(value, color = Color.White, fontWeight = FontWeight.Bold, fontSize = 15.sp, maxLines = 1)
-            Text(unit, color = TextMuted, fontSize = 8.sp, fontWeight = FontWeight.Bold)
+            BasicTextField(
+                value = value,
+                onValueChange = onValueChange,
+                singleLine = true,
+                textStyle = TextStyle(
+                    color = Color.White, fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold, textAlign = TextAlign.Center
+                ),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                cursorBrush = SolidColor(Accent),
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 6.dp)
+            )
         }
-        StepButton(Icons.Filled.Add, onPlus)
-    }
-}
-
-@Composable
-private fun StepButton(icon: ImageVector, onClick: () -> Unit) {
-    Box(
-        Modifier.size(28.dp).clip(CircleShape).background(Surface).clickable(onClick = onClick),
-        contentAlignment = Alignment.Center
-    ) {
-        Icon(icon, null, tint = Color.White, modifier = Modifier.size(15.dp))
+        Text(unit, color = TextMuted, fontSize = 8.sp, fontWeight = FontWeight.Bold)
     }
 }

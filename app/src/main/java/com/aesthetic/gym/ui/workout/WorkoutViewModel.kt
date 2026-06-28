@@ -113,15 +113,15 @@ class WorkoutViewModel(
         }
     }
 
-    fun changeWeight(set: SetLogEntity, delta: Double) {
+    fun setWeight(set: SetLogEntity, kg: Double) {
         viewModelScope.launch {
-            repo.updateSet(set.copy(weightKg = (set.weightKg + delta).coerceAtLeast(0.0)))
+            repo.updateSet(set.copy(weightKg = kg.coerceIn(0.0, 2000.0)))
         }
     }
 
-    fun changeReps(set: SetLogEntity, delta: Int) {
+    fun setReps(set: SetLogEntity, reps: Int) {
         viewModelScope.launch {
-            repo.updateSet(set.copy(reps = (set.reps + delta).coerceIn(0, 100)))
+            repo.updateSet(set.copy(reps = reps.coerceIn(0, 1000)))
         }
     }
 
