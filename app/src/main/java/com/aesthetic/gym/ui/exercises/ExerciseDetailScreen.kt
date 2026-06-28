@@ -86,6 +86,14 @@ fun ExerciseDetailScreen(navController: NavController, exerciseId: String) {
                 "${exercise.primaryMuscle.displayName} · ${exercise.equipment.displayName}",
                 color = TextSecondary, fontSize = 13.sp
             )
+            exercise.lastWeightKg?.let { w ->
+                Spacer(Modifier.height(2.dp))
+                Text(
+                    "Último peso usado: ${formatWeightValue(w, WeightUnit.KG)} kg" +
+                        (exercise.lastReps?.let { " × $it reps" } ?: ""),
+                    color = Accent, fontSize = 13.sp, fontWeight = FontWeight.SemiBold
+                )
+            }
         }
 
         if (!stats.hasData) {

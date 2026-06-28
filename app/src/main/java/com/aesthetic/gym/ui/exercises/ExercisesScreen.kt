@@ -46,6 +46,8 @@ import com.aesthetic.gym.ui.theme.Accent
 import com.aesthetic.gym.ui.theme.Surface
 import com.aesthetic.gym.ui.theme.SurfaceVariant
 import com.aesthetic.gym.ui.theme.TextSecondary
+import com.aesthetic.gym.domain.model.WeightUnit
+import com.aesthetic.gym.util.formatWeightValue
 import com.aesthetic.gym.util.normalizeText
 
 @Composable
@@ -121,6 +123,13 @@ fun ExercisesScreen(navController: NavController) {
                         "${ex.primaryMuscle.displayName} · ${ex.equipment.displayName}",
                         color = TextSecondary, fontSize = 12.sp
                     )
+                    ex.lastWeightKg?.let { w ->
+                        Text(
+                            "Último: ${formatWeightValue(w, WeightUnit.KG)} kg" +
+                                (ex.lastReps?.let { " × $it" } ?: ""),
+                            color = Accent, fontSize = 11.sp, fontWeight = FontWeight.Medium
+                        )
+                    }
                 }
                 Icon(Icons.Filled.ChevronRight, null, tint = TextSecondary)
             }
