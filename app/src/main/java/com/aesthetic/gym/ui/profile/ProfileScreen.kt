@@ -14,6 +14,10 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
@@ -24,6 +28,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
@@ -32,6 +37,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavController
 import com.aesthetic.gym.data.db.ProfileEntity
 import com.aesthetic.gym.domain.model.Sex
 import com.aesthetic.gym.domain.model.WeightUnit
@@ -46,7 +52,7 @@ import com.aesthetic.gym.ui.theme.TextMuted
 import com.aesthetic.gym.ui.theme.TextSecondary
 
 @Composable
-fun ProfileScreen() {
+fun ProfileScreen(navController: NavController) {
     val repo = rememberRepository()
     val vm: ProfileViewModel = viewModel(factory = ProfileViewModel.factory(repo))
     val profile by vm.profile.collectAsState()
@@ -81,7 +87,12 @@ fun ProfileScreen() {
             .padding(top = 14.dp, bottom = 28.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        Text("Perfil", color = Color.White, fontWeight = FontWeight.Black, fontSize = 28.sp)
+        Row(Modifier.fillMaxWidth().padding(top = 6.dp), verticalAlignment = Alignment.CenterVertically) {
+            IconButton(onClick = { navController.popBackStack() }) {
+                Icon(Icons.AutoMirrored.Filled.ArrowBack, "Volver", tint = Color.White)
+            }
+            Text("Perfil", color = Color.White, fontWeight = FontWeight.Black, fontSize = 24.sp)
+        }
 
         SectionCard(Modifier.fillMaxWidth()) {
             Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {

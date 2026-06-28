@@ -4,6 +4,7 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -21,6 +22,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.DeleteOutline
@@ -31,6 +33,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -44,13 +49,13 @@ import androidx.navigation.NavController
 import com.aesthetic.gym.data.db.RoutineItemWithExercise
 import com.aesthetic.gym.data.db.SetLogEntity
 import com.aesthetic.gym.domain.model.WeightUnit
+import com.aesthetic.gym.ui.components.MuscleIcons
 import com.aesthetic.gym.ui.components.PrimaryButton
 import com.aesthetic.gym.ui.components.ScoreBar
 import com.aesthetic.gym.ui.components.SectionCard
 import com.aesthetic.gym.ui.rememberRepository
 import com.aesthetic.gym.ui.theme.Accent
 import com.aesthetic.gym.ui.theme.Background
-import com.aesthetic.gym.ui.theme.Danger
 import com.aesthetic.gym.ui.theme.Outline
 import com.aesthetic.gym.ui.theme.Success
 import com.aesthetic.gym.ui.theme.Surface
@@ -70,6 +75,9 @@ fun WorkoutScreen(navController: NavController, sessionId: Long) {
     val allSets = session?.sets ?: emptyList()
     val doneTotal = allSets.count { it.completed }
     val totalCount = allSets.size
+
+    var selectedIndex by remember { mutableIntStateOf(0) }
+    val safeIndex = selectedIndex.coerceIn(0, (planned.size - 1).coerceAtLeast(0))
 
     Column(Modifier.fillMaxSize()) {
         // ---- Header ----
@@ -98,17 +106,44 @@ fun WorkoutScreen(navController: NavController, sessionId: Long) {
             )
         }
 
-        // ---- Exercises ----
+        // ---- Timeline of exercises ----
+        if (planned.isNotEmpty()) {
+            Row(
+                Modifier.fillMaxWidth().horizontalScroll(rememberScrollState())
+                    .padding(horizontal = 16.dp, vertical = 4.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                planned.forEachIndexed { i, item ->
+                    val sets = allSets.filter { it.exerciseId == item.item.exerciseId }
+                    val done = sets.count { it.completed }
+                    val total = sets.size
+                    val complete = total > 0 && done >= total
+                    if (i > 0) {
+                        Box(
+                            Modifier.width(20.dp).height(2.dp)
+                                .background(if (complete || done > 0) Success else Outline)
+                        )
+                    }
+                    TimelineBubble(
+                        icon = MuscleIcons.forMuscle(item.exercise?.primaryMuscle),
+                        selected = i == safeIndex,
+                        complete = complete,
+                        onClick = { selectedIndex = i }
+                    )
+                }
+            }
+        }
+
+        // ---- Selected exercise detail ----
         Column(
             Modifier.weight(1f).verticalScroll(rememberScrollState())
-                .padding(horizontal = 16.dp).padding(bottom = 16.dp),
+                .padding(horizontal = 16.dp).padding(top = 6.dp, bottom = 16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             if (planned.isEmpty()) {
                 Text("Cargando ejercicios…", color = TextSecondary, modifier = Modifier.padding(8.dp))
-            }
-
-            planned.forEach { item ->
+            } else {
+                val item = planned[safeIndex]
                 val exId = item.item.exerciseId
                 val sets = allSets.filter { it.exerciseId == exId }.sortedBy { it.setNumber }
                 val doneEx = sets.count { it.completed }
@@ -117,6 +152,16 @@ fun WorkoutScreen(navController: NavController, sessionId: Long) {
                 SectionCard(Modifier.fillMaxWidth()) {
                     Column {
                         Row(verticalAlignment = Alignment.CenterVertically) {
+                            Box(
+                                Modifier.size(44.dp).clip(CircleShape).background(Accent.copy(alpha = 0.16f)),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    MuscleIcons.forMuscle(item.exercise?.primaryMuscle),
+                                    null, tint = Accent, modifier = Modifier.size(22.dp)
+                                )
+                            }
+                            Spacer(Modifier.width(12.dp))
                             Column(Modifier.weight(1f)) {
                                 Text(
                                     item.exercise?.name ?: item.item.rawText,
@@ -127,7 +172,7 @@ fun WorkoutScreen(navController: NavController, sessionId: Long) {
                             CountPill(doneEx, sets.size)
                         }
                         if (sugg?.note != null) {
-                            Spacer(Modifier.height(8.dp))
+                            Spacer(Modifier.height(10.dp))
                             SuggestionPill(sugg.note)
                         }
                         Spacer(Modifier.height(12.dp))
@@ -156,19 +201,63 @@ fun WorkoutScreen(navController: NavController, sessionId: Long) {
                         }
                     }
                 }
+
+                if (safeIndex < planned.lastIndex) {
+                    Row(
+                        Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp))
+                            .background(SurfaceVariant.copy(alpha = 0.5f))
+                            .clickable { selectedIndex = safeIndex + 1 }
+                            .padding(vertical = 12.dp),
+                        horizontalArrangement = Arrangement.Center,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            "Siguiente: ${planned[safeIndex + 1].exercise?.name ?: "ejercicio"}",
+                            color = Color.White, fontWeight = FontWeight.SemiBold, fontSize = 13.sp
+                        )
+                        Spacer(Modifier.width(6.dp))
+                        Icon(Icons.AutoMirrored.Filled.ArrowForward, null, tint = Accent, modifier = Modifier.size(18.dp))
+                    }
+                }
             }
         }
 
         // ---- Bottom action ----
-        Box(
-            Modifier.fillMaxWidth().background(Background).padding(16.dp)
-        ) {
+        Box(Modifier.fillMaxWidth().background(Background).padding(16.dp)) {
             PrimaryButton(
                 "Finalizar entreno",
                 { vm.finish { navController.popBackStack() } },
                 Modifier.fillMaxWidth()
             )
         }
+    }
+}
+
+@Composable
+private fun TimelineBubble(
+    icon: ImageVector,
+    selected: Boolean,
+    complete: Boolean,
+    onClick: () -> Unit
+) {
+    val bg = when {
+        complete -> Success
+        selected -> Accent.copy(alpha = 0.20f)
+        else -> SurfaceVariant
+    }
+    val borderColor = if (selected) Accent else Outline
+    Box(
+        Modifier.size(52.dp).clip(CircleShape).background(bg)
+            .border(BorderStroke(if (selected) 2.dp else 1.dp, borderColor), CircleShape)
+            .clickable(onClick = onClick),
+        contentAlignment = Alignment.Center
+    ) {
+        Icon(
+            if (complete) Icons.Filled.Check else icon,
+            null,
+            tint = if (complete) Color.White else if (selected) Accent else TextSecondary,
+            modifier = Modifier.size(24.dp)
+        )
     }
 }
 
@@ -197,7 +286,6 @@ private fun SuggestionPill(note: String) {
     }
 }
 
-@Composable
 private fun targetText(item: RoutineItemWithExercise): String {
     val it = item.item
     val reps = when {
@@ -237,19 +325,14 @@ private fun SetRow(
             Icon(Icons.Filled.DeleteOutline, "Eliminar", tint = TextMuted, modifier = Modifier.size(16.dp))
         }
         Spacer(Modifier.width(4.dp))
-        // Confirm tick
         val tickMod = if (set.completed) {
             Modifier.size(40.dp).clip(CircleShape).background(Success)
         } else {
             Modifier.size(40.dp).clip(CircleShape).border(BorderStroke(2.dp, Outline), CircleShape)
         }
-        Box(
-            tickMod.clickable(onClick = onToggle),
-            contentAlignment = Alignment.Center
-        ) {
+        Box(tickMod.clickable(onClick = onToggle), contentAlignment = Alignment.Center) {
             Icon(
-                Icons.Filled.Check,
-                "Confirmar serie",
+                Icons.Filled.Check, "Confirmar serie",
                 tint = if (set.completed) Color.White else TextMuted,
                 modifier = Modifier.size(20.dp)
             )

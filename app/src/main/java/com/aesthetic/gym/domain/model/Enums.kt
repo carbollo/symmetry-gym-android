@@ -20,3 +20,11 @@ enum class PhotoPose(val displayName: String) {
     SIDE("Lateral"),
     BACK("Espalda")
 }
+
+enum class GoalType(val displayName: String, val unit: String) {
+    BODYWEIGHT("Peso corporal", "kg"),
+    LIFT_1RM("1RM de un ejercicio", "kg"),
+    STRENGTH_SCORE("Puntuación de fuerza", "pts"),
+    WORKOUTS("Nº de entrenos", ""),
+    CUSTOM("Personalizado", "")
+}

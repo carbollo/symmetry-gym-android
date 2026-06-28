@@ -16,9 +16,10 @@ import androidx.room.TypeConverters
         WorkoutSessionEntity::class,
         SetLogEntity::class,
         BodyPhotoEntity::class,
-        BodyMetricEntity::class
+        BodyMetricEntity::class,
+        GoalEntity::class
     ],
-    version = 1,
+    version = 2,
     exportSchema = false
 )
 @TypeConverters(Converters::class)
@@ -28,6 +29,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun routineDao(): RoutineDao
     abstract fun workoutDao(): WorkoutDao
     abstract fun bodyDao(): BodyDao
+    abstract fun goalDao(): GoalDao
 
     companion object {
         @Volatile

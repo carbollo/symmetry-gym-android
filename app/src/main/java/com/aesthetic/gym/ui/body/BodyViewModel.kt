@@ -19,9 +19,9 @@ import kotlinx.coroutines.flow.stateIn
 class BodyViewModel(private val repo: GymRepository) : ViewModel() {
 
     private val empty = RankSummary(
-        perMuscle = MuscleGroup.ranked.map { MuscleRank(it, 0, Rank.PRINCIPIANTE, 0.0, false) },
+        perMuscle = MuscleGroup.ranked.map { MuscleRank(it, 0, Rank.SILVER_I, 0.0, false) },
         overallScore = 0,
-        overallRank = Rank.PRINCIPIANTE
+        overallRank = Rank.SILVER_I
     )
 
     val summary: StateFlow<RankSummary> = combine(

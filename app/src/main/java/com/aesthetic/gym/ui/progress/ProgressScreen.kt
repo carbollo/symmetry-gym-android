@@ -21,18 +21,20 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ListAlt
 import androidx.compose.material.icons.filled.AddAPhoto
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.DeleteOutline
+import androidx.compose.material.icons.filled.Flag
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -46,52 +48,38 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavController
 import coil.compose.AsyncImage
-import com.aesthetic.gym.data.db.ExerciseEntity
 import com.aesthetic.gym.ui.components.EmptyState
 import com.aesthetic.gym.ui.components.LineChart
 import com.aesthetic.gym.ui.components.PrimaryButton
 import com.aesthetic.gym.ui.components.SectionCard
 import com.aesthetic.gym.ui.components.SectionTitle
+import com.aesthetic.gym.ui.components.StatTile
+import com.aesthetic.gym.ui.nav.Routes
 import com.aesthetic.gym.ui.rememberRepository
 import com.aesthetic.gym.ui.theme.Accent
 import com.aesthetic.gym.ui.theme.Cyan
+import com.aesthetic.gym.ui.theme.Danger
+import com.aesthetic.gym.ui.theme.Gold
 import com.aesthetic.gym.ui.theme.Surface
 import com.aesthetic.gym.ui.theme.SurfaceVariant
-import com.aesthetic.gym.ui.theme.TextMuted
 import com.aesthetic.gym.ui.theme.TextSecondary
-import com.aesthetic.gym.util.epley1RM
+import com.aesthetic.gym.util.formatShortDate
 import java.io.File
-import androidx.compose.material.icons.filled.Insights
+import kotlin.math.roundToInt
 
 @Composable
-fun ProgressScreen() {
+fun ProgressScreen(navController: NavController) {
     val repo = rememberRepository()
     val context = LocalContext.current
     val vm: ProgressViewModel = viewModel(factory = ProgressViewModel.factory(repo))
 
     val photos by vm.photos.collectAsState()
     val metrics by vm.metrics.collectAsState()
-    val exercises by vm.loggedExercises.collectAsState()
+    val weekly by vm.weekly.collectAsState()
 
     var weightInput by remember { mutableStateOf("") }
-    var selectedId by remember { mutableStateOf<String?>(null) }
-    LaunchedEffect(exercises) {
-        if (selectedId == null && exercises.isNotEmpty()) selectedId = exercises.first().id
-    }
-
-    val strengthSeries by produceState(initialValue = emptyList<Float>(), selectedId) {
-        val id = selectedId
-        if (id == null) {
-            value = emptyList()
-            return@produceState
-        }
-        repo.setsWithDateFlow(id).collect { rows ->
-            value = rows.groupBy { it.date }.toSortedMap().map { (_, list) ->
-                list.maxOf { epley1RM(it.weightKg, it.reps) }.toFloat()
-            }
-        }
-    }
 
     val pickPhoto = rememberLauncherForActivityResult(
         ActivityResultContracts.PickVisualMedia()
@@ -107,6 +95,20 @@ fun ProgressScreen() {
     ) {
         Text("Progreso", color = Color.White, fontWeight = FontWeight.Black, fontSize = 28.sp)
 
+        // ---- Weekly summary ----
+        SectionTitle("Esta semana")
+        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            StatTile("${weekly.workouts}", "entrenos", Modifier.weight(1f), accent = Accent)
+            StatTile("${weekly.volumeKg.roundToInt()}", "kg volumen", Modifier.weight(1f), accent = Cyan)
+            StatTile("${weekly.kcal}", "kcal", Modifier.weight(1f), accent = Gold)
+        }
+
+        // ---- Quick links ----
+        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            LinkCard("Objetivos", Icons.Filled.Flag, Modifier.weight(1f)) { navController.navigate(Routes.GOALS) }
+            LinkCard("Historial", Icons.AutoMirrored.Filled.ListAlt, Modifier.weight(1f)) { navController.navigate(Routes.HISTORY) }
+        }
+
         // ---- Bodyweight ----
         SectionCard(Modifier.fillMaxWidth()) {
             Column {
@@ -114,8 +116,8 @@ fun ProgressScreen() {
                 Spacer(Modifier.height(10.dp))
                 if (metrics.size >= 2) {
                     LineChart(metrics.map { it.weightKg.toFloat() }, lineColor = Cyan)
-                    Spacer(Modifier.height(4.dp))
-                    Text("Último: ${metrics.last().weightKg} kg", color = TextSecondary, fontSize = 12.sp)
+                    Spacer(Modifier.height(6.dp))
+                    Text("Último: ${trim(metrics.last().weightKg)} kg", color = TextSecondary, fontSize = 12.sp)
                 } else {
                     Text("Registra tu peso para ver la evolución.", color = TextSecondary, fontSize = 13.sp)
                 }
@@ -132,33 +134,24 @@ fun ProgressScreen() {
                     )
                     Spacer(Modifier.width(10.dp))
                     PrimaryButton("Añadir", {
-                        weightInput.replace(',', '.').toDoubleOrNull()?.let {
-                            vm.addWeight(it); weightInput = ""
-                        }
+                        weightInput.replace(',', '.').toDoubleOrNull()?.let { vm.addWeight(it); weightInput = "" }
                     })
                 }
-            }
-        }
-
-        // ---- Strength per exercise ----
-        SectionCard(Modifier.fillMaxWidth()) {
-            Column {
-                SectionTitle("Fuerza (1RM estimado)")
-                Spacer(Modifier.height(10.dp))
-                if (exercises.isEmpty()) {
-                    Text("Aún no has registrado ejercicios.", color = TextSecondary, fontSize = 13.sp)
-                } else {
-                    Row(Modifier.horizontalScroll(rememberScrollState())) {
-                        exercises.forEach { ex ->
-                            ExerciseChip(ex, ex.id == selectedId) { selectedId = ex.id }
-                            Spacer(Modifier.width(8.dp))
-                        }
-                    }
+                if (metrics.isNotEmpty()) {
                     Spacer(Modifier.height(12.dp))
-                    if (strengthSeries.size >= 2) {
-                        LineChart(strengthSeries, lineColor = Accent)
-                    } else {
-                        Text("Necesitas al menos 2 sesiones de este ejercicio.", color = TextSecondary, fontSize = 12.sp)
+                    metrics.asReversed().take(6).forEach { m ->
+                        Row(
+                            Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text("${trim(m.weightKg)} kg", color = Color.White, fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
+                            Spacer(Modifier.width(10.dp))
+                            Text(formatShortDate(m.takenAt), color = TextSecondary, fontSize = 12.sp)
+                            Spacer(Modifier.weight(1f))
+                            IconButton(onClick = { vm.deleteWeight(m.id) }, modifier = Modifier.size(28.dp)) {
+                                Icon(Icons.Filled.DeleteOutline, "Eliminar", tint = Danger, modifier = Modifier.size(16.dp))
+                            }
+                        }
                     }
                 }
             }
@@ -174,7 +167,7 @@ fun ProgressScreen() {
         )
         if (photos.isEmpty()) {
             EmptyState(
-                icon = Icons.Filled.Insights,
+                icon = Icons.Filled.AddAPhoto,
                 title = "Sin fotos todavía",
                 message = "Añade fotos para comparar tu evolución física."
             )
@@ -207,21 +200,18 @@ fun ProgressScreen() {
 }
 
 @Composable
-private fun ExerciseChip(exercise: ExerciseEntity, selected: Boolean, onClick: () -> Unit) {
-    Box(
-        Modifier.clip(RoundedCornerShape(50))
-            .background(if (selected) Accent else Surface)
-            .clickable(onClick = onClick)
-            .padding(horizontal = 14.dp, vertical = 8.dp)
+private fun LinkCard(text: String, icon: androidx.compose.ui.graphics.vector.ImageVector, modifier: Modifier = Modifier, onClick: () -> Unit) {
+    Row(
+        modifier.clip(RoundedCornerShape(16.dp)).background(Surface).clickable(onClick = onClick).padding(16.dp),
+        verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(
-            exercise.name,
-            color = if (selected) Color.White else TextSecondary,
-            fontSize = 12.sp,
-            fontWeight = FontWeight.SemiBold
-        )
+        Icon(icon, null, tint = Accent, modifier = Modifier.size(22.dp))
+        Spacer(Modifier.width(10.dp))
+        Text(text, color = Color.White, fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
     }
 }
+
+private fun trim(v: Double): String = if (v % 1.0 == 0.0) v.toInt().toString() else ((v * 10).toInt() / 10.0).toString()
 
 @Composable
 private fun progressFieldColors() = OutlinedTextFieldDefaults.colors(
@@ -230,6 +220,6 @@ private fun progressFieldColors() = OutlinedTextFieldDefaults.colors(
     focusedBorderColor = Accent,
     unfocusedBorderColor = SurfaceVariant,
     focusedLabelColor = Accent,
-    unfocusedLabelColor = TextMuted,
+    unfocusedLabelColor = TextSecondary,
     cursorColor = Accent
 )

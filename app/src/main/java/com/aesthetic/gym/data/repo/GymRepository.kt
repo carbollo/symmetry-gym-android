@@ -4,6 +4,7 @@ import com.aesthetic.gym.data.db.AppDatabase
 import com.aesthetic.gym.data.db.BodyMetricEntity
 import com.aesthetic.gym.data.db.BodyPhotoEntity
 import com.aesthetic.gym.data.db.ExerciseEntity
+import com.aesthetic.gym.data.db.GoalEntity
 import com.aesthetic.gym.data.db.ProfileEntity
 import com.aesthetic.gym.data.db.RoutineDayEntity
 import com.aesthetic.gym.data.db.RoutineEntity
@@ -20,6 +21,7 @@ class GymRepository(private val db: AppDatabase) {
     private val workoutDao = db.workoutDao()
     private val bodyDao = db.bodyDao()
     private val profileDao = db.profileDao()
+    private val goalDao = db.goalDao()
 
     fun now(): Long = System.currentTimeMillis()
 
@@ -64,6 +66,7 @@ class GymRepository(private val db: AppDatabase) {
     fun sessionWithSetsFlow(id: Long) = workoutDao.sessionWithSetsFlow(id)
     fun recentSessionsFlow(limit: Int) = workoutDao.recentSessionsFlow(limit)
     fun allFinishedSessionsFlow() = workoutDao.allFinishedSessionsFlow()
+    fun finishedSessionsWithSetsFlow() = workoutDao.finishedSessionsWithSetsFlow()
     fun finishedCountFlow() = workoutDao.finishedCountFlow()
     suspend fun setCountForSession(sessionId: Long) = workoutDao.setCountForSession(sessionId)
 
@@ -84,9 +87,16 @@ class GymRepository(private val db: AppDatabase) {
     suspend fun deletePhoto(id: Long) = bodyDao.deletePhoto(id)
     fun metricsFlow() = bodyDao.metricsFlow()
     suspend fun addMetric(metric: BodyMetricEntity) = bodyDao.insertMetric(metric)
+    suspend fun deleteMetric(id: Long) = bodyDao.deleteMetric(id)
 
     // ---- Profile ----
     fun profileFlow() = profileDao.profileFlow()
     suspend fun getProfile() = profileDao.getProfile()
     suspend fun saveProfile(profile: ProfileEntity) = profileDao.upsert(profile)
+
+    // ---- Goals ----
+    fun goalsFlow() = goalDao.goalsFlow()
+    suspend fun insertGoal(goal: GoalEntity): Long = goalDao.insert(goal)
+    suspend fun updateGoal(goal: GoalEntity) = goalDao.update(goal)
+    suspend fun deleteGoal(id: Long) = goalDao.delete(id)
 }

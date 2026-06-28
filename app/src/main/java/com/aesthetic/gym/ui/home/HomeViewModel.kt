@@ -20,7 +20,7 @@ import java.time.LocalDate
 data class HomeUiState(
     val name: String = "",
     val overallScore: Int = 0,
-    val overallRank: Rank = Rank.PRINCIPIANTE,
+    val overallRank: Rank = Rank.SILVER_I,
     val streak: Int = 0,
     val totalWorkouts: Int = 0,
     val activeRoutine: RoutineWithDays? = null,

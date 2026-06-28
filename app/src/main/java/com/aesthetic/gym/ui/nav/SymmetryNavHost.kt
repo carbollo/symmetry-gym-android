@@ -25,6 +25,10 @@ import com.aesthetic.gym.ui.theme.Background
 import com.aesthetic.gym.ui.theme.Surface
 import com.aesthetic.gym.ui.theme.TextMuted
 import com.aesthetic.gym.ui.body.BodyScreen
+import com.aesthetic.gym.ui.exercises.ExerciseDetailScreen
+import com.aesthetic.gym.ui.exercises.ExercisesScreen
+import com.aesthetic.gym.ui.goals.GoalsScreen
+import com.aesthetic.gym.ui.history.HistoryScreen
 import com.aesthetic.gym.ui.home.HomeScreen
 import com.aesthetic.gym.ui.profile.ProfileScreen
 import com.aesthetic.gym.ui.progress.ProgressScreen
@@ -55,10 +59,19 @@ fun SymmetryRoot() {
         ) {
             composable(Routes.HOME) { HomeScreen(navController) }
             composable(Routes.ROUTINES) { RoutinesScreen(navController) }
+            composable(Routes.EXERCISES) { ExercisesScreen(navController) }
             composable(Routes.BODY) { BodyScreen() }
-            composable(Routes.PROGRESS) { ProgressScreen() }
-            composable(Routes.PROFILE) { ProfileScreen() }
+            composable(Routes.PROGRESS) { ProgressScreen(navController) }
+            composable(Routes.PROFILE) { ProfileScreen(navController) }
+            composable(Routes.GOALS) { GoalsScreen(navController) }
+            composable(Routes.HISTORY) { HistoryScreen(navController) }
             composable(Routes.IMPORT) { ImportScreen(navController) }
+            composable(
+                Routes.EXERCISE_DETAIL,
+                arguments = listOf(navArgument("exerciseId") { type = NavType.StringType })
+            ) { entry ->
+                ExerciseDetailScreen(navController, entry.arguments?.getString("exerciseId") ?: "")
+            }
             composable(
                 Routes.ROUTINE_DETAIL,
                 arguments = listOf(navArgument("routineId") { type = NavType.LongType })

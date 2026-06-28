@@ -127,6 +127,10 @@ interface WorkoutDao {
     @Query("SELECT * FROM sessions WHERE finishedAt IS NOT NULL ORDER BY startedAt DESC")
     fun allFinishedSessionsFlow(): Flow<List<WorkoutSessionEntity>>
 
+    @Transaction
+    @Query("SELECT * FROM sessions WHERE finishedAt IS NOT NULL ORDER BY startedAt DESC")
+    fun finishedSessionsWithSetsFlow(): Flow<List<SessionWithSets>>
+
     @Query("SELECT COUNT(*) FROM sessions WHERE finishedAt IS NOT NULL")
     fun finishedCountFlow(): Flow<Int>
 
@@ -195,4 +199,22 @@ interface BodyDao {
 
     @Insert
     suspend fun insertMetric(metric: BodyMetricEntity): Long
+
+    @Query("DELETE FROM body_metrics WHERE id = :id")
+    suspend fun deleteMetric(id: Long)
+}
+
+@Dao
+interface GoalDao {
+    @Query("SELECT * FROM goals ORDER BY done ASC, createdAt DESC")
+    fun goalsFlow(): Flow<List<GoalEntity>>
+
+    @Insert
+    suspend fun insert(goal: GoalEntity): Long
+
+    @Update
+    suspend fun update(goal: GoalEntity)
+
+    @Query("DELETE FROM goals WHERE id = :id")
+    suspend fun delete(id: Long)
 }

@@ -18,6 +18,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.FitnessCenter
 import androidx.compose.material.icons.filled.LocalFireDepartment
 import androidx.compose.material.icons.filled.PlayArrow
@@ -63,8 +64,17 @@ fun HomeScreen(navController: NavController) {
             .padding(top = 14.dp, bottom = 28.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        Text("Hola, ${state.name}", color = androidx.compose.ui.graphics.Color.White,
-            fontWeight = FontWeight.Black, fontSize = 28.sp)
+        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+            Text("Hola, ${state.name}", color = androidx.compose.ui.graphics.Color.White,
+                fontWeight = FontWeight.Black, fontSize = 28.sp, modifier = Modifier.weight(1f))
+            androidx.compose.material3.IconButton(onClick = { navController.navigate(Routes.PROFILE) }) {
+                Icon(
+                    androidx.compose.material.icons.Icons.Filled.AccountCircle,
+                    "Perfil", tint = androidx.compose.ui.graphics.Color.White,
+                    modifier = Modifier.size(30.dp)
+                )
+            }
+        }
 
         // Overall rank card (gradient tinted with the current tier color)
         val rankColor = androidx.compose.ui.graphics.Color(state.overallRank.color)

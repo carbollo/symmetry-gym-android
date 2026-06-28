@@ -21,7 +21,7 @@ data class RankSummary(
 ) {
     private val byMuscle = perMuscle.associateBy { it.muscle }
     fun of(muscle: MuscleGroup): MuscleRank =
-        byMuscle[muscle] ?: MuscleRank(muscle, 0, Rank.PRINCIPIANTE, 0.0, false)
+        byMuscle[muscle] ?: MuscleRank(muscle, 0, Rank.SILVER_I, 0.0, false)
 }
 
 /**

@@ -5,6 +5,7 @@ import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.PrimaryKey
 import com.aesthetic.gym.domain.model.Equipment
+import com.aesthetic.gym.domain.model.GoalType
 import com.aesthetic.gym.domain.model.MuscleGroup
 import com.aesthetic.gym.domain.model.PhotoPose
 import com.aesthetic.gym.domain.model.RoutineSource
@@ -141,4 +142,17 @@ data class BodyMetricEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val takenAt: Long,
     val weightKg: Double
+)
+
+@Entity(tableName = "goals")
+data class GoalEntity(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val title: String,
+    val type: GoalType,
+    val targetValue: Double,
+    val exerciseId: String? = null,
+    val manualCurrent: Double = 0.0,
+    val createdAt: Long = 0L,
+    val deadline: Long? = null,
+    val done: Boolean = false
 )
