@@ -13,10 +13,19 @@ import com.aesthetic.gym.data.db.SetLogEntity
 import com.aesthetic.gym.data.repo.GymRepository
 import com.aesthetic.gym.domain.overload.OverloadSuggestion
 import com.aesthetic.gym.domain.overload.ProgressiveOverload
+import com.aesthetic.gym.util.WorkoutMath
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlin.math.roundToInt
+
+data class WorkoutSummary(
+    val durationMin: Int,
+    val kcal: Int,
+    val volumeKg: Double,
+    val sets: Int
+)
 
 class WorkoutViewModel(
     private val repo: GymRepository,
@@ -31,6 +40,9 @@ class WorkoutViewModel(
         private set
 
     var suggestions by mutableStateOf<Map<String, OverloadSuggestion>>(emptyMap())
+        private set
+
+    var summary by mutableStateOf<WorkoutSummary?>(null)
         private set
 
     init {
@@ -146,10 +158,22 @@ class WorkoutViewModel(
         viewModelScope.launch { repo.deleteSet(set.id) }
     }
 
-    fun finish(onDone: () -> Unit) {
+    /** Finishes the session and produces a summary (duration, calories, volume) to show the user. */
+    fun finishWorkout() {
         viewModelScope.launch {
+            val current = session.value
+            val sets = current?.sets ?: emptyList()
+            val bw = repo.getProfile()?.bodyweightKg ?: 75.0
+            val now = repo.now()
             repo.finishSession(sessionId)
-            onDone()
+            val finished = (current?.session ?: repo.sessionById(sessionId))?.copy(finishedAt = now)
+            val completed = sets.count { it.completed }
+            summary = WorkoutSummary(
+                durationMin = finished?.let { WorkoutMath.durationMinutes(it, completed).roundToInt() } ?: 0,
+                kcal = finished?.let { WorkoutMath.caloriesKcal(it, sets, bw) } ?: 0,
+                volumeKg = WorkoutMath.volumeKg(sets),
+                sets = completed
+            )
         }
     }
 

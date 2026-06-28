@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -28,6 +29,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.DeleteOutline
+import androidx.compose.material.icons.filled.EmojiEvents
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
@@ -50,6 +52,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.aesthetic.gym.data.db.RoutineItemWithExercise
@@ -62,6 +65,8 @@ import com.aesthetic.gym.ui.components.SectionCard
 import com.aesthetic.gym.ui.rememberRepository
 import com.aesthetic.gym.ui.theme.Accent
 import com.aesthetic.gym.ui.theme.Background
+import com.aesthetic.gym.ui.theme.Cyan
+import com.aesthetic.gym.ui.theme.Gold
 import com.aesthetic.gym.ui.theme.Outline
 import com.aesthetic.gym.ui.theme.Success
 import com.aesthetic.gym.ui.theme.Surface
@@ -69,6 +74,7 @@ import com.aesthetic.gym.ui.theme.SurfaceVariant
 import com.aesthetic.gym.ui.theme.TextMuted
 import com.aesthetic.gym.ui.theme.TextSecondary
 import com.aesthetic.gym.util.formatWeightValue
+import kotlin.math.roundToInt
 
 @Composable
 fun WorkoutScreen(navController: NavController, sessionId: Long) {
@@ -232,12 +238,65 @@ fun WorkoutScreen(navController: NavController, sessionId: Long) {
         Box(Modifier.fillMaxWidth().background(Background).padding(16.dp)) {
             PrimaryButton(
                 "Finalizar entreno",
-                { vm.finish { navController.popBackStack() } },
+                { vm.finishWorkout() },
                 Modifier.fillMaxWidth()
             )
         }
     }
+
+    vm.summary?.let { s ->
+        WorkoutSummaryDialog(s) { navController.popBackStack() }
+    }
 }
+
+@Composable
+private fun WorkoutSummaryDialog(summary: WorkoutSummary, onDone: () -> Unit) {
+    Dialog(onDismissRequest = onDone) {
+        Box(
+            Modifier.widthIn(max = 360.dp).clip(RoundedCornerShape(24.dp)).background(Surface).padding(22.dp)
+        ) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
+                Box(
+                    Modifier.size(58.dp).clip(CircleShape).background(Success.copy(alpha = 0.18f)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(Icons.Filled.EmojiEvents, null, tint = Success, modifier = Modifier.size(32.dp))
+                }
+                Spacer(Modifier.height(12.dp))
+                Text("¡Entreno completado!", color = Color.White, fontWeight = FontWeight.Black, fontSize = 20.sp)
+                Spacer(Modifier.height(4.dp))
+                Text("Buen trabajo 💪", color = TextSecondary, fontSize = 13.sp)
+                Spacer(Modifier.height(20.dp))
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    SummaryTile(formatDuration(summary.durationMin), "duración", Accent, Modifier.weight(1f))
+                    SummaryTile("${summary.kcal}", "kcal", Gold, Modifier.weight(1f))
+                    SummaryTile("${summary.volumeKg.roundToInt()}", "kg volumen", Cyan, Modifier.weight(1f))
+                }
+                Spacer(Modifier.height(10.dp))
+                Text("${summary.sets} series completadas", color = TextSecondary, fontSize = 12.sp)
+                Spacer(Modifier.height(20.dp))
+                PrimaryButton("Hecho", onDone, Modifier.fillMaxWidth())
+            }
+        }
+    }
+}
+
+@Composable
+private fun SummaryTile(value: String, label: String, color: Color, modifier: Modifier = Modifier) {
+    Box(
+        modifier.clip(RoundedCornerShape(16.dp)).background(SurfaceVariant.copy(alpha = 0.5f)).padding(vertical = 14.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Text(value, color = color, fontWeight = FontWeight.Black, fontSize = 18.sp, maxLines = 1)
+            Spacer(Modifier.height(2.dp))
+            Text(label, color = TextSecondary, fontSize = 10.sp)
+        }
+    }
+}
+
+private fun formatDuration(minutes: Int): String =
+    if (minutes >= 60) "${minutes / 60}h ${minutes % 60}m" else "$minutes min"
 
 @Composable
 private fun TimelineBubble(
