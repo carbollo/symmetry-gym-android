@@ -30,6 +30,10 @@ class GymRepository(private val db: AppDatabase) {
     suspend fun getAllExercises() = exerciseDao.getAll()
     suspend fun getExercise(id: String) = exerciseDao.byId(id)
     suspend fun upsertExercise(exercise: ExerciseEntity) = exerciseDao.upsert(exercise)
+    suspend fun updateExerciseLastWeight(id: String, weightKg: Double) =
+        exerciseDao.updateLastWeight(id, weightKg)
+    suspend fun updateExerciseLastReps(id: String, reps: Int) =
+        exerciseDao.updateLastReps(id, reps)
 
     suspend fun ensureSeeded() {
         if (exerciseDao.count() == 0) {

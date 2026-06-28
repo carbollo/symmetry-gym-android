@@ -34,7 +34,9 @@ data class ExerciseEntity(
     val equipment: Equipment = Equipment.OTHER,
     val isCompound: Boolean = false,
     val instructions: String = "",
-    val isCustom: Boolean = false
+    val isCustom: Boolean = false,
+    val lastWeightKg: Double? = null,
+    val lastReps: Int? = null
 )
 
 @Entity(tableName = "routines")

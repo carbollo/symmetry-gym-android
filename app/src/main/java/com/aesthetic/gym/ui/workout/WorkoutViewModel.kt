@@ -61,8 +61,10 @@ class WorkoutViewModel(
     ) {
         for (item in items) {
             val sugg = suggestionsMap[item.item.exerciseId]
-            val weight = sugg?.weightKg ?: item.item.targetWeightKg ?: 20.0
-            val reps = when {
+            val ex = item.exercise
+            // Prefer the last weight/reps the user actually used for this exercise.
+            val weight = ex?.lastWeightKg ?: sugg?.weightKg ?: item.item.targetWeightKg ?: 20.0
+            val reps = ex?.lastReps ?: when {
                 item.item.amrap -> sugg?.repsHigh ?: 10
                 item.item.repsMax > 0 -> item.item.repsMax
                 else -> 10
@@ -115,18 +117,29 @@ class WorkoutViewModel(
 
     fun setWeight(set: SetLogEntity, kg: Double) {
         viewModelScope.launch {
-            repo.updateSet(set.copy(weightKg = kg.coerceIn(0.0, 2000.0)))
+            val v = kg.coerceIn(0.0, 2000.0)
+            repo.updateSet(set.copy(weightKg = v))
+            repo.updateExerciseLastWeight(set.exerciseId, v)
         }
     }
 
     fun setReps(set: SetLogEntity, reps: Int) {
         viewModelScope.launch {
-            repo.updateSet(set.copy(reps = reps.coerceIn(0, 1000)))
+            val v = reps.coerceIn(0, 1000)
+            repo.updateSet(set.copy(reps = v))
+            repo.updateExerciseLastReps(set.exerciseId, v)
         }
     }
 
     fun toggleCompleted(set: SetLogEntity) {
-        viewModelScope.launch { repo.updateSet(set.copy(completed = !set.completed)) }
+        viewModelScope.launch {
+            val nowCompleted = !set.completed
+            repo.updateSet(set.copy(completed = nowCompleted))
+            if (nowCompleted) {
+                repo.updateExerciseLastWeight(set.exerciseId, set.weightKg)
+                repo.updateExerciseLastReps(set.exerciseId, set.reps)
+            }
+        }
     }
 
     fun deleteSet(set: SetLogEntity) {

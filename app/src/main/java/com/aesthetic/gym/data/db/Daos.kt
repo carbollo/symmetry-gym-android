@@ -46,6 +46,12 @@ interface ExerciseDao {
 
     @Upsert
     suspend fun upsertAll(exercises: List<ExerciseEntity>)
+
+    @Query("UPDATE exercises SET lastWeightKg = :weightKg WHERE id = :id")
+    suspend fun updateLastWeight(id: String, weightKg: Double)
+
+    @Query("UPDATE exercises SET lastReps = :reps WHERE id = :id")
+    suspend fun updateLastReps(id: String, reps: Int)
 }
 
 @Dao
