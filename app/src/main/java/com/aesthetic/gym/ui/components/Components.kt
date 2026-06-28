@@ -1,6 +1,7 @@
 package com.aesthetic.gym.ui.components
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -44,6 +45,7 @@ fun SectionCard(
         modifier = modifier
             .clip(RoundedCornerShape(22.dp))
             .background(color)
+            .border(1.dp, Outline, RoundedCornerShape(22.dp))
             .padding(18.dp)
     ) { content() }
 }

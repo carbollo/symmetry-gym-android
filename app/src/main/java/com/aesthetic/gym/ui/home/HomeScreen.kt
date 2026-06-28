@@ -1,6 +1,7 @@
 package com.aesthetic.gym.ui.home
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -65,8 +66,20 @@ fun HomeScreen(navController: NavController) {
         Text("Hola, ${state.name}", color = androidx.compose.ui.graphics.Color.White,
             fontWeight = FontWeight.Black, fontSize = 28.sp)
 
-        // Overall rank card
-        SectionCard(Modifier.fillMaxWidth()) {
+        // Overall rank card (gradient tinted with the current tier color)
+        val rankColor = androidx.compose.ui.graphics.Color(state.overallRank.color)
+        Box(
+            Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(22.dp))
+                .background(
+                    androidx.compose.ui.graphics.Brush.linearGradient(
+                        listOf(rankColor.copy(alpha = 0.30f), Surface)
+                    )
+                )
+                .border(1.dp, rankColor.copy(alpha = 0.35f), RoundedCornerShape(22.dp))
+                .padding(18.dp)
+        ) {
             Column {
                 Row(
                     Modifier.fillMaxWidth(),
@@ -78,14 +91,14 @@ fun HomeScreen(navController: NavController) {
                         Spacer(Modifier.height(6.dp))
                         Text(
                             state.overallRank.displayName,
-                            color = androidx.compose.ui.graphics.Color(state.overallRank.color),
-                            fontWeight = FontWeight.Black, fontSize = 26.sp
+                            color = rankColor,
+                            fontWeight = FontWeight.Black, fontSize = 28.sp
                         )
                     }
                     RankChip(state.overallRank)
                 }
                 Spacer(Modifier.height(14.dp))
-                ScoreBar(state.overallScore, androidx.compose.ui.graphics.Color(state.overallRank.color))
+                ScoreBar(state.overallScore, rankColor)
                 Spacer(Modifier.height(6.dp))
                 Text("${state.overallScore} / 100 puntos de fuerza", color = TextSecondary, fontSize = 12.sp)
             }

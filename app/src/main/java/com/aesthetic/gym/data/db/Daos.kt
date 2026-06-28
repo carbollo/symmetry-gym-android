@@ -130,6 +130,9 @@ interface WorkoutDao {
     @Query("SELECT COUNT(*) FROM sessions WHERE finishedAt IS NOT NULL")
     fun finishedCountFlow(): Flow<Int>
 
+    @Query("SELECT COUNT(*) FROM set_logs WHERE sessionId = :sessionId")
+    suspend fun setCountForSession(sessionId: Long): Int
+
     /** Sets from the most recent finished session that contained this exercise (excluding [exceptSessionId]). */
     @Query(
         """

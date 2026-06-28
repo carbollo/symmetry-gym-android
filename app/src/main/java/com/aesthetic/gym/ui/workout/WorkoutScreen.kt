@@ -1,12 +1,15 @@
 package com.aesthetic.gym.ui.workout
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -14,6 +17,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -41,16 +45,19 @@ import com.aesthetic.gym.data.db.RoutineItemWithExercise
 import com.aesthetic.gym.data.db.SetLogEntity
 import com.aesthetic.gym.domain.model.WeightUnit
 import com.aesthetic.gym.ui.components.PrimaryButton
+import com.aesthetic.gym.ui.components.ScoreBar
 import com.aesthetic.gym.ui.components.SectionCard
 import com.aesthetic.gym.ui.rememberRepository
 import com.aesthetic.gym.ui.theme.Accent
+import com.aesthetic.gym.ui.theme.Background
 import com.aesthetic.gym.ui.theme.Danger
+import com.aesthetic.gym.ui.theme.Outline
 import com.aesthetic.gym.ui.theme.Success
+import com.aesthetic.gym.ui.theme.Surface
 import com.aesthetic.gym.ui.theme.SurfaceVariant
 import com.aesthetic.gym.ui.theme.TextMuted
 import com.aesthetic.gym.ui.theme.TextSecondary
 import com.aesthetic.gym.util.formatWeightValue
-import kotlin.math.roundToInt
 
 @Composable
 fun WorkoutScreen(navController: NavController, sessionId: Long) {
@@ -61,86 +68,132 @@ fun WorkoutScreen(navController: NavController, sessionId: Long) {
     val suggestions = vm.suggestions
 
     val allSets = session?.sets ?: emptyList()
-    val totalSets = allSets.count { it.completed }
-    val volume = allSets.filter { it.completed }.sumOf { it.weightKg * it.reps }
+    val doneTotal = allSets.count { it.completed }
+    val totalCount = allSets.size
 
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .verticalScroll(rememberScrollState())
-            .padding(horizontal = 16.dp)
-            .padding(bottom = 28.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
-        Row(Modifier.fillMaxWidth().padding(top = 6.dp), verticalAlignment = Alignment.CenterVertically) {
+    Column(Modifier.fillMaxSize()) {
+        // ---- Header ----
+        Row(
+            Modifier.fillMaxWidth().padding(start = 4.dp, end = 16.dp, top = 6.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
             IconButton(onClick = { navController.popBackStack() }) {
                 Icon(Icons.AutoMirrored.Filled.ArrowBack, "Volver", tint = Color.White)
             }
-            Text(
-                session?.session?.name ?: "Entreno",
-                color = Color.White, fontWeight = FontWeight.Bold, fontSize = 18.sp, maxLines = 1
+            Column(Modifier.weight(1f)) {
+                Text(
+                    session?.session?.name ?: "Entreno",
+                    color = Color.White, fontWeight = FontWeight.Bold, fontSize = 18.sp, maxLines = 1
+                )
+                Text(
+                    "$doneTotal de $totalCount series completadas",
+                    color = TextSecondary, fontSize = 12.sp
+                )
+            }
+        }
+        Box(Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
+            ScoreBar(
+                score = if (totalCount > 0) doneTotal * 100 / totalCount else 0,
+                color = Success
             )
         }
 
-        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            MiniStat("$totalSets", "series", Modifier.weight(1f))
-            MiniStat("${volume.roundToInt()}", "kg de volumen", Modifier.weight(1f))
-        }
+        // ---- Exercises ----
+        Column(
+            Modifier.weight(1f).verticalScroll(rememberScrollState())
+                .padding(horizontal = 16.dp).padding(bottom = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            if (planned.isEmpty()) {
+                Text("Cargando ejercicios…", color = TextSecondary, modifier = Modifier.padding(8.dp))
+            }
 
-        if (planned.isEmpty()) {
-            Text("Cargando ejercicios…", color = TextSecondary, modifier = Modifier.padding(8.dp))
-        }
+            planned.forEach { item ->
+                val exId = item.item.exerciseId
+                val sets = allSets.filter { it.exerciseId == exId }.sortedBy { it.setNumber }
+                val doneEx = sets.count { it.completed }
+                val sugg = suggestions[exId]
 
-        planned.forEach { item ->
-            val exId = item.item.exerciseId
-            val sets = allSets.filter { it.exerciseId == exId }.sortedBy { it.setNumber }
-            val sugg = suggestions[exId]
-            SectionCard(Modifier.fillMaxWidth()) {
-                Column {
-                    Text(
-                        item.exercise?.name ?: item.item.rawText,
-                        color = Color.White, fontWeight = FontWeight.Bold, fontSize = 17.sp
-                    )
-                    Text(targetText(item), color = TextSecondary, fontSize = 12.sp)
-                    if (sugg?.note != null) {
-                        Spacer(Modifier.height(4.dp))
-                        Text("💡 ${sugg.note}", color = Accent, fontSize = 12.sp, fontWeight = FontWeight.Medium)
-                    }
-                    Spacer(Modifier.height(12.dp))
+                SectionCard(Modifier.fillMaxWidth()) {
+                    Column {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Column(Modifier.weight(1f)) {
+                                Text(
+                                    item.exercise?.name ?: item.item.rawText,
+                                    color = Color.White, fontWeight = FontWeight.Bold, fontSize = 17.sp
+                                )
+                                Text(targetText(item), color = TextSecondary, fontSize = 12.sp)
+                            }
+                            CountPill(doneEx, sets.size)
+                        }
+                        if (sugg?.note != null) {
+                            Spacer(Modifier.height(8.dp))
+                            SuggestionPill(sugg.note)
+                        }
+                        Spacer(Modifier.height(12.dp))
 
-                    sets.forEach { set ->
-                        SetRow(
-                            set = set,
-                            onWeight = { d -> vm.changeWeight(set, d) },
-                            onReps = { d -> vm.changeReps(set, d) },
-                            onToggle = { vm.toggleCompleted(set) },
-                            onDelete = { vm.deleteSet(set) }
-                        )
-                        Spacer(Modifier.height(8.dp))
-                    }
+                        sets.forEach { set ->
+                            SetRow(
+                                set = set,
+                                onWeight = { d -> vm.changeWeight(set, d) },
+                                onReps = { d -> vm.changeReps(set, d) },
+                                onToggle = { vm.toggleCompleted(set) },
+                                onDelete = { vm.deleteSet(set) }
+                            )
+                            Spacer(Modifier.height(8.dp))
+                        }
 
-                    Row(
-                        Modifier.fillMaxWidth().clip(CircleShape)
-                            .background(SurfaceVariant)
-                            .clickable { vm.addSet(item) }
-                            .padding(vertical = 10.dp),
-                        horizontalArrangement = Arrangement.Center,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Icon(Icons.Filled.Add, null, tint = Accent, modifier = Modifier.size(18.dp))
-                        Spacer(Modifier.width(6.dp))
-                        Text("Añadir serie", color = Accent, fontWeight = FontWeight.SemiBold, fontSize = 13.sp)
+                        Row(
+                            Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp))
+                                .clickable { vm.addSet(item) }
+                                .padding(vertical = 8.dp),
+                            horizontalArrangement = Arrangement.Center,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(Icons.Filled.Add, null, tint = TextSecondary, modifier = Modifier.size(16.dp))
+                            Spacer(Modifier.width(6.dp))
+                            Text("Añadir serie extra", color = TextSecondary, fontWeight = FontWeight.SemiBold, fontSize = 12.sp)
+                        }
                     }
                 }
             }
         }
 
-        Spacer(Modifier.height(6.dp))
-        PrimaryButton(
-            "Finalizar entreno",
-            { vm.finish { navController.popBackStack() } },
-            Modifier.fillMaxWidth()
-        )
+        // ---- Bottom action ----
+        Box(
+            Modifier.fillMaxWidth().background(Background).padding(16.dp)
+        ) {
+            PrimaryButton(
+                "Finalizar entreno",
+                { vm.finish { navController.popBackStack() } },
+                Modifier.fillMaxWidth()
+            )
+        }
+    }
+}
+
+@Composable
+private fun CountPill(done: Int, total: Int) {
+    val complete = total > 0 && done >= total
+    val color = if (complete) Success else Accent
+    Box(
+        Modifier.clip(RoundedCornerShape(50)).background(color.copy(alpha = 0.16f))
+            .padding(horizontal = 12.dp, vertical = 5.dp)
+    ) {
+        Text("$done/$total", color = color, fontWeight = FontWeight.Bold, fontSize = 13.sp)
+    }
+}
+
+@Composable
+private fun SuggestionPill(note: String) {
+    Row(
+        Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp))
+            .background(Accent.copy(alpha = 0.12f)).padding(horizontal = 10.dp, vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text("💡", fontSize = 13.sp)
+        Spacer(Modifier.width(6.dp))
+        Text(note, color = Accent, fontSize = 12.sp, fontWeight = FontWeight.Medium)
     }
 }
 
@@ -156,16 +209,6 @@ private fun targetText(item: RoutineItemWithExercise): String {
 }
 
 @Composable
-private fun MiniStat(value: String, label: String, modifier: Modifier = Modifier) {
-    SectionCard(modifier) {
-        Column {
-            Text(value, color = Accent, fontWeight = FontWeight.Black, fontSize = 22.sp)
-            Text(label, color = TextSecondary, fontSize = 11.sp)
-        }
-    }
-}
-
-@Composable
 private fun SetRow(
     set: SetLogEntity,
     onWeight: (Double) -> Unit,
@@ -173,24 +216,43 @@ private fun SetRow(
     onToggle: () -> Unit,
     onDelete: () -> Unit
 ) {
-    Row(verticalAlignment = Alignment.CenterVertically) {
-        Text("#${set.setNumber}", color = TextMuted, fontSize = 12.sp, modifier = Modifier.width(24.dp))
+    val bg = if (set.completed) Success.copy(alpha = 0.10f) else SurfaceVariant.copy(alpha = 0.5f)
+    Row(
+        Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)).background(bg)
+            .padding(horizontal = 8.dp, vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            "${set.setNumber}",
+            color = if (set.completed) Success else TextMuted,
+            fontSize = 13.sp, fontWeight = FontWeight.Bold,
+            modifier = Modifier.width(20.dp)
+        )
         Spacer(Modifier.width(4.dp))
-        Stepper(formatWeightValue(set.weightKg, WeightUnit.KG), "kg", { onWeight(-2.5) }, { onWeight(2.5) })
+        Stepper(formatWeightValue(set.weightKg, WeightUnit.KG), "KG", { onWeight(-2.5) }, { onWeight(2.5) })
         Spacer(Modifier.width(6.dp))
-        Stepper("${set.reps}", "reps", { onReps(-1) }, { onReps(1) })
+        Stepper("${set.reps}", "REPS", { onReps(-1) }, { onReps(1) })
         Spacer(Modifier.weight(1f))
+        IconButton(onClick = onDelete, modifier = Modifier.size(30.dp)) {
+            Icon(Icons.Filled.DeleteOutline, "Eliminar", tint = TextMuted, modifier = Modifier.size(16.dp))
+        }
+        Spacer(Modifier.width(4.dp))
+        // Confirm tick
+        val tickMod = if (set.completed) {
+            Modifier.size(40.dp).clip(CircleShape).background(Success)
+        } else {
+            Modifier.size(40.dp).clip(CircleShape).border(BorderStroke(2.dp, Outline), CircleShape)
+        }
         Box(
-            Modifier.size(34.dp).clip(CircleShape)
-                .background(if (set.completed) Success else SurfaceVariant)
-                .clickable(onClick = onToggle),
+            tickMod.clickable(onClick = onToggle),
             contentAlignment = Alignment.Center
         ) {
-            Icon(Icons.Filled.Check, "Hecha", tint = if (set.completed) Color.White else TextMuted,
-                modifier = Modifier.size(18.dp))
-        }
-        IconButton(onClick = onDelete, modifier = Modifier.size(34.dp)) {
-            Icon(Icons.Filled.DeleteOutline, "Eliminar", tint = Danger, modifier = Modifier.size(18.dp))
+            Icon(
+                Icons.Filled.Check,
+                "Confirmar serie",
+                tint = if (set.completed) Color.White else TextMuted,
+                modifier = Modifier.size(20.dp)
+            )
         }
     }
 }
@@ -201,10 +263,10 @@ private fun Stepper(value: String, unit: String, onMinus: () -> Unit, onPlus: ()
         StepButton(Icons.Filled.Remove, onMinus)
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier.width(42.dp)
+            modifier = Modifier.width(40.dp)
         ) {
             Text(value, color = Color.White, fontWeight = FontWeight.Bold, fontSize = 15.sp, maxLines = 1)
-            Text(unit, color = TextMuted, fontSize = 9.sp)
+            Text(unit, color = TextMuted, fontSize = 8.sp, fontWeight = FontWeight.Bold)
         }
         StepButton(Icons.Filled.Add, onPlus)
     }
@@ -213,9 +275,9 @@ private fun Stepper(value: String, unit: String, onMinus: () -> Unit, onPlus: ()
 @Composable
 private fun StepButton(icon: ImageVector, onClick: () -> Unit) {
     Box(
-        Modifier.size(30.dp).clip(CircleShape).background(SurfaceVariant).clickable(onClick = onClick),
+        Modifier.size(28.dp).clip(CircleShape).background(Surface).clickable(onClick = onClick),
         contentAlignment = Alignment.Center
     ) {
-        Icon(icon, null, tint = Color.White, modifier = Modifier.size(16.dp))
+        Icon(icon, null, tint = Color.White, modifier = Modifier.size(15.dp))
     }
 }

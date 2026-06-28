@@ -47,6 +47,40 @@ class WorkoutViewModel(
                 map[it.item.exerciseId] = ProgressiveOverload.suggest(it.item, it.exercise, last)
             }
             suggestions = map
+
+            // First time this session opens: pre-load every planned set (pending confirmation).
+            if (repo.setCountForSession(sessionId) == 0) {
+                autoPopulate(items, map)
+            }
+        }
+    }
+
+    private suspend fun autoPopulate(
+        items: List<RoutineItemWithExercise>,
+        suggestionsMap: Map<String, OverloadSuggestion>
+    ) {
+        for (item in items) {
+            val sugg = suggestionsMap[item.item.exerciseId]
+            val weight = sugg?.weightKg ?: item.item.targetWeightKg ?: 20.0
+            val reps = when {
+                item.item.amrap -> sugg?.repsHigh ?: 10
+                item.item.repsMax > 0 -> item.item.repsMax
+                else -> 10
+            }
+            val total = item.item.targetSets.coerceIn(1, 20)
+            for (n in 1..total) {
+                repo.addSet(
+                    SetLogEntity(
+                        sessionId = sessionId,
+                        exerciseId = item.item.exerciseId,
+                        routineItemId = item.item.id,
+                        setNumber = n,
+                        reps = reps,
+                        weightKg = weight,
+                        completed = false
+                    )
+                )
+            }
         }
     }
 
@@ -73,7 +107,7 @@ class WorkoutViewModel(
                     setNumber = setNumber,
                     reps = reps,
                     weightKg = weight,
-                    completed = true
+                    completed = false
                 )
             )
         }

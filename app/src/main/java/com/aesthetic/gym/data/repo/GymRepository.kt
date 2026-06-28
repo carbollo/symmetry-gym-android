@@ -65,6 +65,7 @@ class GymRepository(private val db: AppDatabase) {
     fun recentSessionsFlow(limit: Int) = workoutDao.recentSessionsFlow(limit)
     fun allFinishedSessionsFlow() = workoutDao.allFinishedSessionsFlow()
     fun finishedCountFlow() = workoutDao.finishedCountFlow()
+    suspend fun setCountForSession(sessionId: Long) = workoutDao.setCountForSession(sessionId)
 
     suspend fun addSet(set: SetLogEntity): Long = workoutDao.insertSet(set.copy(createdAt = now()))
     suspend fun updateSet(set: SetLogEntity) = workoutDao.updateSet(set)
