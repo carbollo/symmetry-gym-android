@@ -76,23 +76,29 @@ class WorkoutViewModel(
             val sugg = suggestionsMap[item.item.exerciseId]
             val ex = item.exercise
             val measure = ex?.measure ?: MeasureType.REPS
-            // Prefer the last weight/reps the user actually used for this exercise.
-            val weight = ex?.lastWeightKg ?: sugg?.weightKg ?: item.item.targetWeightKg ?: 20.0
-            val reps = ex?.lastReps ?: if (measure == MeasureType.SECONDS) 30 else when {
+
+            // Restore each set from the corresponding set of the previous session (per set number).
+            val previous = repo.previousSetsForExercise(item.item.exerciseId, sessionId)
+            val prevByNumber = previous.associateBy { it.setNumber }
+
+            val fallbackWeight = ex?.lastWeightKg ?: sugg?.weightKg ?: item.item.targetWeightKg ?: 20.0
+            val fallbackReps = ex?.lastReps ?: if (measure == MeasureType.SECONDS) 30 else when {
                 item.item.amrap -> sugg?.repsHigh ?: 10
                 item.item.repsMax > 0 -> item.item.repsMax
                 else -> 10
             }
+
             val total = item.item.targetSets.coerceIn(1, 20)
             for (n in 1..total) {
+                val ref = prevByNumber[n] ?: previous.lastOrNull()
                 repo.addSet(
                     SetLogEntity(
                         sessionId = sessionId,
                         exerciseId = item.item.exerciseId,
                         routineItemId = item.item.id,
                         setNumber = n,
-                        reps = reps,
-                        weightKg = weight,
+                        reps = ref?.reps ?: fallbackReps,
+                        weightKg = ref?.weightKg ?: fallbackWeight,
                         completed = false,
                         measure = measure
                     )

@@ -162,6 +162,22 @@ interface WorkoutDao {
     )
     suspend fun lastSetsForExercise(exerciseId: String, exceptSessionId: Long): List<SetLogEntity>
 
+    /** Every set (in order) from the most recent previous session that contained this exercise. */
+    @Query(
+        """
+        SELECT * FROM set_logs
+        WHERE exerciseId = :exerciseId
+          AND sessionId = (
+            SELECT s.id FROM sessions s
+            JOIN set_logs sl ON sl.sessionId = s.id
+            WHERE sl.exerciseId = :exerciseId AND s.id != :exceptSessionId
+            ORDER BY s.startedAt DESC LIMIT 1
+          )
+        ORDER BY setNumber
+        """
+    )
+    suspend fun previousSetsForExercise(exerciseId: String, exceptSessionId: Long): List<SetLogEntity>
+
     @Query(
         """
         SELECT sl.exerciseId AS exerciseId, sl.weightKg AS weightKg, sl.reps AS reps,

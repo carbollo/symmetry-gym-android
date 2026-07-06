@@ -81,6 +81,8 @@ class GymRepository(private val db: AppDatabase) {
     suspend fun deleteSet(id: Long) = workoutDao.deleteSet(id)
     suspend fun lastSetsForExercise(exerciseId: String, exceptSessionId: Long) =
         workoutDao.lastSetsForExercise(exerciseId, exceptSessionId)
+    suspend fun previousSetsForExercise(exerciseId: String, exceptSessionId: Long) =
+        workoutDao.previousSetsForExercise(exerciseId, exceptSessionId)
 
     fun setMuscleRowsFlow() = workoutDao.setMuscleRowsFlow()
     fun setsWithDateFlow(exerciseId: String) = workoutDao.setsWithDateFlow(exerciseId)
