@@ -3,6 +3,7 @@ package com.aesthetic.gym.data.db
 import androidx.room.TypeConverter
 import com.aesthetic.gym.domain.model.Equipment
 import com.aesthetic.gym.domain.model.GoalType
+import com.aesthetic.gym.domain.model.MeasureType
 import com.aesthetic.gym.domain.model.MuscleGroup
 import com.aesthetic.gym.domain.model.PhotoPose
 import com.aesthetic.gym.domain.model.RoutineSource
@@ -37,4 +38,7 @@ class Converters {
 
     @TypeConverter fun goalTypeToString(value: GoalType): String = value.name
     @TypeConverter fun stringToGoalType(value: String): GoalType = GoalType.valueOf(value)
+
+    @TypeConverter fun measureToString(value: MeasureType): String = value.name
+    @TypeConverter fun stringToMeasure(value: String): MeasureType = MeasureType.valueOf(value)
 }

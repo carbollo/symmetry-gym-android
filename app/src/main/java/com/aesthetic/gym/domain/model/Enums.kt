@@ -11,6 +11,11 @@ enum class Equipment(val displayName: String) {
 
 enum class Sex { MALE, FEMALE, OTHER }
 
+enum class MeasureType(val displayName: String, val shortUnit: String) {
+    REPS("Repeticiones", "REPS"),
+    SECONDS("Segundos", "SEG")
+}
+
 enum class WeightUnit(val label: String) { KG("kg"), LB("lb") }
 
 enum class RoutineSource { MANUAL, PDF, TEXT }

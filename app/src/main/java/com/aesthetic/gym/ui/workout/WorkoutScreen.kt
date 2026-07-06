@@ -30,9 +30,11 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.DeleteOutline
 import androidx.compose.material.icons.filled.EmojiEvents
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -57,6 +59,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.aesthetic.gym.data.db.RoutineItemWithExercise
 import com.aesthetic.gym.data.db.SetLogEntity
+import com.aesthetic.gym.domain.model.MeasureType
 import com.aesthetic.gym.domain.model.WeightUnit
 import com.aesthetic.gym.ui.components.MuscleIcons
 import com.aesthetic.gym.ui.components.PrimaryButton
@@ -89,6 +92,7 @@ fun WorkoutScreen(navController: NavController, sessionId: Long) {
     val totalCount = allSets.size
 
     var selectedIndex by remember { mutableIntStateOf(0) }
+    var showConfirm by remember { mutableStateOf(false) }
     val safeIndex = selectedIndex.coerceIn(0, (planned.size - 1).coerceAtLeast(0))
 
     Column(Modifier.fillMaxSize()) {
@@ -160,6 +164,7 @@ fun WorkoutScreen(navController: NavController, sessionId: Long) {
                 val sets = allSets.filter { it.exerciseId == exId }.sortedBy { it.setNumber }
                 val doneEx = sets.count { it.completed }
                 val sugg = suggestions[exId]
+                val measure = sets.firstOrNull()?.measure ?: item.exercise?.measure ?: MeasureType.REPS
 
                 SectionCard(Modifier.fillMaxWidth()) {
                     Column {
@@ -183,6 +188,8 @@ fun WorkoutScreen(navController: NavController, sessionId: Long) {
                             }
                             CountPill(doneEx, sets.size)
                         }
+                        Spacer(Modifier.height(12.dp))
+                        MeasureToggle(measure) { vm.setMeasure(exId, sets, it) }
                         if (sugg?.note != null) {
                             Spacer(Modifier.height(10.dp))
                             SuggestionPill(sugg.note)
@@ -238,14 +245,61 @@ fun WorkoutScreen(navController: NavController, sessionId: Long) {
         Box(Modifier.fillMaxWidth().background(Background).padding(16.dp)) {
             PrimaryButton(
                 "Finalizar entreno",
-                { vm.finishWorkout() },
+                { showConfirm = true },
                 Modifier.fillMaxWidth()
             )
         }
     }
 
+    if (showConfirm) {
+        AlertDialog(
+            onDismissRequest = { showConfirm = false },
+            containerColor = Surface,
+            titleContentColor = Color.White,
+            textContentColor = TextSecondary,
+            title = { Text("¿Finalizar entrenamiento?") },
+            text = { Text("Se guardará el entreno y verás el resumen.") },
+            confirmButton = {
+                TextButton(onClick = {
+                    showConfirm = false
+                    vm.finishWorkout()
+                }) { Text("Finalizar", color = Accent, fontWeight = FontWeight.Bold) }
+            },
+            dismissButton = {
+                TextButton(onClick = { showConfirm = false }) {
+                    Text("Cancelar", color = TextSecondary)
+                }
+            }
+        )
+    }
+
     vm.summary?.let { s ->
         WorkoutSummaryDialog(s) { navController.popBackStack() }
+    }
+}
+
+@Composable
+private fun MeasureToggle(current: MeasureType, onSelect: (MeasureType) -> Unit) {
+    Row(
+        Modifier.clip(RoundedCornerShape(50)).background(SurfaceVariant).padding(3.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        MeasureType.entries.forEach { m ->
+            val selected = m == current
+            Box(
+                Modifier.clip(RoundedCornerShape(50))
+                    .background(if (selected) Accent else Color.Transparent)
+                    .clickable { onSelect(m) }
+                    .padding(horizontal = 16.dp, vertical = 6.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    if (m == MeasureType.SECONDS) "Segundos" else "Reps",
+                    color = if (selected) Color.White else TextSecondary,
+                    fontSize = 12.sp, fontWeight = FontWeight.SemiBold
+                )
+            }
+        }
     }
 }
 
@@ -396,7 +450,7 @@ private fun SetRow(
         Spacer(Modifier.width(10.dp))
         NumberField(
             value = repsText,
-            unit = "REPS",
+            unit = if (set.measure == MeasureType.SECONDS) "SEG" else "REPS",
             onValueChange = {
                 repsText = it
                 it.toIntOrNull()?.let { r -> onRepsSet(r) }

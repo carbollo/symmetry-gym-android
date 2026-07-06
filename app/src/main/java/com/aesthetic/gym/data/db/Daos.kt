@@ -52,6 +52,9 @@ interface ExerciseDao {
 
     @Query("UPDATE exercises SET lastReps = :reps WHERE id = :id")
     suspend fun updateLastReps(id: String, reps: Int)
+
+    @Query("UPDATE exercises SET measure = :measure WHERE id = :id")
+    suspend fun updateMeasure(id: String, measure: com.aesthetic.gym.domain.model.MeasureType)
 }
 
 @Dao
@@ -165,7 +168,7 @@ interface WorkoutDao {
                e.primaryMuscle AS primaryMuscle, e.isCompound AS isCompound
         FROM set_logs sl
         JOIN exercises e ON e.id = sl.exerciseId
-        WHERE sl.completed = 1 AND sl.isWarmup = 0
+        WHERE sl.completed = 1 AND sl.isWarmup = 0 AND sl.measure = 'REPS'
         """
     )
     fun setMuscleRowsFlow(): Flow<List<SetMuscleRow>>
@@ -176,7 +179,7 @@ interface WorkoutDao {
         FROM set_logs sl
         JOIN sessions s ON s.id = sl.sessionId
         WHERE sl.exerciseId = :exerciseId AND sl.completed = 1 AND sl.isWarmup = 0
-              AND s.finishedAt IS NOT NULL
+              AND sl.measure = 'REPS' AND s.finishedAt IS NOT NULL
         ORDER BY s.startedAt
         """
     )

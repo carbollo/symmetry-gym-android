@@ -34,6 +34,8 @@ class GymRepository(private val db: AppDatabase) {
         exerciseDao.updateLastWeight(id, weightKg)
     suspend fun updateExerciseLastReps(id: String, reps: Int) =
         exerciseDao.updateLastReps(id, reps)
+    suspend fun updateExerciseMeasure(id: String, measure: com.aesthetic.gym.domain.model.MeasureType) =
+        exerciseDao.updateMeasure(id, measure)
 
     suspend fun ensureSeeded() {
         if (exerciseDao.count() == 0) {

@@ -2,6 +2,7 @@ package com.aesthetic.gym.util
 
 import com.aesthetic.gym.data.db.SetLogEntity
 import com.aesthetic.gym.data.db.WorkoutSessionEntity
+import com.aesthetic.gym.domain.model.MeasureType
 import kotlin.math.roundToInt
 
 /** Volume moved and calories burned estimates for a workout session. */
@@ -9,9 +10,9 @@ object WorkoutMath {
 
     private const val STRENGTH_MET = 5.0 // moderate weight training
 
-    /** Total weight moved (kg) across completed working sets: Σ peso × reps. */
+    /** Total weight moved (kg) across completed rep-based working sets: Σ peso × reps. */
     fun volumeKg(sets: List<SetLogEntity>): Double =
-        sets.filter { it.completed }.sumOf { it.weightKg * it.reps }
+        sets.filter { it.completed && it.measure == MeasureType.REPS }.sumOf { it.weightKg * it.reps }
 
     /** Session duration in minutes, real if available, otherwise estimated from set count. */
     fun durationMinutes(session: WorkoutSessionEntity, completedSets: Int): Double {

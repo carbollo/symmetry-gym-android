@@ -11,6 +11,7 @@ import com.aesthetic.gym.data.db.RoutineItemWithExercise
 import com.aesthetic.gym.data.db.SessionWithSets
 import com.aesthetic.gym.data.db.SetLogEntity
 import com.aesthetic.gym.data.repo.GymRepository
+import com.aesthetic.gym.domain.model.MeasureType
 import com.aesthetic.gym.domain.overload.OverloadSuggestion
 import com.aesthetic.gym.domain.overload.ProgressiveOverload
 import com.aesthetic.gym.util.WorkoutMath
@@ -74,9 +75,10 @@ class WorkoutViewModel(
         for (item in items) {
             val sugg = suggestionsMap[item.item.exerciseId]
             val ex = item.exercise
+            val measure = ex?.measure ?: MeasureType.REPS
             // Prefer the last weight/reps the user actually used for this exercise.
             val weight = ex?.lastWeightKg ?: sugg?.weightKg ?: item.item.targetWeightKg ?: 20.0
-            val reps = ex?.lastReps ?: when {
+            val reps = ex?.lastReps ?: if (measure == MeasureType.SECONDS) 30 else when {
                 item.item.amrap -> sugg?.repsHigh ?: 10
                 item.item.repsMax > 0 -> item.item.repsMax
                 else -> 10
@@ -91,7 +93,8 @@ class WorkoutViewModel(
                         setNumber = n,
                         reps = reps,
                         weightKg = weight,
-                        completed = false
+                        completed = false,
+                        measure = measure
                     )
                 )
             }
@@ -106,13 +109,15 @@ class WorkoutViewModel(
             val current = setsFor(item.item.exerciseId)
             val setNumber = (current.maxOfOrNull { it.setNumber } ?: 0) + 1
             val sugg = suggestions[item.item.exerciseId]
+            val measure = current.firstOrNull()?.measure ?: item.exercise?.measure ?: MeasureType.REPS
             val weight = current.maxByOrNull { it.setNumber }?.weightKg
                 ?: sugg?.weightKg ?: item.item.targetWeightKg ?: 20.0
-            val reps = when {
-                item.item.amrap -> sugg?.repsHigh ?: 10
-                item.item.repsMax > 0 -> item.item.repsMax
-                else -> 10
-            }
+            val reps = current.maxByOrNull { it.setNumber }?.reps
+                ?: if (measure == MeasureType.SECONDS) 30 else when {
+                    item.item.amrap -> sugg?.repsHigh ?: 10
+                    item.item.repsMax > 0 -> item.item.repsMax
+                    else -> 10
+                }
             repo.addSet(
                 SetLogEntity(
                     sessionId = sessionId,
@@ -121,7 +126,8 @@ class WorkoutViewModel(
                     setNumber = setNumber,
                     reps = reps,
                     weightKg = weight,
-                    completed = false
+                    completed = false,
+                    measure = measure
                 )
             )
         }
@@ -156,6 +162,14 @@ class WorkoutViewModel(
 
     fun deleteSet(set: SetLogEntity) {
         viewModelScope.launch { repo.deleteSet(set.id) }
+    }
+
+    /** Switches an exercise between rep-based and time-based, updating its existing sets. */
+    fun setMeasure(exerciseId: String, sets: List<SetLogEntity>, measure: MeasureType) {
+        viewModelScope.launch {
+            repo.updateExerciseMeasure(exerciseId, measure)
+            sets.forEach { repo.updateSet(it.copy(measure = measure)) }
+        }
     }
 
     /** Finishes the session and produces a summary (duration, calories, volume) to show the user. */

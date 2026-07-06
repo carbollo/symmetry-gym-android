@@ -6,6 +6,7 @@ import androidx.room.Index
 import androidx.room.PrimaryKey
 import com.aesthetic.gym.domain.model.Equipment
 import com.aesthetic.gym.domain.model.GoalType
+import com.aesthetic.gym.domain.model.MeasureType
 import com.aesthetic.gym.domain.model.MuscleGroup
 import com.aesthetic.gym.domain.model.PhotoPose
 import com.aesthetic.gym.domain.model.RoutineSource
@@ -36,7 +37,8 @@ data class ExerciseEntity(
     val instructions: String = "",
     val isCustom: Boolean = false,
     val lastWeightKg: Double? = null,
-    val lastReps: Int? = null
+    val lastReps: Int? = null,
+    val measure: MeasureType = MeasureType.REPS
 )
 
 @Entity(tableName = "routines")
@@ -126,6 +128,7 @@ data class SetLogEntity(
     val rpe: Double? = null,
     val isWarmup: Boolean = false,
     val completed: Boolean = true,
+    val measure: MeasureType = MeasureType.REPS,
     val createdAt: Long = 0L
 )
 
