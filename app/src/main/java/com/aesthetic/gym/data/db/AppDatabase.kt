@@ -20,7 +20,7 @@ import androidx.room.TypeConverters
         GoalEntity::class
     ],
     version = 4,
-    exportSchema = false
+    exportSchema = true
 )
 @TypeConverters(Converters::class)
 abstract class AppDatabase : RoomDatabase() {
@@ -41,7 +41,10 @@ abstract class AppDatabase : RoomDatabase() {
                     context.applicationContext,
                     AppDatabase::class.java,
                     "symmetry.db"
-                ).fallbackToDestructiveMigration().build().also { INSTANCE = it }
+                )
+                    .addMigrations(*ALL_MIGRATIONS)
+                    .fallbackToDestructiveMigrationOnDowngrade()
+                    .build().also { INSTANCE = it }
             }
     }
 }
