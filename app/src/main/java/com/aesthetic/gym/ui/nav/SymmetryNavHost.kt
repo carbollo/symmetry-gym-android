@@ -32,6 +32,7 @@ import com.aesthetic.gym.ui.history.HistoryScreen
 import com.aesthetic.gym.ui.home.HomeScreen
 import com.aesthetic.gym.ui.profile.ProfileScreen
 import com.aesthetic.gym.ui.progress.ProgressScreen
+import com.aesthetic.gym.ui.routines.CreateRoutineScreen
 import com.aesthetic.gym.ui.routines.ImportScreen
 import com.aesthetic.gym.ui.routines.RoutineDetailScreen
 import com.aesthetic.gym.ui.routines.RoutinesScreen
@@ -66,6 +67,7 @@ fun SymmetryRoot() {
             composable(Routes.GOALS) { GoalsScreen(navController) }
             composable(Routes.HISTORY) { HistoryScreen(navController) }
             composable(Routes.IMPORT) { ImportScreen(navController) }
+            composable(Routes.CREATE_ROUTINE) { CreateRoutineScreen(navController) }
             composable(
                 Routes.EXERCISE_DETAIL,
                 arguments = listOf(navArgument("exerciseId") { type = NavType.StringType })

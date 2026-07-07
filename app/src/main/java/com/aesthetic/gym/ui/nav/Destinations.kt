@@ -16,6 +16,7 @@ object Routes {
     const val PROGRESS = "progress"
 
     const val IMPORT = "import"
+    const val CREATE_ROUTINE = "create_routine"
     const val PROFILE = "profile"
     const val GOALS = "goals"
     const val HISTORY = "history"

@@ -37,6 +37,7 @@ import androidx.navigation.NavController
 import com.aesthetic.gym.domain.model.RoutineSource
 import com.aesthetic.gym.ui.components.EmptyState
 import com.aesthetic.gym.ui.components.PrimaryButton
+import com.aesthetic.gym.ui.components.SecondaryButton
 import com.aesthetic.gym.ui.nav.Routes
 import com.aesthetic.gym.ui.rememberRepository
 import com.aesthetic.gym.ui.theme.Accent
@@ -63,10 +64,15 @@ fun RoutinesScreen(navController: NavController) {
         Text("Rutinas", color = Color.White, fontWeight = FontWeight.Black, fontSize = 28.sp)
 
         PrimaryButton(
-            "Importar rutina desde PDF",
-            { navController.navigate(Routes.IMPORT) },
+            "Crear rutina",
+            { navController.navigate(Routes.CREATE_ROUTINE) },
             Modifier.fillMaxWidth(),
             icon = Icons.Filled.Add
+        )
+        SecondaryButton(
+            "Importar desde PDF/texto",
+            { navController.navigate(Routes.IMPORT) },
+            Modifier.fillMaxWidth()
         )
 
         if (routines.isEmpty()) {
