@@ -1,6 +1,7 @@
 package com.aesthetic.gym.ui.profile
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -10,16 +11,19 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -32,6 +36,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
@@ -41,15 +47,14 @@ import androidx.navigation.NavController
 import com.aesthetic.gym.data.db.ProfileEntity
 import com.aesthetic.gym.domain.model.Sex
 import com.aesthetic.gym.domain.model.WeightUnit
-import com.aesthetic.gym.ui.components.PrimaryButton
-import com.aesthetic.gym.ui.components.SectionCard
-import com.aesthetic.gym.ui.components.SectionTitle
 import com.aesthetic.gym.ui.rememberRepository
-import com.aesthetic.gym.ui.theme.Accent
+import com.aesthetic.gym.ui.theme.Outline
 import com.aesthetic.gym.ui.theme.Surface
 import com.aesthetic.gym.ui.theme.SurfaceVariant
 import com.aesthetic.gym.ui.theme.TextMuted
 import com.aesthetic.gym.ui.theme.TextSecondary
+import com.aesthetic.gym.ui.theme.Violet
+import com.aesthetic.gym.util.epochToLocalDate
 
 @Composable
 fun ProfileScreen(navController: NavController) {
@@ -69,140 +74,190 @@ fun ProfileScreen(navController: NavController) {
     LaunchedEffect(profile) {
         val p = profile
         if (!loaded && p != null) {
-            name = p.name
-            sex = p.sex
-            weight = trimDouble(p.bodyweightKg)
-            height = trimDouble(p.heightCm)
-            unit = p.unit
-            experience = p.experienceLevel
+            name = p.name; sex = p.sex
+            weight = trimDouble(p.bodyweightKg); height = trimDouble(p.heightCm)
+            unit = p.unit; experience = p.experienceLevel
             loaded = true
         }
     }
 
     Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .verticalScroll(rememberScrollState())
-            .padding(horizontal = 18.dp)
-            .padding(top = 14.dp, bottom = 28.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+        Modifier.fillMaxWidth().verticalScroll(rememberScrollState())
+            .padding(horizontal = 16.dp).padding(top = 8.dp, bottom = 28.dp)
     ) {
-        Row(Modifier.fillMaxWidth().padding(top = 6.dp), verticalAlignment = Alignment.CenterVertically) {
-            IconButton(onClick = { navController.popBackStack() }) {
-                Icon(Icons.AutoMirrored.Filled.ArrowBack, "Volver", tint = Color.White)
+        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+            Box(
+                Modifier.size(34.dp).clip(CircleShape).background(SurfaceVariant)
+                    .clickable { navController.popBackStack() },
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(Icons.AutoMirrored.Filled.ArrowBack, "Volver", tint = Color.White, modifier = Modifier.size(17.dp))
             }
-            Text("Perfil", color = Color.White, fontWeight = FontWeight.Black, fontSize = 24.sp)
+            Spacer(Modifier.width(12.dp))
+            Text("Perfil", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 15.sp)
         }
 
-        SectionCard(Modifier.fillMaxWidth()) {
-            Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
-                OutlinedTextField(
-                    value = name,
-                    onValueChange = { name = it; saved = false },
-                    label = { Text("Nombre") },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = profileFieldColors()
-                )
+        // ---------- AVATAR ----------
+        Spacer(Modifier.height(20.dp))
+        Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
+            Box(
+                Modifier.size(76.dp).clip(CircleShape).background(Violet.copy(alpha = 0.20f))
+                    .border(2.dp, Violet, CircleShape),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(Icons.Filled.Person, null, tint = Violet, modifier = Modifier.size(36.dp))
+            }
+            Spacer(Modifier.height(12.dp))
+            Text(
+                name.ifBlank { "Atleta Symmetry" },
+                color = Color.White, fontWeight = FontWeight.Black, fontSize = 20.sp
+            )
+            Spacer(Modifier.height(3.dp))
+            Text(
+                "Miembro desde ${profile?.createdAt?.takeIf { it > 0 }?.let { epochToLocalDate(it).year } ?: epochToLocalDate(System.currentTimeMillis()).year}",
+                color = TextMuted, fontSize = 11.sp
+            )
+        }
 
-                SectionTitle("Sexo")
+        // ---------- FORM ----------
+        Spacer(Modifier.height(22.dp))
+        Box(
+            Modifier.fillMaxWidth().clip(RoundedCornerShape(20.dp)).background(Surface)
+                .border(1.dp, Outline, RoundedCornerShape(20.dp)).padding(16.dp)
+        ) {
+            Column {
+                FieldLabel("NOMBRE")
+                DarkField(name, "Tu nombre", KeyboardType.Text) { name = it; saved = false }
+
+                Spacer(Modifier.height(16.dp))
+                FieldLabel("SEXO")
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    SelectChip("Hombre", sex == Sex.MALE) { sex = Sex.MALE; saved = false }
-                    SelectChip("Mujer", sex == Sex.FEMALE) { sex = Sex.FEMALE; saved = false }
-                    SelectChip("Otro", sex == Sex.OTHER) { sex = Sex.OTHER; saved = false }
+                    Chip("Hombre", sex == Sex.MALE, Modifier.weight(1f)) { sex = Sex.MALE; saved = false }
+                    Chip("Mujer", sex == Sex.FEMALE, Modifier.weight(1f)) { sex = Sex.FEMALE; saved = false }
+                    Chip("Otro", sex == Sex.OTHER, Modifier.weight(1f)) { sex = Sex.OTHER; saved = false }
                 }
 
+                Spacer(Modifier.height(16.dp))
                 Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    OutlinedTextField(
-                        value = weight,
-                        onValueChange = { weight = it; saved = false },
-                        label = { Text("Peso (kg)") },
-                        singleLine = true,
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                        modifier = Modifier.weight(1f),
-                        colors = profileFieldColors()
-                    )
-                    OutlinedTextField(
-                        value = height,
-                        onValueChange = { height = it; saved = false },
-                        label = { Text("Altura (cm)") },
-                        singleLine = true,
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                        modifier = Modifier.weight(1f),
-                        colors = profileFieldColors()
+                    Column(Modifier.weight(1f)) {
+                        FieldLabel("PESO (KG)")
+                        DarkField(weight, "75", KeyboardType.Number) { weight = it; saved = false }
+                    }
+                    Column(Modifier.weight(1f)) {
+                        FieldLabel("ALTURA (CM)")
+                        DarkField(height, "180", KeyboardType.Number) { height = it; saved = false }
+                    }
+                }
+
+                Spacer(Modifier.height(16.dp))
+                FieldLabel("UNIDAD DE PESO")
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Chip("kg", unit == WeightUnit.KG, Modifier.width(74.dp)) { unit = WeightUnit.KG; saved = false }
+                    Chip("lb", unit == WeightUnit.LB, Modifier.width(74.dp)) { unit = WeightUnit.LB; saved = false }
+                }
+
+                Spacer(Modifier.height(16.dp))
+                FieldLabel("EXPERIENCIA")
+                listOf(1 to "Principiante", 2 to "Intermedio", 3 to "Avanzado").forEach { (level, label) ->
+                    Box(
+                        Modifier.fillMaxWidth().padding(bottom = 8.dp)
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(if (experience == level) Violet else SurfaceVariant)
+                            .clickable { experience = level; saved = false }
+                            .padding(vertical = 12.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            label,
+                            color = if (experience == level) Color.White else TextSecondary,
+                            fontWeight = FontWeight.SemiBold, fontSize = 13.sp
+                        )
+                    }
+                }
+
+                Spacer(Modifier.height(10.dp))
+                Row(verticalAlignment = Alignment.Top) {
+                    Icon(Icons.Filled.Info, null, tint = TextMuted, modifier = Modifier.size(13.dp))
+                    Spacer(Modifier.width(6.dp))
+                    Text(
+                        "Tu peso corporal y sexo se usan para calcular tus rangos de fuerza.",
+                        color = TextMuted, fontSize = 10.sp, lineHeight = 14.sp
                     )
                 }
 
-                SectionTitle("Unidad de peso")
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    SelectChip("kg", unit == WeightUnit.KG) { unit = WeightUnit.KG; saved = false }
-                    SelectChip("lb", unit == WeightUnit.LB) { unit = WeightUnit.LB; saved = false }
-                }
-
-                SectionTitle("Experiencia")
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    SelectChip("Principiante", experience == 1) { experience = 1; saved = false }
-                    SelectChip("Intermedio", experience == 2) { experience = 2; saved = false }
-                    SelectChip("Avanzado", experience == 3) { experience = 3; saved = false }
+                Spacer(Modifier.height(16.dp))
+                Box(
+                    Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)).background(Violet)
+                        .clickable {
+                            vm.save(
+                                ProfileEntity(
+                                    id = 1,
+                                    name = name,
+                                    sex = sex,
+                                    bodyweightKg = weight.replace(',', '.').toDoubleOrNull() ?: 75.0,
+                                    heightCm = height.replace(',', '.').toDoubleOrNull() ?: 175.0,
+                                    unit = unit,
+                                    experienceLevel = experience,
+                                    onboarded = true,
+                                    createdAt = profile?.createdAt ?: 0L
+                                )
+                            )
+                            saved = true
+                        }
+                        .padding(vertical = 15.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        if (saved) "Guardado ✓" else "Guardar perfil",
+                        color = Color.White, fontWeight = FontWeight.Bold, fontSize = 15.sp
+                    )
                 }
             }
         }
+    }
+}
 
-        Text(
-            "Tu peso corporal y sexo se usan para calcular tus rangos de fuerza.",
-            color = TextMuted, fontSize = 12.sp
-        )
+@Composable
+private fun FieldLabel(text: String) {
+    Text(text, color = TextMuted, fontSize = 9.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.2.sp)
+    Spacer(Modifier.height(6.dp))
+}
 
-        PrimaryButton(
-            if (saved) "Guardado ✓" else "Guardar perfil",
-            {
-                vm.save(
-                    ProfileEntity(
-                        id = 1,
-                        name = name,
-                        sex = sex,
-                        bodyweightKg = weight.replace(',', '.').toDoubleOrNull() ?: 75.0,
-                        heightCm = height.replace(',', '.').toDoubleOrNull() ?: 175.0,
-                        unit = unit,
-                        experienceLevel = experience,
-                        onboarded = true,
-                        createdAt = profile?.createdAt ?: 0L
-                    )
-                )
-                saved = true
-            },
-            Modifier.fillMaxWidth()
+@Composable
+private fun DarkField(value: String, placeholder: String, keyboard: KeyboardType, onChange: (String) -> Unit) {
+    Box(
+        Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(SurfaceVariant)
+            .padding(horizontal = 14.dp, vertical = 13.dp)
+    ) {
+        if (value.isEmpty()) Text(placeholder, color = TextMuted, fontSize = 13.sp)
+        BasicTextField(
+            value = value,
+            onValueChange = onChange,
+            singleLine = true,
+            keyboardOptions = KeyboardOptions(keyboardType = keyboard),
+            textStyle = TextStyle(color = Color.White, fontSize = 13.sp, fontWeight = FontWeight.Bold),
+            cursorBrush = SolidColor(Violet),
+            modifier = Modifier.fillMaxWidth()
         )
     }
 }
 
 @Composable
-private fun SelectChip(text: String, selected: Boolean, onClick: () -> Unit) {
+private fun Chip(text: String, selected: Boolean, modifier: Modifier = Modifier, onClick: () -> Unit) {
     Box(
-        Modifier.clip(RoundedCornerShape(50))
-            .background(if (selected) Accent else Surface)
+        modifier.clip(RoundedCornerShape(12.dp))
+            .background(if (selected) Violet else SurfaceVariant)
             .clickable(onClick = onClick)
-            .padding(horizontal = 16.dp, vertical = 9.dp)
+            .padding(vertical = 11.dp),
+        contentAlignment = Alignment.Center
     ) {
         Text(
             text,
             color = if (selected) Color.White else TextSecondary,
-            fontWeight = FontWeight.SemiBold,
-            fontSize = 13.sp
+            fontWeight = FontWeight.SemiBold, fontSize = 13.sp
         )
     }
 }
 
 private fun trimDouble(value: Double): String =
     if (value % 1.0 == 0.0) value.toInt().toString() else value.toString()
-
-@Composable
-private fun profileFieldColors() = OutlinedTextFieldDefaults.colors(
-    focusedTextColor = Color.White,
-    unfocusedTextColor = Color.White,
-    focusedBorderColor = Accent,
-    unfocusedBorderColor = SurfaceVariant,
-    focusedLabelColor = Accent,
-    unfocusedLabelColor = TextMuted,
-    cursorColor = Accent
-)

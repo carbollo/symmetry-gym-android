@@ -4,6 +4,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
@@ -17,19 +18,18 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ListAlt
 import androidx.compose.material.icons.filled.AddAPhoto
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.DeleteOutline
 import androidx.compose.material.icons.filled.Flag
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -41,8 +41,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
@@ -50,23 +52,21 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
-import com.aesthetic.gym.ui.components.EmptyState
 import com.aesthetic.gym.ui.components.LineChart
-import com.aesthetic.gym.ui.components.PrimaryButton
-import com.aesthetic.gym.ui.components.SectionCard
-import com.aesthetic.gym.ui.components.SectionTitle
-import com.aesthetic.gym.ui.components.StatTile
 import com.aesthetic.gym.ui.nav.Routes
 import com.aesthetic.gym.ui.rememberRepository
-import com.aesthetic.gym.ui.theme.Accent
 import com.aesthetic.gym.ui.theme.Cyan
-import com.aesthetic.gym.ui.theme.Danger
 import com.aesthetic.gym.ui.theme.Gold
+import com.aesthetic.gym.ui.theme.Lime
+import com.aesthetic.gym.ui.theme.Outline
 import com.aesthetic.gym.ui.theme.Surface
 import com.aesthetic.gym.ui.theme.SurfaceVariant
+import com.aesthetic.gym.ui.theme.TextMuted
 import com.aesthetic.gym.ui.theme.TextSecondary
+import com.aesthetic.gym.ui.theme.Violet
 import com.aesthetic.gym.util.formatShortDate
 import java.io.File
+import kotlin.math.abs
 import kotlin.math.roundToInt
 
 @Composable
@@ -85,113 +85,173 @@ fun ProgressScreen(navController: NavController) {
         ActivityResultContracts.PickVisualMedia()
     ) { uri -> if (uri != null) vm.addPhoto(context, uri) }
 
+    val last = metrics.lastOrNull()
+    val delta = if (metrics.size >= 2) metrics.last().weightKg - metrics[metrics.size - 2].weightKg else null
+
     Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .verticalScroll(rememberScrollState())
-            .padding(horizontal = 18.dp)
-            .padding(top = 14.dp, bottom = 28.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+        Modifier.fillMaxWidth().verticalScroll(rememberScrollState())
+            .padding(horizontal = 16.dp).padding(top = 10.dp, bottom = 28.dp)
     ) {
-        Text("Progreso", color = Color.White, fontWeight = FontWeight.Black, fontSize = 28.sp)
+        // ---------- HEADER ----------
+        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                "PROGRESO", color = Color.White, fontWeight = FontWeight.Black,
+                fontSize = 22.sp, modifier = Modifier.weight(1f)
+            )
+            Box(
+                Modifier.size(34.dp).clip(CircleShape).background(Violet.copy(alpha = 0.22f))
+                    .clickable { navController.navigate(Routes.PROFILE) },
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(Icons.Filled.Person, "Perfil", tint = Violet, modifier = Modifier.size(18.dp))
+            }
+        }
 
-        // ---- Weekly summary ----
-        SectionTitle("Esta semana")
+        Spacer(Modifier.height(16.dp))
+        Text("ESTA SEMANA", color = TextMuted, fontSize = 9.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.5.sp)
+        Spacer(Modifier.height(10.dp))
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            StatTile("${weekly.workouts}", "entrenos", Modifier.weight(1f), accent = Accent)
-            StatTile("${weekly.volumeKg.roundToInt()}", "kg volumen", Modifier.weight(1f), accent = Cyan)
-            StatTile("${weekly.kcal}", "kcal", Modifier.weight(1f), accent = Gold)
+            WeekTile("${weekly.workouts}", "ENTRENOS", Violet, Modifier.weight(1f))
+            WeekTile(shortKg(weekly.volumeKg), "KG VOL.", Cyan, Modifier.weight(1f))
+            WeekTile("${weekly.kcal}", "KCAL", Gold, Modifier.weight(1f))
         }
 
-        // ---- Quick links ----
-        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            LinkCard("Objetivos", Icons.Filled.Flag, Modifier.weight(1f)) { navController.navigate(Routes.GOALS) }
-            LinkCard("Historial", Icons.AutoMirrored.Filled.ListAlt, Modifier.weight(1f)) { navController.navigate(Routes.HISTORY) }
+        Spacer(Modifier.height(14.dp))
+        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            LinkTile("Objetivos", Icons.Filled.Flag, Modifier.weight(1f)) { navController.navigate(Routes.GOALS) }
+            LinkTile("Historial", Icons.AutoMirrored.Filled.ListAlt, Modifier.weight(1f)) { navController.navigate(Routes.HISTORY) }
         }
 
-        // ---- Bodyweight ----
-        SectionCard(Modifier.fillMaxWidth()) {
+        // ---------- BODYWEIGHT ----------
+        Spacer(Modifier.height(18.dp))
+        Box(
+            Modifier.fillMaxWidth().clip(RoundedCornerShape(20.dp)).background(Surface)
+                .border(1.dp, Outline, RoundedCornerShape(20.dp)).padding(16.dp)
+        ) {
             Column {
-                SectionTitle("Peso corporal")
-                Spacer(Modifier.height(10.dp))
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Column(Modifier.weight(1f)) {
+                        Text("Peso corporal", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 17.sp)
+                        Spacer(Modifier.height(2.dp))
+                        Text(
+                            last?.let { "Último: ${trim(it.weightKg)} kg" } ?: "Sin registros",
+                            color = TextMuted, fontSize = 11.sp
+                        )
+                    }
+                    if (delta != null) {
+                        Text(
+                            (if (delta > 0) "▲ +" else "▼ ") + trim(abs(delta)) + " kg",
+                            color = if (delta > 0) Gold else Lime,
+                            fontSize = 12.sp, fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
+                Spacer(Modifier.height(14.dp))
                 if (metrics.size >= 2) {
                     LineChart(metrics.map { it.weightKg.toFloat() }, lineColor = Cyan)
-                    Spacer(Modifier.height(6.dp))
-                    Text("Último: ${trim(metrics.last().weightKg)} kg", color = TextSecondary, fontSize = 12.sp)
                 } else {
-                    Text("Registra tu peso para ver la evolución.", color = TextSecondary, fontSize = 13.sp)
+                    Text("Registra tu peso para ver la evolución.", color = TextMuted, fontSize = 12.sp)
                 }
-                Spacer(Modifier.height(12.dp))
+                Spacer(Modifier.height(14.dp))
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    OutlinedTextField(
-                        value = weightInput,
-                        onValueChange = { weightInput = it },
-                        label = { Text("Peso (kg)") },
-                        singleLine = true,
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                        modifier = Modifier.weight(1f),
-                        colors = progressFieldColors()
-                    )
+                    Box(
+                        Modifier.weight(1f).clip(RoundedCornerShape(12.dp)).background(SurfaceVariant)
+                            .padding(horizontal = 14.dp, vertical = 13.dp)
+                    ) {
+                        if (weightInput.isEmpty()) Text("Peso (kg)", color = TextMuted, fontSize = 13.sp)
+                        BasicTextField(
+                            value = weightInput,
+                            onValueChange = { weightInput = it },
+                            singleLine = true,
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                            textStyle = TextStyle(color = Color.White, fontSize = 13.sp, fontWeight = FontWeight.Bold),
+                            cursorBrush = SolidColor(Violet),
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
                     Spacer(Modifier.width(10.dp))
-                    PrimaryButton("Añadir", {
-                        weightInput.replace(',', '.').toDoubleOrNull()?.let { vm.addWeight(it); weightInput = "" }
-                    })
+                    Box(
+                        Modifier.clip(RoundedCornerShape(12.dp)).background(Violet)
+                            .clickable {
+                                weightInput.replace(',', '.').toDoubleOrNull()?.let {
+                                    vm.addWeight(it); weightInput = ""
+                                }
+                            }
+                            .padding(horizontal = 20.dp, vertical = 13.dp)
+                    ) {
+                        Text("Añadir", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                    }
                 }
                 if (metrics.isNotEmpty()) {
-                    Spacer(Modifier.height(12.dp))
-                    metrics.asReversed().take(6).forEach { m ->
+                    Spacer(Modifier.height(14.dp))
+                    metrics.asReversed().take(4).forEach { m ->
                         Row(
-                            Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                            Modifier.fillMaxWidth().padding(vertical = 7.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Text("${trim(m.weightKg)} kg", color = Color.White, fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
-                            Spacer(Modifier.width(10.dp))
-                            Text(formatShortDate(m.takenAt), color = TextSecondary, fontSize = 12.sp)
+                            Text("${trim(m.weightKg)} kg", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 14.sp)
                             Spacer(Modifier.weight(1f))
-                            IconButton(onClick = { vm.deleteWeight(m.id) }, modifier = Modifier.size(28.dp)) {
-                                Icon(Icons.Filled.DeleteOutline, "Eliminar", tint = Danger, modifier = Modifier.size(16.dp))
+                            Text(formatShortDate(m.takenAt), color = TextMuted, fontSize = 11.sp)
+                            Spacer(Modifier.width(10.dp))
+                            Icon(
+                                Icons.Filled.Close, "Eliminar", tint = TextMuted,
+                                modifier = Modifier.size(15.dp).clickable { vm.deleteWeight(m.id) }
+                            )
+                        }
+                    }
+                }
+            }
+        }
+
+        // ---------- PHOTOS ----------
+        Spacer(Modifier.height(22.dp))
+        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                "Fotos de\nprogreso", color = Color.White, fontWeight = FontWeight.Black,
+                fontSize = 20.sp, lineHeight = 24.sp, modifier = Modifier.weight(1f)
+            )
+            Row(
+                Modifier.clip(RoundedCornerShape(12.dp)).background(Violet)
+                    .clickable { pickPhoto.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) }
+                    .padding(horizontal = 14.dp, vertical = 10.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(Icons.Filled.AddAPhoto, null, tint = Color.White, modifier = Modifier.size(15.dp))
+                Spacer(Modifier.width(6.dp))
+                Text("Añadir\nfoto", color = Color.White, fontSize = 11.sp, fontWeight = FontWeight.Bold, lineHeight = 13.sp)
+            }
+        }
+
+        Spacer(Modifier.height(14.dp))
+        if (photos.isEmpty()) {
+            Text("Añade fotos para comparar tu evolución física.", color = TextMuted, fontSize = 12.sp)
+        } else {
+            Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState())) {
+                photos.forEach { photo ->
+                    Column(Modifier.padding(end = 12.dp)) {
+                        Box {
+                            AsyncImage(
+                                model = File(photo.filePath),
+                                contentDescription = null,
+                                contentScale = ContentScale.Crop,
+                                modifier = Modifier.size(width = 150.dp, height = 200.dp)
+                                    .clip(RoundedCornerShape(16.dp)).background(SurfaceVariant)
+                            )
+                            Box(
+                                Modifier.padding(8.dp).size(24.dp).clip(CircleShape)
+                                    .background(Color.Black.copy(alpha = 0.6f))
+                                    .clickable { vm.deletePhoto(photo) }
+                                    .align(Alignment.TopEnd),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(Icons.Filled.Close, "Eliminar", tint = Color.White, modifier = Modifier.size(14.dp))
                             }
                         }
-                    }
-                }
-            }
-        }
-
-        // ---- Photos ----
-        SectionTitle("Fotos de progreso")
-        PrimaryButton(
-            "Añadir foto",
-            { pickPhoto.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) },
-            Modifier.fillMaxWidth(),
-            icon = Icons.Filled.AddAPhoto
-        )
-        if (photos.isEmpty()) {
-            EmptyState(
-                icon = Icons.Filled.AddAPhoto,
-                title = "Sin fotos todavía",
-                message = "Añade fotos para comparar tu evolución física."
-            )
-        } else {
-            Row(Modifier.horizontalScroll(rememberScrollState())) {
-                photos.forEach { photo ->
-                    Box(Modifier.padding(end = 10.dp)) {
-                        AsyncImage(
-                            model = File(photo.filePath),
-                            contentDescription = null,
-                            contentScale = ContentScale.Crop,
-                            modifier = Modifier.size(width = 120.dp, height = 168.dp)
-                                .clip(RoundedCornerShape(14.dp))
-                                .background(SurfaceVariant)
+                        Spacer(Modifier.height(6.dp))
+                        Text(
+                            formatShortDate(photo.takenAt).uppercase(),
+                            color = TextSecondary, fontSize = 10.sp, fontWeight = FontWeight.Bold
                         )
-                        Box(
-                            Modifier.padding(6.dp).size(26.dp).clip(RoundedCornerShape(50))
-                                .background(Color.Black.copy(alpha = 0.55f))
-                                .clickable { vm.deletePhoto(photo) }
-                                .align(Alignment.TopEnd),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(Icons.Filled.Close, "Eliminar", tint = Color.White, modifier = Modifier.size(16.dp))
-                        }
                     }
                 }
             }
@@ -199,27 +259,47 @@ fun ProgressScreen(navController: NavController) {
     }
 }
 
+private fun trim(v: Double): String =
+    if (v % 1.0 == 0.0) v.toInt().toString() else ((v * 10).roundToInt() / 10.0).toString()
+
+private fun shortKg(v: Double): String =
+    if (v >= 1000) "${((v / 100).roundToInt() / 10.0)}k" else "${v.roundToInt()}"
+
 @Composable
-private fun LinkCard(text: String, icon: androidx.compose.ui.graphics.vector.ImageVector, modifier: Modifier = Modifier, onClick: () -> Unit) {
+private fun WeekTile(value: String, label: String, color: Color, modifier: Modifier = Modifier) {
+    Box(
+        modifier.clip(RoundedCornerShape(16.dp)).background(Surface)
+            .border(1.dp, Outline, RoundedCornerShape(16.dp)).padding(vertical = 16.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Text(value, color = color, fontWeight = FontWeight.Black, fontSize = 20.sp, maxLines = 1)
+            Spacer(Modifier.height(3.dp))
+            Text(label, color = TextMuted, fontSize = 8.sp, fontWeight = FontWeight.Bold, letterSpacing = 0.8.sp)
+        }
+    }
+}
+
+@Composable
+private fun LinkTile(
+    text: String,
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit
+) {
     Row(
-        modifier.clip(RoundedCornerShape(16.dp)).background(Surface).clickable(onClick = onClick).padding(16.dp),
+        modifier.clip(RoundedCornerShape(16.dp)).background(Surface)
+            .border(1.dp, Outline, RoundedCornerShape(16.dp))
+            .clickable(onClick = onClick).padding(14.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Icon(icon, null, tint = Accent, modifier = Modifier.size(22.dp))
+        Box(
+            Modifier.size(30.dp).clip(RoundedCornerShape(9.dp)).background(Violet.copy(alpha = 0.22f)),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(icon, null, tint = Violet, modifier = Modifier.size(16.dp))
+        }
         Spacer(Modifier.width(10.dp))
-        Text(text, color = Color.White, fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
+        Text(text, color = Color.White, fontWeight = FontWeight.SemiBold, fontSize = 13.sp)
     }
 }
-
-private fun trim(v: Double): String = if (v % 1.0 == 0.0) v.toInt().toString() else ((v * 10).toInt() / 10.0).toString()
-
-@Composable
-private fun progressFieldColors() = OutlinedTextFieldDefaults.colors(
-    focusedTextColor = Color.White,
-    unfocusedTextColor = Color.White,
-    focusedBorderColor = Accent,
-    unfocusedBorderColor = SurfaceVariant,
-    focusedLabelColor = Accent,
-    unfocusedLabelColor = TextSecondary,
-    cursorColor = Accent
-)

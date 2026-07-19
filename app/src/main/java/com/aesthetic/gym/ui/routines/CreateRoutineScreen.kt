@@ -1,6 +1,7 @@
 package com.aesthetic.gym.ui.routines
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -23,13 +24,13 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.AddCircleOutline
+import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.DeleteOutline
+import androidx.compose.material.icons.filled.Save
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -54,17 +55,15 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.aesthetic.gym.data.db.ExerciseEntity
 import com.aesthetic.gym.ui.components.MuscleIcons
-import com.aesthetic.gym.ui.components.PrimaryButton
-import com.aesthetic.gym.ui.components.SectionCard
 import com.aesthetic.gym.ui.nav.Routes
 import com.aesthetic.gym.ui.rememberRepository
-import com.aesthetic.gym.ui.theme.Accent
 import com.aesthetic.gym.ui.theme.Background
-import com.aesthetic.gym.ui.theme.Danger
+import com.aesthetic.gym.ui.theme.Outline
 import com.aesthetic.gym.ui.theme.Surface
 import com.aesthetic.gym.ui.theme.SurfaceVariant
 import com.aesthetic.gym.ui.theme.TextMuted
 import com.aesthetic.gym.ui.theme.TextSecondary
+import com.aesthetic.gym.ui.theme.Violet
 import com.aesthetic.gym.util.normalizeText
 
 @Composable
@@ -72,87 +71,172 @@ fun CreateRoutineScreen(navController: NavController) {
     val repo = rememberRepository()
     val vm: CreateRoutineViewModel = viewModel(factory = CreateRoutineViewModel.factory(repo))
     val exercises by vm.exercises.collectAsState()
-
     var pickerDay by remember { mutableStateOf<Int?>(null) }
 
-    Column(Modifier.fillMaxSize()) {
+    Column(Modifier.fillMaxSize().background(Background)) {
+
+        // ---------- TOP ----------
         Row(
-            Modifier.fillMaxWidth().padding(start = 4.dp, end = 16.dp, top = 6.dp),
+            Modifier.fillMaxWidth().padding(horizontal = 16.dp).padding(top = 10.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            IconButton(onClick = { navController.popBackStack() }) {
-                Icon(Icons.AutoMirrored.Filled.ArrowBack, "Volver", tint = Color.White)
+            Box(
+                Modifier.size(34.dp).clip(CircleShape).background(SurfaceVariant)
+                    .clickable { navController.popBackStack() },
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(Icons.AutoMirrored.Filled.ArrowBack, "Volver", tint = Color.White, modifier = Modifier.size(17.dp))
             }
-            Text("Crear rutina", color = Color.White, fontWeight = FontWeight.Black, fontSize = 22.sp)
+            Spacer(Modifier.width(12.dp))
+            Text(
+                "CREAR RUTINA", color = Color.White, fontWeight = FontWeight.Black,
+                fontSize = 18.sp, modifier = Modifier.weight(1f)
+            )
+            Text("AYUDA", color = Violet, fontSize = 11.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
         }
 
         Column(
             Modifier.weight(1f).verticalScroll(rememberScrollState())
-                .padding(horizontal = 16.dp).padding(bottom = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(14.dp)
+                .padding(horizontal = 16.dp).padding(top = 20.dp, bottom = 16.dp)
         ) {
-            OutlinedTextField(
-                value = vm.name,
-                onValueChange = { vm.updateName(it) },
-                label = { Text("Nombre de la rutina") },
-                singleLine = true,
-                modifier = Modifier.fillMaxWidth(),
-                colors = fieldColors()
+            Text(
+                "NOMBRE DE LA RUTINA", color = TextMuted, fontSize = 9.sp,
+                fontWeight = FontWeight.Bold, letterSpacing = 1.5.sp
             )
+            Spacer(Modifier.height(8.dp))
+            LightField(vm.name, "Ej: Empuje Hipertrofia", Modifier.fillMaxWidth(), KeyboardType.Text) {
+                vm.updateName(it)
+            }
+
+            Spacer(Modifier.height(22.dp))
 
             vm.days.forEachIndexed { dayIndex, day ->
-                SectionCard(Modifier.fillMaxWidth()) {
+                Box(
+                    Modifier.fillMaxWidth().padding(bottom = 16.dp)
+                        .clip(RoundedCornerShape(20.dp)).background(Surface)
+                        .border(1.dp, Outline, RoundedCornerShape(20.dp)).padding(16.dp)
+                ) {
                     Column {
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             BasicTextField(
                                 value = day.name,
                                 onValueChange = { vm.renameDay(dayIndex, it) },
                                 singleLine = true,
-                                textStyle = TextStyle(color = Color.White, fontWeight = FontWeight.Bold, fontSize = 18.sp),
-                                cursorBrush = SolidColor(Accent),
+                                textStyle = TextStyle(
+                                    color = Violet, fontWeight = FontWeight.Black,
+                                    fontSize = 15.sp, letterSpacing = 1.sp
+                                ),
+                                cursorBrush = SolidColor(Violet),
                                 modifier = Modifier.weight(1f)
                             )
                             if (vm.days.size > 1) {
-                                IconButton(onClick = { vm.removeDay(dayIndex) }, modifier = Modifier.size(32.dp)) {
-                                    Icon(Icons.Filled.DeleteOutline, "Eliminar día", tint = Danger, modifier = Modifier.size(18.dp))
-                                }
+                                Icon(
+                                    Icons.Filled.DeleteOutline, "Eliminar día", tint = TextMuted,
+                                    modifier = Modifier.size(20.dp).clickable { vm.removeDay(dayIndex) }
+                                )
                             }
                         }
-                        Spacer(Modifier.height(8.dp))
+                        Spacer(Modifier.height(14.dp))
 
                         day.items.forEachIndexed { itemIndex, item ->
-                            ItemEditor(
-                                item = item,
-                                keyPrefix = "${day.localId}-$itemIndex",
-                                onSets = { v -> vm.updateItem(dayIndex, itemIndex) { it.copy(sets = v) } },
-                                onRepsMin = { v -> vm.updateItem(dayIndex, itemIndex) { it.copy(repsMin = v) } },
-                                onRepsMax = { v -> vm.updateItem(dayIndex, itemIndex) { it.copy(repsMax = v) } },
-                                onWeight = { v -> vm.updateItem(dayIndex, itemIndex) { it.copy(weightKg = v) } },
-                                onRemove = { vm.removeItem(dayIndex, itemIndex) }
-                            )
-                            Spacer(Modifier.height(8.dp))
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Box(
+                                    Modifier.size(28.dp).clip(RoundedCornerShape(8.dp))
+                                        .background(Violet.copy(alpha = 0.22f)),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Icon(
+                                        MuscleIcons.forMuscle(item.muscle), null,
+                                        tint = Violet, modifier = Modifier.size(15.dp)
+                                    )
+                                }
+                                Spacer(Modifier.width(10.dp))
+                                Text(
+                                    item.name, color = Color.White, fontWeight = FontWeight.Bold,
+                                    fontSize = 15.sp, modifier = Modifier.weight(1f)
+                                )
+                                Icon(
+                                    Icons.Filled.Close, "Quitar", tint = TextMuted,
+                                    modifier = Modifier.size(17.dp).clickable { vm.removeItem(dayIndex, itemIndex) }
+                                )
+                            }
+                            Spacer(Modifier.height(10.dp))
+                            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                NumCol("SERIES", item.sets.toString(), "$dayIndex-$itemIndex-s", Modifier.weight(1f)) { s ->
+                                    s.toIntOrNull()?.let { v -> vm.updateItem(dayIndex, itemIndex) { it.copy(sets = v.coerceIn(1, 20)) } }
+                                }
+                                NumCol("REPS MÍN", item.repsMin.toString(), "$dayIndex-$itemIndex-rmin", Modifier.weight(1f)) { s ->
+                                    s.toIntOrNull()?.let { v -> vm.updateItem(dayIndex, itemIndex) { it.copy(repsMin = v.coerceIn(1, 100)) } }
+                                }
+                                NumCol("REPS MÁX", item.repsMax.toString(), "$dayIndex-$itemIndex-rmax", Modifier.weight(1f)) { s ->
+                                    s.toIntOrNull()?.let { v -> vm.updateItem(dayIndex, itemIndex) { it.copy(repsMax = v.coerceIn(1, 100)) } }
+                                }
+                                NumCol("PESO KG", item.weightKg?.let { trim(it) } ?: "", "$dayIndex-$itemIndex-w", Modifier.weight(1f)) { s ->
+                                    vm.updateItem(dayIndex, itemIndex) {
+                                        it.copy(weightKg = if (s.isBlank()) null else s.replace(',', '.').toDoubleOrNull())
+                                    }
+                                }
+                            }
+                            Spacer(Modifier.height(18.dp))
                         }
 
-                        AddRow("Añadir ejercicio") { pickerDay = dayIndex }
+                        Row(
+                            Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp))
+                                .border(1.dp, Violet.copy(alpha = 0.55f), RoundedCornerShape(12.dp))
+                                .clickable { pickerDay = dayIndex }
+                                .padding(vertical = 13.dp),
+                            horizontalArrangement = Arrangement.Center,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(Icons.Filled.AddCircleOutline, null, tint = Violet, modifier = Modifier.size(16.dp))
+                            Spacer(Modifier.width(8.dp))
+                            Text(
+                                "AÑADIR EJERCICIO", color = Violet, fontWeight = FontWeight.Bold,
+                                fontSize = 11.sp, letterSpacing = 1.sp
+                            )
+                        }
                     }
                 }
             }
 
-            AddRow("Añadir día") { vm.addDay() }
+            Row(
+                Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)).background(SurfaceVariant)
+                    .clickable { vm.addDay() }.padding(vertical = 15.dp),
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(Icons.Filled.CalendarMonth, null, tint = Color.White, modifier = Modifier.size(17.dp))
+                Spacer(Modifier.width(8.dp))
+                Text("AÑADIR DÍA", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 13.sp, letterSpacing = 1.sp)
+            }
         }
 
-        Box(Modifier.fillMaxWidth().background(Background).padding(16.dp)) {
-            PrimaryButton(
-                "Guardar rutina",
-                {
-                    vm.save { id ->
-                        navController.popBackStack()
-                        navController.navigate(Routes.routineDetail(id))
+        // ---------- SAVE ----------
+        Box(Modifier.fillMaxWidth().padding(16.dp)) {
+            Row(
+                Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp))
+                    .background(if (vm.canSave) Violet else SurfaceVariant)
+                    .clickable(enabled = vm.canSave) {
+                        vm.save { id ->
+                            navController.popBackStack()
+                            navController.navigate(Routes.routineDetail(id))
+                        }
                     }
-                },
-                Modifier.fillMaxWidth(),
-                enabled = vm.canSave
-            )
+                    .padding(vertical = 16.dp),
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    Icons.Filled.Save, null,
+                    tint = if (vm.canSave) Color.White else TextMuted, modifier = Modifier.size(18.dp)
+                )
+                Spacer(Modifier.width(8.dp))
+                Text(
+                    "GUARDAR RUTINA",
+                    color = if (vm.canSave) Color.White else TextMuted,
+                    fontWeight = FontWeight.Black, fontSize = 14.sp, letterSpacing = 1.sp
+                )
+            }
         }
     }
 
@@ -167,73 +251,55 @@ fun CreateRoutineScreen(navController: NavController) {
     }
 }
 
+/** White input box like in the design. */
 @Composable
-private fun ItemEditor(
-    item: DraftItem,
-    keyPrefix: String,
-    onSets: (Int) -> Unit,
-    onRepsMin: (Int) -> Unit,
-    onRepsMax: (Int) -> Unit,
-    onWeight: (Double?) -> Unit,
-    onRemove: () -> Unit
+private fun LightField(
+    value: String,
+    placeholder: String,
+    modifier: Modifier = Modifier,
+    keyboard: KeyboardType,
+    onChange: (String) -> Unit
 ) {
-    Column(
-        Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)).background(SurfaceVariant.copy(alpha = 0.5f)).padding(10.dp)
+    Box(
+        modifier.clip(RoundedCornerShape(12.dp)).background(Color.White)
+            .padding(horizontal = 14.dp, vertical = 14.dp)
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Icon(MuscleIcons.forMuscle(item.muscle), null, tint = Accent, modifier = Modifier.size(18.dp))
-            Spacer(Modifier.width(8.dp))
-            Text(item.name, color = Color.White, fontWeight = FontWeight.SemiBold, fontSize = 14.sp, modifier = Modifier.weight(1f))
-            IconButton(onClick = onRemove, modifier = Modifier.size(28.dp)) {
-                Icon(Icons.Filled.Close, "Quitar", tint = TextMuted, modifier = Modifier.size(16.dp))
-            }
-        }
-        Spacer(Modifier.height(8.dp))
-        Row(verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            LabeledNum("Series", item.sets.toString(), "$keyPrefix-s", 54.dp) { s -> s.toIntOrNull()?.let { onSets(it.coerceIn(1, 20)) } }
-            LabeledNum("Reps mín", item.repsMin.toString(), "$keyPrefix-rmin", 58.dp) { s -> s.toIntOrNull()?.let { onRepsMin(it.coerceIn(1, 100)) } }
-            LabeledNum("Reps máx", item.repsMax.toString(), "$keyPrefix-rmax", 58.dp) { s -> s.toIntOrNull()?.let { onRepsMax(it.coerceIn(1, 100)) } }
-            LabeledNum("Peso kg", item.weightKg?.let { trim(it) } ?: "", "$keyPrefix-w", 64.dp) { s ->
-                onWeight(if (s.isBlank()) null else s.replace(',', '.').toDoubleOrNull())
-            }
-        }
+        if (value.isEmpty()) Text(placeholder, color = Color(0xFF9AA0A6), fontSize = 13.sp)
+        BasicTextField(
+            value = value,
+            onValueChange = onChange,
+            singleLine = true,
+            keyboardOptions = KeyboardOptions(keyboardType = keyboard),
+            textStyle = TextStyle(color = Color(0xFF0B0B10), fontSize = 13.sp, fontWeight = FontWeight.Bold),
+            cursorBrush = SolidColor(Violet),
+            modifier = Modifier.fillMaxWidth()
+        )
     }
 }
 
 @Composable
-private fun LabeledNum(label: String, initial: String, key: String, width: Dp, onCommit: (String) -> Unit) {
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+private fun NumCol(label: String, initial: String, key: String, modifier: Modifier = Modifier, onCommit: (String) -> Unit) {
+    Column(modifier) {
+        Text(label, color = TextMuted, fontSize = 7.sp, fontWeight = FontWeight.Bold, letterSpacing = 0.5.sp)
+        Spacer(Modifier.height(5.dp))
         var text by remember(key) { mutableStateOf(initial) }
         Box(
-            Modifier.width(width).height(38.dp).clip(RoundedCornerShape(10.dp)).background(Surface),
+            Modifier.fillMaxWidth().height(38.dp).clip(RoundedCornerShape(8.dp)).background(Color.White),
             contentAlignment = Alignment.Center
         ) {
             BasicTextField(
                 value = text,
                 onValueChange = { text = it; onCommit(it) },
                 singleLine = true,
-                textStyle = TextStyle(color = Color.White, fontWeight = FontWeight.Bold, fontSize = 15.sp, textAlign = TextAlign.Center),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                cursorBrush = SolidColor(Accent),
+                textStyle = TextStyle(
+                    color = Color(0xFF0B0B10), fontSize = 14.sp,
+                    fontWeight = FontWeight.Black, textAlign = TextAlign.Center
+                ),
+                cursorBrush = SolidColor(Violet),
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp)
             )
         }
-        Spacer(Modifier.height(3.dp))
-        Text(label, color = TextMuted, fontSize = 9.sp, fontWeight = FontWeight.Bold)
-    }
-}
-
-@Composable
-private fun AddRow(text: String, onClick: () -> Unit) {
-    Row(
-        Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp))
-            .background(Accent.copy(alpha = 0.12f)).clickable(onClick = onClick).padding(vertical = 12.dp),
-        horizontalArrangement = Arrangement.Center,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Icon(Icons.Filled.Add, null, tint = Accent, modifier = Modifier.size(18.dp))
-        Spacer(Modifier.width(6.dp))
-        Text(text, color = Accent, fontWeight = FontWeight.Bold, fontSize = 13.sp)
     }
 }
 
@@ -253,40 +319,50 @@ private fun ExercisePickerDialog(
         Box(Modifier.clip(RoundedCornerShape(22.dp)).background(Surface).padding(16.dp)) {
             Column {
                 Text("Añadir ejercicio", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 18.sp)
-                Spacer(Modifier.height(10.dp))
-                OutlinedTextField(
-                    value = query,
-                    onValueChange = { query = it },
-                    label = { Text("Buscar o crear") },
-                    leadingIcon = { Icon(Icons.Filled.Search, null, tint = TextSecondary) },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = fieldColors()
-                )
+                Spacer(Modifier.height(12.dp))
+                Row(
+                    Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(SurfaceVariant)
+                        .padding(horizontal = 12.dp, vertical = 12.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(Icons.Filled.Search, null, tint = TextMuted, modifier = Modifier.size(17.dp))
+                    Spacer(Modifier.width(8.dp))
+                    Box(Modifier.weight(1f)) {
+                        if (query.isEmpty()) Text("Buscar o crear", color = TextMuted, fontSize = 13.sp)
+                        BasicTextField(
+                            value = query, onValueChange = { query = it }, singleLine = true,
+                            textStyle = TextStyle(color = Color.White, fontSize = 13.sp),
+                            cursorBrush = SolidColor(Violet), modifier = Modifier.fillMaxWidth()
+                        )
+                    }
+                }
                 if (query.isNotBlank() && !exactMatch) {
                     Spacer(Modifier.height(8.dp))
                     Row(
                         Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp))
-                            .background(Accent.copy(alpha = 0.14f)).clickable { onCreate(query) }.padding(12.dp),
+                            .background(Violet.copy(alpha = 0.16f)).clickable { onCreate(query) }.padding(12.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Icon(Icons.Filled.Add, null, tint = Accent, modifier = Modifier.size(18.dp))
+                        Icon(Icons.Filled.Add, null, tint = Violet, modifier = Modifier.size(17.dp))
                         Spacer(Modifier.width(8.dp))
-                        Text("Crear \"${query.trim()}\"", color = Accent, fontWeight = FontWeight.SemiBold, fontSize = 13.sp)
+                        Text("Crear \"${query.trim()}\"", color = Violet, fontWeight = FontWeight.SemiBold, fontSize = 13.sp)
                     }
                 }
                 Spacer(Modifier.height(8.dp))
-                Column(Modifier.heightIn(max = 360.dp).verticalScroll(rememberScrollState())) {
+                Column(Modifier.heightIn(max = 340.dp).verticalScroll(rememberScrollState())) {
                     filtered.forEach { ex ->
                         Row(
                             Modifier.fillMaxWidth().clickable { onPick(ex) }.padding(vertical = 10.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Box(
-                                Modifier.size(34.dp).clip(CircleShape).background(SurfaceVariant),
+                                Modifier.size(32.dp).clip(CircleShape).background(SurfaceVariant),
                                 contentAlignment = Alignment.Center
                             ) {
-                                Icon(MuscleIcons.forMuscle(ex.primaryMuscle), null, tint = Accent, modifier = Modifier.size(18.dp))
+                                Icon(
+                                    MuscleIcons.forMuscle(ex.primaryMuscle), null,
+                                    tint = Violet, modifier = Modifier.size(16.dp)
+                                )
                             }
                             Spacer(Modifier.width(10.dp))
                             Column(Modifier.weight(1f)) {
@@ -301,15 +377,5 @@ private fun ExercisePickerDialog(
     }
 }
 
-private fun trim(v: Double): String = if (v % 1.0 == 0.0) v.toInt().toString() else ((v * 10).toInt() / 10.0).toString()
-
-@Composable
-private fun fieldColors() = OutlinedTextFieldDefaults.colors(
-    focusedTextColor = Color.White,
-    unfocusedTextColor = Color.White,
-    focusedBorderColor = Accent,
-    unfocusedBorderColor = SurfaceVariant,
-    focusedLabelColor = Accent,
-    unfocusedLabelColor = TextSecondary,
-    cursorColor = Accent
-)
+private fun trim(v: Double): String =
+    if (v % 1.0 == 0.0) v.toInt().toString() else ((v * 10).toInt() / 10.0).toString()

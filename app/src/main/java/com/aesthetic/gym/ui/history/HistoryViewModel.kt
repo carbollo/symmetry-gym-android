@@ -7,10 +7,12 @@ import androidx.lifecycle.viewmodel.viewModelFactory
 import com.aesthetic.gym.data.db.WorkoutSessionEntity
 import com.aesthetic.gym.data.repo.GymRepository
 import com.aesthetic.gym.util.WorkoutMath
+import com.aesthetic.gym.util.epochToLocalDate
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
+import java.time.LocalDate
 import kotlin.math.roundToInt
 
 data class SessionSummary(
@@ -21,14 +23,20 @@ data class SessionSummary(
     val durationMin: Int
 )
 
+data class HistoryState(
+    val sessions: List<SessionSummary> = emptyList(),
+    val sessionsThisMonth: Int = 0,
+    val totalHours: Double = 0.0
+)
+
 class HistoryViewModel(repo: GymRepository) : ViewModel() {
 
-    val sessions: StateFlow<List<SessionSummary>> = combine(
+    val state: StateFlow<HistoryState> = combine(
         repo.finishedSessionsWithSetsFlow(),
         repo.profileFlow()
     ) { list, profile ->
         val bw = profile?.bodyweightKg ?: 75.0
-        list.map { sw ->
+        val summaries = list.map { sw ->
             val done = sw.sets.count { it.completed }
             SessionSummary(
                 session = sw.session,
@@ -38,7 +46,13 @@ class HistoryViewModel(repo: GymRepository) : ViewModel() {
                 durationMin = WorkoutMath.durationMinutes(sw.session, done).roundToInt()
             )
         }
-    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+        val month = LocalDate.now().withDayOfMonth(1)
+        HistoryState(
+            sessions = summaries,
+            sessionsThisMonth = summaries.count { epochToLocalDate(it.session.startedAt) >= month },
+            totalHours = summaries.sumOf { it.durationMin } / 60.0
+        )
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), HistoryState())
 
     companion object {
         fun factory(repo: GymRepository) = viewModelFactory { initializer { HistoryViewModel(repo) } }

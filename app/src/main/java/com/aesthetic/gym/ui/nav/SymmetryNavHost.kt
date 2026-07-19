@@ -61,7 +61,7 @@ fun SymmetryRoot() {
             composable(Routes.HOME) { HomeScreen(navController) }
             composable(Routes.ROUTINES) { RoutinesScreen(navController) }
             composable(Routes.EXERCISES) { ExercisesScreen(navController) }
-            composable(Routes.BODY) { BodyScreen() }
+            composable(Routes.BODY) { BodyScreen(navController) }
             composable(Routes.PROGRESS) { ProgressScreen(navController) }
             composable(Routes.PROFILE) { ProfileScreen(navController) }
             composable(Routes.GOALS) { GoalsScreen(navController) }
