@@ -106,26 +106,6 @@ fun WorkoutScreen(navController: NavController, sessionId: Long) {
     var showConfirm by remember { mutableStateOf(false) }
     val safeIndex = selectedIndex.coerceIn(0, (planned.size - 1).coerceAtLeast(0))
 
-    // Live session timer
-    var elapsed by remember { mutableLongStateOf(0L) }
-    val startedAt = session?.session?.startedAt
-    LaunchedEffect(startedAt) {
-        if (startedAt != null) {
-            while (true) {
-                elapsed = System.currentTimeMillis() - startedAt
-                delay(1000)
-            }
-        }
-    }
-    val minutes = elapsed / 60000.0
-    val intensity = when {
-        doneTotal == 0 -> "—"
-        minutes < 1.0 -> "ALTA"
-        doneTotal / minutes >= 0.45 -> "ALTA"
-        doneTotal / minutes >= 0.22 -> "MEDIA"
-        else -> "BAJA"
-    }
-
     // Locked during the workout: back minimizes instead of closing/leaving.
     BackHandler { activity?.moveTaskToBack(true) }
 
@@ -253,25 +233,8 @@ fun WorkoutScreen(navController: NavController, sessionId: Long) {
         }
 
         // ---------- TIME / INTENSITY ----------
-        Row(
-            Modifier.padding(horizontal = 16.dp).fillMaxWidth()
-                .clip(RoundedCornerShape(18.dp)).background(Surface).padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Column(Modifier.weight(1f)) {
-                Text("TIEMPO TOTAL", color = TextMuted, fontSize = 9.sp, fontWeight = FontWeight.Bold)
-                Spacer(Modifier.height(2.dp))
-                Text(formatTimer(elapsed), color = Color.White, fontWeight = FontWeight.Black, fontSize = 24.sp)
-            }
-            Column(horizontalAlignment = Alignment.End) {
-                Text("INTENSIDAD", color = TextMuted, fontSize = 9.sp, fontWeight = FontWeight.Bold)
-                Spacer(Modifier.height(2.dp))
-                Text(
-                    intensity, color = Magenta, fontWeight = FontWeight.Black,
-                    fontStyle = FontStyle.Italic, fontSize = 22.sp
-                )
-            }
-        }
+        // Kept in its own composable so the 1s tick only recomposes this card.
+        TimeIntensityCard(session?.session?.startedAt, doneTotal)
 
         // ---------- FINISH ----------
         Box(Modifier.fillMaxWidth().padding(16.dp)) {
@@ -319,6 +282,46 @@ fun WorkoutScreen(navController: NavController, sessionId: Long) {
 private fun dayTitle(sessionName: String?): String {
     if (sessionName.isNullOrBlank()) return "ENTRENO"
     return sessionName.substringAfterLast("·").trim().uppercase()
+}
+
+@Composable
+private fun TimeIntensityCard(startedAt: Long?, doneSets: Int) {
+    var elapsed by remember(startedAt) { mutableLongStateOf(0L) }
+    LaunchedEffect(startedAt) {
+        if (startedAt != null) {
+            while (true) {
+                elapsed = System.currentTimeMillis() - startedAt
+                delay(1000)
+            }
+        }
+    }
+    val minutes = elapsed / 60000.0
+    val intensity = when {
+        doneSets == 0 -> "—"
+        minutes < 1.0 -> "ALTA"
+        doneSets / minutes >= 0.45 -> "ALTA"
+        doneSets / minutes >= 0.22 -> "MEDIA"
+        else -> "BAJA"
+    }
+    Row(
+        Modifier.padding(horizontal = 16.dp).fillMaxWidth()
+            .clip(RoundedCornerShape(18.dp)).background(Surface).padding(16.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Column(Modifier.weight(1f)) {
+            Text("TIEMPO TOTAL", color = TextMuted, fontSize = 9.sp, fontWeight = FontWeight.Bold)
+            Spacer(Modifier.height(2.dp))
+            Text(formatTimer(elapsed), color = Color.White, fontWeight = FontWeight.Black, fontSize = 24.sp)
+        }
+        Column(horizontalAlignment = Alignment.End) {
+            Text("INTENSIDAD", color = TextMuted, fontSize = 9.sp, fontWeight = FontWeight.Bold)
+            Spacer(Modifier.height(2.dp))
+            Text(
+                intensity, color = Magenta, fontWeight = FontWeight.Black,
+                fontStyle = FontStyle.Italic, fontSize = 22.sp
+            )
+        }
+    }
 }
 
 private fun formatTimer(ms: Long): String {
@@ -401,32 +404,35 @@ private fun SetRow(
             .padding(horizontal = 14.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Column(Modifier.widthIn(min = 68.dp)) {
+        Column(Modifier.weight(1.1f)) {
             Text(
                 "SERIE ${set.setNumber}",
                 color = if (done) Lime else TextMuted,
-                fontSize = 9.sp, fontWeight = FontWeight.Bold
+                fontSize = 9.sp, fontWeight = FontWeight.Bold, maxLines = 1
             )
             Spacer(Modifier.height(2.dp))
             if (done) {
                 Text(
-                    "Hecha", color = Lime, fontSize = 16.sp,
-                    fontWeight = FontWeight.Black, fontStyle = FontStyle.Italic
+                    "Hecha", color = Lime, fontSize = 15.sp,
+                    fontWeight = FontWeight.Black, fontStyle = FontStyle.Italic, maxLines = 1
                 )
             } else {
                 Text(
                     "%02d".format(set.setNumber), color = TextMuted,
-                    fontSize = 20.sp, fontWeight = FontWeight.Black
+                    fontSize = 20.sp, fontWeight = FontWeight.Black, maxLines = 1
                 )
             }
         }
-        Spacer(Modifier.weight(1f))
-        NumberBox("KG", weightText, done) {
+        Spacer(Modifier.width(6.dp))
+        NumberBox("KG", weightText, done, Modifier.weight(1f)) {
             weightText = it
             it.replace(',', '.').toDoubleOrNull()?.let { w -> onWeightSet(w) }
         }
         Spacer(Modifier.width(8.dp))
-        NumberBox(if (set.measure == MeasureType.SECONDS) "SEG" else "REPS", repsText, done) {
+        NumberBox(
+            if (set.measure == MeasureType.SECONDS) "SEG" else "REPS",
+            repsText, done, Modifier.weight(1f)
+        ) {
             repsText = it
             it.toIntOrNull()?.let { r -> onRepsSet(r) }
         }
@@ -450,12 +456,18 @@ private fun SetRow(
 }
 
 @Composable
-private fun NumberBox(label: String, value: String, highlighted: Boolean, onValueChange: (String) -> Unit) {
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+private fun NumberBox(
+    label: String,
+    value: String,
+    highlighted: Boolean,
+    modifier: Modifier = Modifier,
+    onValueChange: (String) -> Unit
+) {
+    Column(modifier, horizontalAlignment = Alignment.CenterHorizontally) {
         Text(label, color = TextMuted, fontSize = 8.sp, fontWeight = FontWeight.Bold)
         Spacer(Modifier.height(3.dp))
         Box(
-            Modifier.width(58.dp).height(38.dp).clip(RoundedCornerShape(10.dp))
+            Modifier.fillMaxWidth().widthIn(min = 46.dp).height(38.dp).clip(RoundedCornerShape(10.dp))
                 .background(if (highlighted) Lime.copy(alpha = 0.12f) else SurfaceVariant)
                 .then(
                     if (highlighted) Modifier.border(BorderStroke(1.dp, Lime), RoundedCornerShape(10.dp))

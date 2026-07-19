@@ -15,6 +15,8 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -47,6 +49,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -349,8 +352,8 @@ private fun ExercisePickerDialog(
                     }
                 }
                 Spacer(Modifier.height(8.dp))
-                Column(Modifier.heightIn(max = 340.dp).verticalScroll(rememberScrollState())) {
-                    filtered.forEach { ex ->
+                LazyColumn(Modifier.heightIn(max = 340.dp)) {
+                    items(filtered, key = { it.id }) { ex ->
                         Row(
                             Modifier.fillMaxWidth().clickable { onPick(ex) }.padding(vertical = 10.dp),
                             verticalAlignment = Alignment.CenterVertically
@@ -366,7 +369,11 @@ private fun ExercisePickerDialog(
                             }
                             Spacer(Modifier.width(10.dp))
                             Column(Modifier.weight(1f)) {
-                                Text(ex.name, color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
+                                Text(
+                                    ex.name, color = Color.White, fontSize = 14.sp,
+                                    fontWeight = FontWeight.SemiBold,
+                                    maxLines = 1, overflow = TextOverflow.Ellipsis
+                                )
                                 Text(ex.primaryMuscle.displayName, color = TextSecondary, fontSize = 11.sp)
                             }
                         }

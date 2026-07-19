@@ -12,7 +12,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -104,10 +103,12 @@ private fun SymmetryBottomBar(navController: NavHostController, currentRoute: St
             NavigationBarItem(
                 selected = selected,
                 onClick = {
-                    navController.navigate(dest.route) {
-                        popUpTo(navController.graph.findStartDestination().id) { saveState = true }
-                        launchSingleTop = true
-                        restoreState = true
+                    if (currentRoute != dest.route) {
+                        navController.navigate(dest.route) {
+                            // Deterministic tab switching: always land on the tapped tab.
+                            popUpTo(Routes.HOME) { inclusive = dest.route == Routes.HOME }
+                            launchSingleTop = true
+                        }
                     }
                 },
                 icon = { Icon(dest.icon, contentDescription = dest.label) },
