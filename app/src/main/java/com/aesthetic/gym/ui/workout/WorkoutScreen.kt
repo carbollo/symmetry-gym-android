@@ -75,7 +75,9 @@ import com.aesthetic.gym.ui.theme.Accent
 import com.aesthetic.gym.ui.theme.Background
 import com.aesthetic.gym.ui.theme.Cyan
 import com.aesthetic.gym.ui.theme.Gold
+import com.aesthetic.gym.ui.theme.Lime
 import com.aesthetic.gym.ui.theme.Magenta
+import com.aesthetic.gym.ui.theme.OnLime
 import com.aesthetic.gym.ui.theme.Outline
 import com.aesthetic.gym.ui.theme.Success
 import com.aesthetic.gym.ui.theme.Surface
@@ -121,7 +123,7 @@ fun WorkoutScreen(navController: NavController, sessionId: Long) {
                 )
                 Text(
                     "$doneTotal DE $totalCount SERIES",
-                    color = Accent, fontSize = 12.sp, fontWeight = FontWeight.Bold
+                    color = Lime, fontSize = 12.sp, fontWeight = FontWeight.Bold
                 )
             }
         }
@@ -224,9 +226,9 @@ fun WorkoutScreen(navController: NavController, sessionId: Long) {
                             horizontalArrangement = Arrangement.Center,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Icon(Icons.Filled.Add, null, tint = TextSecondary, modifier = Modifier.size(16.dp))
+                            Icon(Icons.Filled.Add, null, tint = Lime, modifier = Modifier.size(16.dp))
                             Spacer(Modifier.width(6.dp))
-                            Text("Añadir serie extra", color = TextSecondary, fontWeight = FontWeight.SemiBold, fontSize = 12.sp)
+                            Text("AÑADIR SERIE", color = Lime, fontWeight = FontWeight.Bold, fontSize = 12.sp)
                         }
                     }
                 }
@@ -374,10 +376,10 @@ private fun TimelineBubble(
 ) {
     val bg = when {
         complete -> Magenta
-        selected -> Accent.copy(alpha = 0.15f)
+        selected -> Lime.copy(alpha = 0.12f)
         else -> SurfaceVariant
     }
-    val borderColor = if (selected) Accent else Outline
+    val borderColor = if (selected) Lime else Outline
     Box(
         Modifier.size(52.dp).clip(CircleShape).background(bg)
             .border(BorderStroke(if (selected) 2.dp else 1.dp, borderColor), CircleShape)
@@ -387,7 +389,7 @@ private fun TimelineBubble(
         Icon(
             if (complete) Icons.Filled.Check else icon,
             null,
-            tint = if (complete) Color.White else if (selected) Accent else TextSecondary,
+            tint = if (complete) Color.White else if (selected) Lime else TextSecondary,
             modifier = Modifier.size(24.dp)
         )
     }
@@ -409,12 +411,12 @@ private fun CountPill(done: Int, total: Int) {
 private fun SuggestionPill(note: String) {
     Row(
         Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp))
-            .background(Accent.copy(alpha = 0.12f)).padding(horizontal = 10.dp, vertical = 8.dp),
+            .background(Lime.copy(alpha = 0.10f)).padding(horizontal = 10.dp, vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text("💡", fontSize = 13.sp)
         Spacer(Modifier.width(6.dp))
-        Text(note, color = Accent, fontSize = 12.sp, fontWeight = FontWeight.Medium)
+        Text(note, color = Lime, fontSize = 12.sp, fontWeight = FontWeight.Medium)
     }
 }
 
@@ -455,6 +457,7 @@ private fun SetRow(
         NumberField(
             value = weightText,
             unit = "KG",
+            highlighted = set.completed,
             onValueChange = {
                 weightText = it
                 it.replace(',', '.').toDoubleOrNull()?.let { w -> onWeightSet(w) }
@@ -464,6 +467,7 @@ private fun SetRow(
         NumberField(
             value = repsText,
             unit = if (set.measure == MeasureType.SECONDS) "SEG" else "REPS",
+            highlighted = set.completed,
             onValueChange = {
                 repsText = it
                 it.toIntOrNull()?.let { r -> onRepsSet(r) }
@@ -482,7 +486,7 @@ private fun SetRow(
         Box(tickMod.clickable(onClick = onToggle), contentAlignment = Alignment.Center) {
             Icon(
                 Icons.Filled.Check, "Confirmar serie",
-                tint = if (set.completed) Color.White else TextMuted,
+                tint = if (set.completed) OnLime else TextMuted,
                 modifier = Modifier.size(20.dp)
             )
         }
@@ -490,10 +494,16 @@ private fun SetRow(
 }
 
 @Composable
-private fun NumberField(value: String, unit: String, onValueChange: (String) -> Unit) {
+private fun NumberField(
+    value: String,
+    unit: String,
+    highlighted: Boolean = false,
+    onValueChange: (String) -> Unit
+) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Box(
-            Modifier.width(64.dp).height(40.dp).clip(RoundedCornerShape(10.dp)).background(Surface),
+            Modifier.width(64.dp).height(40.dp).clip(RoundedCornerShape(10.dp))
+                .background(if (highlighted) Lime else Surface),
             contentAlignment = Alignment.Center
         ) {
             BasicTextField(
@@ -501,14 +511,18 @@ private fun NumberField(value: String, unit: String, onValueChange: (String) -> 
                 onValueChange = onValueChange,
                 singleLine = true,
                 textStyle = TextStyle(
-                    color = Color.White, fontSize = 16.sp,
+                    color = if (highlighted) OnLime else Color.White, fontSize = 16.sp,
                     fontWeight = FontWeight.Bold, textAlign = TextAlign.Center
                 ),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                cursorBrush = SolidColor(Accent),
+                cursorBrush = SolidColor(if (highlighted) OnLime else Lime),
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 6.dp)
             )
         }
-        Text(unit, color = TextMuted, fontSize = 8.sp, fontWeight = FontWeight.Bold)
+        Text(
+            unit,
+            color = if (highlighted) Lime else TextMuted,
+            fontSize = 8.sp, fontWeight = FontWeight.Bold
+        )
     }
 }

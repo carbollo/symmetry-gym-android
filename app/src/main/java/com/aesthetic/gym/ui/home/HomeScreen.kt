@@ -49,6 +49,7 @@ import com.aesthetic.gym.ui.nav.Routes
 import com.aesthetic.gym.ui.rememberRepository
 import com.aesthetic.gym.ui.theme.Accent
 import com.aesthetic.gym.ui.theme.Gold
+import com.aesthetic.gym.ui.theme.Lime
 import com.aesthetic.gym.ui.theme.Magenta
 import com.aesthetic.gym.ui.theme.Surface
 import com.aesthetic.gym.ui.theme.SurfaceVariant
@@ -141,8 +142,8 @@ fun HomeScreen(navController: NavController) {
 
         // Stats row
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            StatTile("${state.streak}", "días de racha", Modifier.weight(1f), accent = Gold)
-            StatTile("${state.totalWorkouts}", "entrenos totales", Modifier.weight(1f))
+            StatTile("${state.streak}", "días de racha", Modifier.weight(1f), accent = Lime)
+            StatTile("${state.totalWorkouts}", "entrenos totales", Modifier.weight(1f), accent = Magenta)
         }
 
         // Active routine
