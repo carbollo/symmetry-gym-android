@@ -6,6 +6,16 @@ import com.aesthetic.gym.data.db.BodyPhotoEntity
 import com.aesthetic.gym.data.db.ExerciseEntity
 import com.aesthetic.gym.data.db.GoalEntity
 import com.aesthetic.gym.data.db.ProfileEntity
+import com.aesthetic.gym.data.db.RoutineWithDays
+import com.aesthetic.gym.data.db.SessionWithSets
+import com.aesthetic.gym.data.db.SetMuscleRow
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.stateIn
 import com.aesthetic.gym.data.db.RoutineDayEntity
 import com.aesthetic.gym.data.db.RoutineEntity
 import com.aesthetic.gym.data.db.RoutineItemEntity
@@ -22,6 +32,25 @@ class GymRepository(private val db: AppDatabase) {
     private val bodyDao = db.bodyDao()
     private val profileDao = db.profileDao()
     private val goalDao = db.goalDao()
+
+    /**
+     * App-scoped hot caches. Screens read these instead of re-querying Room on every
+     * navigation, so switching tabs is instant instead of hitting the database again.
+     */
+    private val cacheScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+    private fun <T> hot(flow: Flow<T>, initial: T): StateFlow<T> =
+        flow.stateIn(cacheScope, SharingStarted.Eagerly, initial)
+
+    val profileHot: StateFlow<ProfileEntity?> = hot(profileDao.profileFlow(), null)
+    val exercisesHot: StateFlow<List<ExerciseEntity>> = hot(exerciseDao.allFlow(), emptyList())
+    val routinesHot: StateFlow<List<RoutineEntity>> = hot(routineDao.routinesFlow(), emptyList())
+    val activeRoutineHot: StateFlow<RoutineWithDays?> = hot(routineDao.activeRoutineFlow(), null)
+    val sessionsWithSetsHot: StateFlow<List<SessionWithSets>> =
+        hot(workoutDao.finishedSessionsWithSetsFlow(), emptyList())
+    val setMuscleRowsHot: StateFlow<List<SetMuscleRow>> = hot(workoutDao.setMuscleRowsFlow(), emptyList())
+    val photosHot: StateFlow<List<BodyPhotoEntity>> = hot(bodyDao.photosFlow(), emptyList())
+    val metricsHot: StateFlow<List<BodyMetricEntity>> = hot(bodyDao.metricsFlow(), emptyList())
+    val goalsHot: StateFlow<List<GoalEntity>> = hot(goalDao.goalsFlow(), emptyList())
 
     fun now(): Long = System.currentTimeMillis()
 

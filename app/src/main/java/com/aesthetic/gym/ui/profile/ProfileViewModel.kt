@@ -14,7 +14,7 @@ import kotlinx.coroutines.launch
 class ProfileViewModel(private val repo: GymRepository) : ViewModel() {
 
     val profile: StateFlow<ProfileEntity?> =
-        repo.profileFlow().stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
+        repo.profileHot.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
 
     fun save(profile: ProfileEntity) {
         viewModelScope.launch {

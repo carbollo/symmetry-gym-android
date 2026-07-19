@@ -23,14 +23,14 @@ data class WeeklyStats(val workouts: Int = 0, val volumeKg: Double = 0.0, val kc
 class ProgressViewModel(private val repo: GymRepository) : ViewModel() {
 
     val photos: StateFlow<List<BodyPhotoEntity>> =
-        repo.photosFlow().stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+        repo.photosHot.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     val metrics: StateFlow<List<BodyMetricEntity>> =
-        repo.metricsFlow().stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+        repo.metricsHot.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     val weekly: StateFlow<WeeklyStats> = combine(
-        repo.finishedSessionsWithSetsFlow(),
-        repo.profileFlow()
+        repo.sessionsWithSetsHot,
+        repo.profileHot
     ) { list, profile ->
         val bw = profile?.bodyweightKg ?: 75.0
         val weekAgo = repo.now() - 7L * 24 * 3600 * 1000

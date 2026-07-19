@@ -35,10 +35,10 @@ data class HomeUiState(
 class HomeViewModel(private val repo: GymRepository) : ViewModel() {
 
     val state: StateFlow<HomeUiState> = combine(
-        repo.profileFlow(),
-        repo.activeRoutineFlow(),
-        repo.finishedSessionsWithSetsFlow(),
-        repo.setMuscleRowsFlow()
+        repo.profileHot,
+        repo.activeRoutineHot,
+        repo.sessionsWithSetsHot,
+        repo.setMuscleRowsHot
     ) { profile, active, sessionsWithSets, rows ->
         val bw = profile?.bodyweightKg ?: 75.0
         val sex = profile?.sex ?: Sex.MALE

@@ -25,8 +25,8 @@ class BodyViewModel(private val repo: GymRepository) : ViewModel() {
     )
 
     val summary: StateFlow<RankSummary> = combine(
-        repo.profileFlow(),
-        repo.setMuscleRowsFlow()
+        repo.profileHot,
+        repo.setMuscleRowsHot
     ) { profile, rows ->
         RankCalculator.compute(rows, profile?.bodyweightKg ?: 75.0, profile?.sex ?: Sex.MALE)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), empty)

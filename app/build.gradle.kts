@@ -12,18 +12,33 @@ android {
         applicationId = "com.aesthetic.gym"
         minSdk = 26
         targetSdk = 34
-        versionCode = 18
-        versionName = "1.17"
+        versionCode = 19
+        versionName = "1.18"
         vectorDrawables { useSupportLibrary = true }
+    }
+
+    // Signed with the local debug keystore so release APKs install over the debug ones
+    // (same signature) without losing data.
+    signingConfigs {
+        create("localRelease") {
+            storeFile = file(System.getProperty("user.home") + "/.android/debug.keystore")
+            storePassword = "android"
+            keyAlias = "androiddebugkey"
+            keyPassword = "android"
+        }
     }
 
     buildTypes {
         release {
-            isMinifyEnabled = false
+            // R8 shrinking + optimisation, and (crucially) debuggable = false, which lets
+            // ART apply optimisations that are disabled in debug builds.
+            isMinifyEnabled = true
+            isShrinkResources = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            signingConfig = signingConfigs.getByName("localRelease")
         }
     }
 

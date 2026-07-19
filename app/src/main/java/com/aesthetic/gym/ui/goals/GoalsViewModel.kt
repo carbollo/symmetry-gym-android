@@ -26,10 +26,10 @@ data class GoalProgress(
 class GoalsViewModel(private val repo: GymRepository) : ViewModel() {
 
     val goals: StateFlow<List<GoalProgress>> = combine(
-        repo.goalsFlow(),
-        repo.profileFlow(),
+        repo.goalsHot,
+        repo.profileHot,
         repo.finishedCountFlow(),
-        repo.setMuscleRowsFlow()
+        repo.setMuscleRowsHot
     ) { goals, profile, workouts, rows ->
         val bestByExercise = rows.filter { it.weightKg > 0 }
             .groupBy { it.exerciseId }

@@ -32,8 +32,8 @@ data class HistoryState(
 class HistoryViewModel(repo: GymRepository) : ViewModel() {
 
     val state: StateFlow<HistoryState> = combine(
-        repo.finishedSessionsWithSetsFlow(),
-        repo.profileFlow()
+        repo.sessionsWithSetsHot,
+        repo.profileHot
     ) { list, profile ->
         val bw = profile?.bodyweightKg ?: 75.0
         val summaries = list.map { sw ->

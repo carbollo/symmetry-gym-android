@@ -20,10 +20,10 @@ data class WeeklyEfficiency(val percent: Int = 0, val bars: List<Float> = List(7
 class RoutinesViewModel(private val repo: GymRepository) : ViewModel() {
 
     val routines: StateFlow<List<RoutineEntity>> =
-        repo.routinesFlow().stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+        repo.routinesHot.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     val efficiency: StateFlow<WeeklyEfficiency> =
-        repo.finishedSessionsWithSetsFlow().map { list ->
+        repo.sessionsWithSetsHot.map { list ->
             val today = LocalDate.now()
             val weekStart = today.minusDays(6)
             val recent = list.filter { epochToLocalDate(it.session.startedAt) >= weekStart }

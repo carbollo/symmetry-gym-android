@@ -44,7 +44,7 @@ class CreateRoutineViewModel(private val repo: GymRepository) : ViewModel() {
     private var nextDayId = 2L
 
     val exercises: StateFlow<List<ExerciseEntity>> =
-        repo.exercisesFlow.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+        repo.exercisesHot.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     val canSave: Boolean get() = days.any { it.items.isNotEmpty() }
 
