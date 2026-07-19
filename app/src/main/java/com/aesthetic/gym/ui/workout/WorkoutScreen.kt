@@ -1,5 +1,7 @@
 package com.aesthetic.gym.ui.workout
 
+import android.app.Activity
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -24,12 +26,12 @@ import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.DeleteOutline
 import androidx.compose.material.icons.filled.EmojiEvents
+import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -48,6 +50,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -86,6 +89,7 @@ fun WorkoutScreen(navController: NavController, sessionId: Long) {
     val session by vm.session.collectAsState()
     val planned = vm.plannedItems
     val suggestions = vm.suggestions
+    val activity = LocalContext.current as? Activity
 
     val allSets = session?.sets ?: emptyList()
     val doneTotal = allSets.count { it.completed }
@@ -95,14 +99,17 @@ fun WorkoutScreen(navController: NavController, sessionId: Long) {
     var showConfirm by remember { mutableStateOf(false) }
     val safeIndex = selectedIndex.coerceIn(0, (planned.size - 1).coerceAtLeast(0))
 
+    // Lock the app during the workout: back minimizes instead of closing/leaving.
+    BackHandler { activity?.moveTaskToBack(true) }
+
     Column(Modifier.fillMaxSize()) {
         // ---- Header ----
         Row(
             Modifier.fillMaxWidth().padding(start = 4.dp, end = 16.dp, top = 6.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            IconButton(onClick = { navController.popBackStack() }) {
-                Icon(Icons.AutoMirrored.Filled.ArrowBack, "Volver", tint = Color.White)
+            IconButton(onClick = { activity?.moveTaskToBack(true) }) {
+                Icon(Icons.Filled.KeyboardArrowDown, "Minimizar", tint = Color.White)
             }
             Column(Modifier.weight(1f)) {
                 Text(
