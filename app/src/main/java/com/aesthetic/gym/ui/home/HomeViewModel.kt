@@ -8,7 +8,9 @@ import com.aesthetic.gym.data.db.RoutineWithDays
 import com.aesthetic.gym.data.db.WorkoutSessionEntity
 import com.aesthetic.gym.data.repo.GymRepository
 import com.aesthetic.gym.domain.model.Rank
+import com.aesthetic.gym.domain.model.Sex
 import com.aesthetic.gym.domain.rank.RankCalculator
+import com.aesthetic.gym.util.WorkoutMath
 import com.aesthetic.gym.util.epochToLocalDate
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -16,6 +18,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import java.time.LocalDate
+import kotlin.math.roundToInt
 
 data class HomeUiState(
     val name: String = "",
@@ -25,6 +28,7 @@ data class HomeUiState(
     val totalWorkouts: Int = 0,
     val activeRoutine: RoutineWithDays? = null,
     val recent: List<WorkoutSessionEntity> = emptyList(),
+    val volumeChangePct: Int? = null,
     val loading: Boolean = true
 )
 
@@ -33,12 +37,25 @@ class HomeViewModel(private val repo: GymRepository) : ViewModel() {
     val state: StateFlow<HomeUiState> = combine(
         repo.profileFlow(),
         repo.activeRoutineFlow(),
-        repo.allFinishedSessionsFlow(),
+        repo.finishedSessionsWithSetsFlow(),
         repo.setMuscleRowsFlow()
-    ) { profile, active, sessions, rows ->
+    ) { profile, active, sessionsWithSets, rows ->
         val bw = profile?.bodyweightKg ?: 75.0
-        val sex = profile?.sex ?: com.aesthetic.gym.domain.model.Sex.MALE
+        val sex = profile?.sex ?: Sex.MALE
         val summary = RankCalculator.compute(rows, bw, sex)
+        val sessions = sessionsWithSets.map { it.session }
+
+        // Week-over-week training volume, used by the "Análisis biométrico" card.
+        val now = repo.now()
+        val week = 7L * 24 * 3600 * 1000
+        val volThis = sessionsWithSets
+            .filter { it.session.startedAt >= now - week }
+            .sumOf { WorkoutMath.volumeKg(it.sets) }
+        val volPrev = sessionsWithSets
+            .filter { it.session.startedAt in (now - 2 * week) until (now - week) }
+            .sumOf { WorkoutMath.volumeKg(it.sets) }
+        val changePct = if (volPrev > 0.0) (((volThis - volPrev) / volPrev) * 100).roundToInt() else null
+
         HomeUiState(
             name = profile?.name?.takeIf { it.isNotBlank() } ?: "Atleta",
             overallScore = summary.overallScore,
@@ -47,6 +64,7 @@ class HomeViewModel(private val repo: GymRepository) : ViewModel() {
             totalWorkouts = sessions.size,
             activeRoutine = active,
             recent = sessions.take(5),
+            volumeChangePct = changePct,
             loading = false
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), HomeUiState())
@@ -62,7 +80,6 @@ class HomeViewModel(private val repo: GymRepository) : ViewModel() {
         if (starts.isEmpty()) return 0
         val days = starts.map { epochToLocalDate(it) }.toSortedSet().toList().reversed()
         val today = LocalDate.now()
-        // Streak only counts if the most recent workout was today or yesterday.
         var cursor = when {
             days.first() == today -> today
             days.first() == today.minusDays(1) -> today.minusDays(1)

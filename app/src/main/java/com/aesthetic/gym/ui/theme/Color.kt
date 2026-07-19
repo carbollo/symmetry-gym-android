@@ -14,6 +14,7 @@ val Accent = Color(0xFFFF2D78)     // magenta — primary actions
 val Magenta = Color(0xFFFF2D78)    // alias of Accent
 val AccentSoft = Color(0xFFFF5C97)
 val Lime = Color(0xFFCCFF00)       // highlight only (progress, confirmed values)
+val Violet = Color(0xFF7C5CFF)     // accent of the Home design
 val Cyan = Color(0xFF35E0F0)
 val Gold = Color(0xFFFFC53D)
 val Success = Color(0xFFCCFF00)    // confirmed = lime

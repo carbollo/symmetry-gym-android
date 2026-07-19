@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, viewport-fit=cover" name="viewport"/>
+<title>Symmetry | Entrenamiento</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;800;900&family=Space+Grotesk:wght@700&family=Work+Sans:wght@400;600&family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@100..900&family=Space+Grotesk:wght@100..900&family=Work+Sans:wght@100..900&display=swap" rel="stylesheet"/>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .glow-lime {
+            box-shadow: 0 0 15px rgba(204, 255, 0, 0.4);
+        }
+        .glow-magenta {
+            box-shadow: 0 0 15px rgba(255, 45, 120, 0.4);
+        }
+        .inner-stroke {
+            box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.1);
+        }
+        input:focus {
+            outline: none !important;
+            border-color: #FF2D78 !important;
+            box-shadow: 0 0 8px rgba(255, 45, 120, 0.3) !important;
+        }
+        /* Custom scrollbar for timeline */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-tertiary-fixed": "#002022",
+                        "inverse-on-surface": "#303036",
+                        "on-surface-variant": "#c4c9ac",
+                        "error-container": "#93000a",
+                        "on-tertiary-fixed-variant": "#004f54",
+                        "surface-bright": "#39383e",
+                        "primary-fixed-dim": "#abd600",
+                        "on-error": "#690005",
+                        "surface-container-highest": "#35343a",
+                        "primary-container": "#c3f400",
+                        "surface-dim": "#131318",
+                        "error": "#ffb4ab",
+                        "on-tertiary-container": "#006f77",
+                        "background": "#0B0B10",
+                        "secondary-container": "#e00363",
+                        "outline-variant": "#444933",
+                        "on-error-container": "#ffdad6",
+                        "tertiary-fixed": "#7df4ff",
+                        "on-secondary-fixed": "#3f0017",
+                        "on-primary-fixed": "#161e00",
+                        "secondary-fixed": "#ffd9df",
+                        "on-background": "#e4e1e9",
+                        "surface-variant": "#35343a",
+                        "on-secondary-fixed-variant": "#90003d",
+                        "on-secondary": "#660029",
+                        "on-tertiary": "#00363a",
+                        "surface-container-low": "#1b1b20",
+                        "on-secondary-container": "#fff6f6",
+                        "on-surface": "#e4e1e9",
+                        "surface-container": "#1f1f24",
+                        "tertiary": "#ffffff",
+                        "secondary": "#FF2D78",
+                        "tertiary-container": "#7df4ff",
+                        "surface-tint": "#abd600",
+                        "surface-container-high": "#2a292f",
+                        "primary-fixed": "#c3f400",
+                        "surface": "#131318",
+                        "secondary-fixed-dim": "#ffb1c0",
+                        "on-primary-fixed-variant": "#3c4d00",
+                        "inverse-surface": "#e4e1e9",
+                        "surface-container-lowest": "#0e0e13",
+                        "tertiary-fixed-dim": "#00dbe9",
+                        "inverse-primary": "#506600",
+                        "on-primary-container": "#556d00",
+                        "outline": "#8e9379",
+                        "on-primary": "#283500",
+                        "primary": "#CCFF00"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "stack-sm": "12px",
+                        "container-margin": "24px",
+                        "stack-md": "24px",
+                        "stack-lg": "48px",
+                        "gutter": "16px",
+                        "base": "8px"
+                    },
+                    "fontFamily": {
+                        "display-xl": ["Montserrat"],
+                        "headline-lg": ["Montserrat"],
+                        "headline-md": ["Montserrat"],
+                        "body-md": ["Work Sans"],
+                        "label-caps": ["Space Grotesk"]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-background font-body-md min-h-screen pb-32">
+<!-- TopAppBar -->
+<header class="fixed top-0 w-full z-50 bg-surface/80 backdrop-blur-xl border-b border-white/5">
+<div class="flex justify-between items-center w-full px-container-margin h-16">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary cursor-pointer active:scale-95 transition-transform" data-icon="expand_more">expand_more</span>
+<div>
+<h1 class="font-headline-md text-headline-md tracking-tighter uppercase leading-none">EMPUJE</h1>
+<p class="font-label-caps text-[10px] text-on-surface-variant tracking-widest mt-0.5">4 de 9 series</p>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-on-surface-variant" data-icon="more_vert">more_vert</span>
+</div>
+</div>
+<!-- Progress Bar -->
+<div class="w-full h-1 bg-surface-container-lowest overflow-hidden">
+<div class="h-full bg-primary w-[44%] shadow-[0_0_10px_#CCFF00]"></div>
+</div>
+</header>
+<main class="pt-24 px-container-margin">
+<!-- Exercise Timeline -->
+<section class="mb-stack-md">
+<div class="flex items-center gap-4 overflow-x-auto no-scrollbar py-2">
+<!-- Completed -->
+<div class="flex-shrink-0 w-12 h-12 rounded-full bg-secondary flex items-center justify-center glow-magenta border-2 border-secondary">
+<span class="material-symbols-outlined text-white text-xl" data-icon="check" style="font-variation-settings: 'FILL' 1;">check</span>
+</div>
+<!-- Completed -->
+<div class="flex-shrink-0 w-12 h-12 rounded-full bg-secondary flex items-center justify-center glow-magenta border-2 border-secondary">
+<span class="material-symbols-outlined text-white text-xl" data-icon="check" style="font-variation-settings: 'FILL' 1;">check</span>
+</div>
+<!-- Current -->
+<div class="flex-shrink-0 w-12 h-12 rounded-full border-2 border-primary glow-lime flex items-center justify-center bg-surface-container-high">
+<span class="material-symbols-outlined text-primary" data-icon="fitness_center">fitness_center</span>
+</div>
+<!-- Upcoming -->
+<div class="flex-shrink-0 w-12 h-12 rounded-full border border-white/10 flex items-center justify-center bg-surface-container-lowest opacity-40">
+<span class="material-symbols-outlined text-on-surface-variant" data-icon="layers">layers</span>
+</div>
+<!-- Upcoming -->
+<div class="flex-shrink-0 w-12 h-12 rounded-full border border-white/10 flex items-center justify-center bg-surface-container-lowest opacity-40">
+<span class="material-symbols-outlined text-on-surface-variant" data-icon="bolt">bolt</span>
+</div>
+<!-- Upcoming -->
+<div class="flex-shrink-0 w-12 h-12 rounded-full border border-white/10 flex items-center justify-center bg-surface-container-lowest opacity-40">
+<span class="material-symbols-outlined text-on-surface-variant" data-icon="timer">timer</span>
+</div>
+</div>
+</section>
+<!-- Exercise Card -->
+<section class="space-y-stack-md">
+<div class="flex flex-col gap-2">
+<h2 class="font-headline-lg text-4xl uppercase tracking-tighter leading-none italic">PRESS DE BANCA</h2>
+<div class="flex items-center gap-1 mt-2">
+<span class="material-symbols-outlined text-primary text-sm" data-icon="history">history</span>
+<p class="font-label-caps text-[10px] text-primary/70">RÉCORD: 100 KG x 8</p>
+</div>
+</div>
+<!-- Segmented Control -->
+<div class="bg-surface-container-lowest p-1 rounded-xl flex inner-stroke">
+<button class="flex-1 py-2 font-label-caps text-xs rounded-lg bg-surface-container-highest text-white shadow-sm">REPS</button>
+<button class="flex-1 py-2 font-label-caps text-xs text-on-surface-variant hover:text-white transition-colors">SEGUNDOS</button>
+</div>
+<!-- Set List -->
+<div class="space-y-4">
+<!-- Set Row 1 (Active/Confirmed Example) -->
+<div class="flex items-center justify-between gap-4 p-4 rounded-2xl bg-surface-container border border-primary/20 transition-all duration-300">
+<div class="flex flex-col">
+<span class="font-label-caps text-[10px] text-primary">SERIE 1</span>
+<span class="text-2xl font-bold italic text-white">Confirmed</span>
+</div>
+<div class="flex items-center gap-3">
+<div class="flex flex-col gap-1 w-20">
+<span class="font-label-caps text-[8px] text-on-surface-variant text-center">KG</span>
+<div class="h-12 bg-background rounded-lg flex items-center justify-center font-black text-primary border border-primary/30">80</div>
+</div>
+<div class="flex flex-col gap-1 w-20">
+<span class="font-label-caps text-[8px] text-on-surface-variant text-center">REPS</span>
+<div class="h-12 bg-background rounded-lg flex items-center justify-center font-black text-primary border border-primary/30">10</div>
+</div>
+<button class="w-12 h-12 rounded-full bg-primary flex items-center justify-center glow-lime transform active:scale-90 transition-all">
+<span class="material-symbols-outlined text-black font-bold" data-icon="check">check</span>
+</button>
+</div>
+</div>
+<!-- Set Row 2 (Input State) -->
+<div class="flex items-center justify-between gap-4 p-4 rounded-2xl bg-surface-container border border-white/5 group hover:border-white/10 transition-all duration-300">
+<div class="flex flex-col">
+<span class="font-label-caps text-[10px] text-on-surface-variant">SERIE 2</span>
+<span class="text-2xl font-bold italic text-white opacity-40">02</span>
+</div>
+<div class="flex items-center gap-3">
+<div class="flex flex-col gap-1 w-20">
+<span class="font-label-caps text-[8px] text-on-surface-variant text-center">KG</span>
+<input class="w-full h-12 bg-background rounded-lg border-b border-white/10 text-center font-black text-white focus:border-secondary transition-all" placeholder="0" type="number"/>
+</div>
+<div class="flex flex-col gap-1 w-20">
+<span class="font-label-caps text-[8px] text-on-surface-variant text-center">REPS</span>
+<input class="w-full h-12 bg-background rounded-lg border-b border-white/10 text-center font-black text-white focus:border-secondary transition-all" placeholder="0" type="number"/>
+</div>
+<button class="w-12 h-12 rounded-full border-2 border-white/10 flex items-center justify-center hover:border-primary/50 transition-all active:scale-90" onclick="this.parentElement.parentElement.classList.add('border-primary/20', 'bg-surface-container-high')">
+<span class="material-symbols-outlined text-white/40" data-icon="check">check</span>
+</button>
+</div>
+</div>
+<!-- Set Row 3 (Input State) -->
+<div class="flex items-center justify-between gap-4 p-4 rounded-2xl bg-surface-container border border-white/5 opacity-60">
+<div class="flex flex-col">
+<span class="font-label-caps text-[10px] text-on-surface-variant">SERIE 3</span>
+<span class="text-2xl font-bold italic text-white opacity-40">03</span>
+</div>
+<div class="flex items-center gap-3">
+<div class="flex flex-col gap-1 w-20">
+<span class="font-label-caps text-[8px] text-on-surface-variant text-center">KG</span>
+<input class="w-full h-12 bg-background rounded-lg border-b border-white/10 text-center font-black text-white" placeholder="0" type="number"/>
+</div>
+<div class="flex flex-col gap-1 w-20">
+<span class="font-label-caps text-[8px] text-on-surface-variant text-center">REPS</span>
+<input class="w-full h-12 bg-background rounded-lg border-b border-white/10 text-center font-black text-white" placeholder="0" type="number"/>
+</div>
+<button class="w-12 h-12 rounded-full border-2 border-white/10 flex items-center justify-center">
+<span class="material-symbols-outlined text-white/20" data-icon="check">check</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Add Set -->
+<button class="flex items-center gap-2 group">
+<span class="material-symbols-outlined text-primary group-hover:scale-110 transition-transform" data-icon="add_circle">add_circle</span>
+<span class="font-label-caps text-xs text-primary uppercase tracking-widest">+ Añadir serie</span>
+</button>
+</section>
+<!-- Decorative Asset: Stats Glow -->
+<div class="mt-stack-lg p-6 rounded-3xl bg-surface-container-lowest relative overflow-hidden inner-stroke">
+<div class="absolute -top-12 -right-12 w-32 h-32 bg-primary/10 blur-3xl rounded-full"></div>
+<div class="flex items-center justify-between">
+<div>
+<p class="font-label-caps text-[10px] text-on-surface-variant">TIEMPO TOTAL</p>
+<p class="text-3xl font-black italic tracking-tighter text-white">00:34:12</p>
+</div>
+<div class="text-right">
+<p class="font-label-caps text-[10px] text-on-surface-variant">INTENSIDAD</p>
+<p class="text-3xl font-black italic tracking-tighter text-secondary">ALTA</p>
+</div>
+</div>
+</div>
+</main>
+<!-- Finalize Button -->
+<div class="fixed bottom-0 w-full p-container-margin bg-gradient-to-t from-background via-background to-transparent pt-10">
+<button class="w-full py-5 bg-secondary text-white font-headline-md text-xl italic uppercase rounded-xl glow-magenta active:scale-95 transition-all flex items-center justify-center gap-3">
+<span>FINALIZAR ENTRENO</span>
+<span class="material-symbols-outlined" data-icon="bolt" style="font-variation-settings: 'FILL' 1;">bolt</span>
+</button>
+</div>
+<!-- Micro-interaction Script -->
+<script>
+        // Simple ripple-like effect on inputs or specialized confirms
+        document.querySelectorAll('input').forEach(input => {
+            input.addEventListener('focus', () => {
+                // Potential focus logic or animation triggers
+            });
+        });
+
+        // Toggle logic for segmented control
+        const segments = document.querySelectorAll('.bg-surface-container-lowest button');
+        segments.forEach(btn => {
+            btn.addEventListener('click', () => {
+                segments.forEach(b => {
+                    b.classList.remove('bg-surface-container-highest', 'text-white', 'shadow-sm');
+                    b.classList.add('text-on-surface-variant');
+                });
+                btn.classList.add('bg-surface-container-highest', 'text-white', 'shadow-sm');
+                btn.classList.remove('text-on-surface-variant');
+            });
+        });
+    </script>
+</body></html>

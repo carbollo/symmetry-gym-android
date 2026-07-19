@@ -20,10 +20,10 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import com.aesthetic.gym.ui.theme.Accent
 import com.aesthetic.gym.ui.theme.Background
 import com.aesthetic.gym.ui.theme.Surface
 import com.aesthetic.gym.ui.theme.TextMuted
+import com.aesthetic.gym.ui.theme.Violet
 import com.aesthetic.gym.ui.body.BodyScreen
 import com.aesthetic.gym.ui.exercises.ExerciseDetailScreen
 import com.aesthetic.gym.ui.exercises.ExercisesScreen
@@ -113,9 +113,9 @@ private fun SymmetryBottomBar(navController: NavHostController, currentRoute: St
                 icon = { Icon(dest.icon, contentDescription = dest.label) },
                 label = { Text(dest.label) },
                 colors = NavigationBarItemDefaults.colors(
-                    selectedIconColor = Accent,
-                    selectedTextColor = Accent,
-                    indicatorColor = Color.Transparent,
+                    selectedIconColor = Violet,
+                    selectedTextColor = Violet,
+                    indicatorColor = Violet.copy(alpha = 0.18f),
                     unselectedIconColor = TextMuted,
                     unselectedTextColor = TextMuted
                 )
