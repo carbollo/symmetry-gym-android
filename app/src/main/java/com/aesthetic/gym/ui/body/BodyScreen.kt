@@ -57,7 +57,7 @@ fun BodyScreen() {
             .padding(top = 14.dp, bottom = 28.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
-        Text("Tu cuerpo", color = Color.White, fontWeight = FontWeight.Black, fontSize = 28.sp)
+        Text("TU CUERPO", color = Color.White, fontWeight = FontWeight.Black, fontSize = 28.sp)
 
         SectionCard(Modifier.fillMaxWidth()) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {

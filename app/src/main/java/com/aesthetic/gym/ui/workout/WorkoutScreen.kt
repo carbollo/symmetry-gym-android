@@ -33,6 +33,8 @@ import androidx.compose.material.icons.filled.DeleteOutline
 import androidx.compose.material.icons.filled.EmojiEvents
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
@@ -73,6 +75,7 @@ import com.aesthetic.gym.ui.theme.Accent
 import com.aesthetic.gym.ui.theme.Background
 import com.aesthetic.gym.ui.theme.Cyan
 import com.aesthetic.gym.ui.theme.Gold
+import com.aesthetic.gym.ui.theme.Magenta
 import com.aesthetic.gym.ui.theme.Outline
 import com.aesthetic.gym.ui.theme.Success
 import com.aesthetic.gym.ui.theme.Surface
@@ -113,12 +116,12 @@ fun WorkoutScreen(navController: NavController, sessionId: Long) {
             }
             Column(Modifier.weight(1f)) {
                 Text(
-                    session?.session?.name ?: "Entreno",
-                    color = Color.White, fontWeight = FontWeight.Bold, fontSize = 18.sp, maxLines = 1
+                    (session?.session?.name ?: "Entreno").uppercase(),
+                    color = Color.White, fontWeight = FontWeight.Black, fontSize = 18.sp, maxLines = 1
                 )
                 Text(
-                    "$doneTotal de $totalCount series completadas",
-                    color = TextSecondary, fontSize = 12.sp
+                    "$doneTotal DE $totalCount SERIES",
+                    color = Accent, fontSize = 12.sp, fontWeight = FontWeight.Bold
                 )
             }
         }
@@ -188,8 +191,8 @@ fun WorkoutScreen(navController: NavController, sessionId: Long) {
                             Spacer(Modifier.width(12.dp))
                             Column(Modifier.weight(1f)) {
                                 Text(
-                                    item.exercise?.name ?: item.item.rawText,
-                                    color = Color.White, fontWeight = FontWeight.Bold, fontSize = 17.sp
+                                    (item.exercise?.name ?: item.item.rawText).uppercase(),
+                                    color = Color.White, fontWeight = FontWeight.Black, fontSize = 16.sp
                                 )
                                 Text(targetText(item), color = TextSecondary, fontSize = 12.sp)
                             }
@@ -250,11 +253,14 @@ fun WorkoutScreen(navController: NavController, sessionId: Long) {
 
         // ---- Bottom action ----
         Box(Modifier.fillMaxWidth().background(Background).padding(16.dp)) {
-            PrimaryButton(
-                "Finalizar entreno",
-                { showConfirm = true },
-                Modifier.fillMaxWidth()
-            )
+            Button(
+                onClick = { showConfirm = true },
+                modifier = Modifier.fillMaxWidth().height(54.dp),
+                shape = RoundedCornerShape(16.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = Magenta, contentColor = Color.White)
+            ) {
+                Text("FINALIZAR ENTRENO", fontWeight = FontWeight.Black, fontSize = 15.sp)
+            }
         }
     }
 
@@ -367,8 +373,8 @@ private fun TimelineBubble(
     onClick: () -> Unit
 ) {
     val bg = when {
-        complete -> Success
-        selected -> Accent.copy(alpha = 0.20f)
+        complete -> Magenta
+        selected -> Accent.copy(alpha = 0.15f)
         else -> SurfaceVariant
     }
     val borderColor = if (selected) Accent else Outline

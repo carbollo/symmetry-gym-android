@@ -11,11 +11,11 @@ import androidx.core.view.WindowCompat
 
 private val SymmetryColors = darkColorScheme(
     primary = Accent,
-    onPrimary = Color.White,
+    onPrimary = OnAccent,
     primaryContainer = Accent,
-    onPrimaryContainer = Color.White,
-    secondary = Cyan,
-    onSecondary = Color.Black,
+    onPrimaryContainer = OnAccent,
+    secondary = Magenta,
+    onSecondary = Color.White,
     background = Background,
     onBackground = TextPrimary,
     surface = Surface,

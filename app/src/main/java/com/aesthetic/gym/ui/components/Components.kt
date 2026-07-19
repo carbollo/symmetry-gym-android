@@ -29,6 +29,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.aesthetic.gym.domain.model.Rank
 import com.aesthetic.gym.ui.theme.Accent
+import com.aesthetic.gym.ui.theme.OnAccent
 import com.aesthetic.gym.ui.theme.Outline
 import com.aesthetic.gym.ui.theme.Surface
 import com.aesthetic.gym.ui.theme.SurfaceVariant
@@ -77,7 +78,7 @@ fun PrimaryButton(
         shape = RoundedCornerShape(16.dp),
         colors = ButtonDefaults.buttonColors(
             containerColor = Accent,
-            contentColor = Color.White,
+            contentColor = OnAccent,
             disabledContainerColor = SurfaceVariant,
             disabledContentColor = TextMuted
         )

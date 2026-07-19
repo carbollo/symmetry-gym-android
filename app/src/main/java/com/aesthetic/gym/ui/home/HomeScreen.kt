@@ -49,6 +49,7 @@ import com.aesthetic.gym.ui.nav.Routes
 import com.aesthetic.gym.ui.rememberRepository
 import com.aesthetic.gym.ui.theme.Accent
 import com.aesthetic.gym.ui.theme.Gold
+import com.aesthetic.gym.ui.theme.Magenta
 import com.aesthetic.gym.ui.theme.Surface
 import com.aesthetic.gym.ui.theme.SurfaceVariant
 import com.aesthetic.gym.ui.theme.TextSecondary
@@ -72,8 +73,8 @@ fun HomeScreen(navController: NavController) {
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-            Text("Hola, ${state.name}", color = androidx.compose.ui.graphics.Color.White,
-                fontWeight = FontWeight.Black, fontSize = 28.sp, modifier = Modifier.weight(1f))
+            Text("HOLA, ${state.name.uppercase()}", color = androidx.compose.ui.graphics.Color.White,
+                fontWeight = FontWeight.Black, fontSize = 26.sp, modifier = Modifier.weight(1f), maxLines = 1)
             androidx.compose.material3.IconButton(onClick = { navController.navigate(Routes.PROFILE) }) {
                 Icon(
                     androidx.compose.material.icons.Icons.Filled.AccountCircle,
@@ -85,6 +86,7 @@ fun HomeScreen(navController: NavController) {
 
         // Overall rank card (gradient tinted with the current tier color)
         val rankColor = androidx.compose.ui.graphics.Color(state.overallRank.color)
+        val nextRank = com.aesthetic.gym.domain.model.Rank.entries.firstOrNull { it.minScore > state.overallScore }
         Box(
             Modifier
                 .fillMaxWidth()
@@ -107,7 +109,7 @@ fun HomeScreen(navController: NavController) {
                         SectionTitle("Rango global")
                         Spacer(Modifier.height(6.dp))
                         Text(
-                            state.overallRank.displayName,
+                            state.overallRank.displayName.uppercase(),
                             color = rankColor,
                             fontWeight = FontWeight.Black, fontSize = 22.sp, maxLines = 2
                         )
@@ -127,8 +129,13 @@ fun HomeScreen(navController: NavController) {
                 }
                 Spacer(Modifier.height(14.dp))
                 ScoreBar(state.overallScore, rankColor)
-                Spacer(Modifier.height(6.dp))
-                Text("${state.overallScore} / 100 puntos de fuerza", color = TextSecondary, fontSize = 12.sp)
+                Spacer(Modifier.height(8.dp))
+                Text(
+                    if (nextRank != null)
+                        "${state.overallScore} PTS · FALTAN ${nextRank.minScore - state.overallScore} PARA ${nextRank.displayName.uppercase()}"
+                    else "${state.overallScore} PTS · RANGO MÁXIMO",
+                    color = TextSecondary, fontSize = 11.sp, fontWeight = FontWeight.Bold
+                )
             }
         }
 
@@ -218,7 +225,7 @@ private fun DayCard(title: String, subtitle: String, highlighted: Boolean, onSta
             Text(subtitle, color = TextSecondary, fontSize = 12.sp)
         }
         Box(
-            Modifier.size(44.dp).clip(CircleShape).background(Accent),
+            Modifier.size(46.dp).clip(CircleShape).background(Magenta),
             contentAlignment = Alignment.Center
         ) {
             Icon(Icons.Filled.PlayArrow, "Empezar", tint = androidx.compose.ui.graphics.Color.White)
