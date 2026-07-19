@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, viewport-fit=cover" name="viewport"/>
+<title>Symmetry - Detalle de Ejercicio</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&amp;family=Inter:wght@400;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        body {
+            background-color: #0A0A0F;
+            color: #e4e1e9;
+            -webkit-font-smoothing: antialiased;
+            overflow-x: hidden;
+        }
+        .glass-panel {
+            background: rgba(19, 19, 26, 0.6);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(26, 26, 36, 1);
+        }
+        .premium-border {
+            border: 1px solid #1A1A24;
+        }
+        .gold-glow {
+            text-shadow: 0 0 15px rgba(255, 215, 0, 0.3);
+        }
+        .violet-glow {
+            box-shadow: 0 0 20px rgba(109, 93, 251, 0.1);
+        }
+        .chart-gradient {
+            background: linear-gradient(180deg, rgba(109, 93, 251, 0.15) 0%, rgba(109, 93, 251, 0) 100%);
+        }
+        .scrollbar-hide::-webkit-scrollbar {
+            display: none;
+        }
+        .safe-bottom {
+            padding-bottom: env(safe-area-inset-bottom);
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "primary": "#c5c0ff",
+                      "on-tertiary-fixed": "#221b00",
+                      "surface-dim": "#131318",
+                      "primary-fixed": "#e4dfff",
+                      "on-tertiary": "#3a3000",
+                      "on-secondary-fixed": "#002021",
+                      "on-primary": "#2600a1",
+                      "on-background": "#e4e1e9",
+                      "on-error": "#690005",
+                      "secondary-container": "#00f4fe",
+                      "on-tertiary-container": "#4c3f00",
+                      "background": "#131318",
+                      "outline-variant": "#474555",
+                      "on-tertiary-fixed-variant": "#544600",
+                      "on-surface": "#e4e1e9",
+                      "surface": "#131318",
+                      "surface-bright": "#39383e",
+                      "secondary": "#e6feff",
+                      "error-container": "#93000a",
+                      "error": "#ffb4ab",
+                      "inverse-surface": "#e4e1e9",
+                      "outline": "#928ea1",
+                      "tertiary-fixed-dim": "#e9c400",
+                      "tertiary": "#e9c400",
+                      "tertiary-container": "#c9a900",
+                      "secondary-fixed-dim": "#00dce5",
+                      "primary-container": "#6d5dfb",
+                      "on-secondary-fixed-variant": "#004f53",
+                      "on-error-container": "#ffdad6",
+                      "surface-container-highest": "#35343a",
+                      "surface-container": "#1f1f25",
+                      "on-surface-variant": "#c8c4d8",
+                      "surface-container-low": "#1b1b20",
+                      "surface-container-lowest": "#0e0e13",
+                      "surface-tint": "#c5c0ff",
+                      "primary-fixed-dim": "#c5c0ff",
+                      "on-secondary": "#003739",
+                      "on-secondary-container": "#006c71",
+                      "inverse-primary": "#5542e2",
+                      "surface-container-high": "#2a292f",
+                      "on-primary-container": "#ffffff",
+                      "inverse-on-surface": "#303036",
+                      "surface-variant": "#35343a",
+                      "on-primary-fixed-variant": "#3c1fcb",
+                      "tertiary-fixed": "#ffe16d",
+                      "on-primary-fixed": "#150067",
+                      "secondary-fixed": "#63f7ff"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "2xl": "1.5rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "container-margin": "20px",
+                      "md": "24px",
+                      "gutter": "16px",
+                      "base": "8px",
+                      "xs": "4px",
+                      "xl": "64px",
+                      "sm": "12px",
+                      "lg": "40px"
+              },
+              "fontFamily": {
+                      "stat-value": ["Montserrat"],
+                      "headline-lg": ["Montserrat"],
+                      "display-xl": ["Montserrat"],
+                      "headline-md": ["Montserrat"],
+                      "label-bold": ["Inter"],
+                      "display-xl-mobile": ["Montserrat"],
+                      "body-md": ["Inter"],
+                      "body-lg": ["Inter"]
+              },
+              "fontSize": {
+                      "stat-value": ["24px", {"lineHeight": "24px", "fontWeight": "800"}],
+                      "headline-lg": ["32px", {"lineHeight": "40px", "fontWeight": "700"}],
+                      "display-xl": ["48px", {"lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "800"}],
+                      "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "700"}],
+                      "label-bold": ["14px", {"lineHeight": "20px", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                      "display-xl-mobile": ["36px", {"lineHeight": "44px", "letterSpacing": "-0.02em", "fontWeight": "800"}],
+                      "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                      "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}]
+              }
+            },
+          },
+        }
+    </script>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-surface-container-lowest pb-32">
+<!-- Top Navigation Anchor (Task Focused: Back arrow implies task-focused subpage) -->
+<header class="fixed top-0 w-full z-50 bg-surface/40 backdrop-blur-xl border-b border-outline-variant/30 px-gutter h-20 flex flex-col justify-center">
+<div class="flex justify-between items-center w-full">
+<div class="flex items-center gap-4">
+<button class="active:scale-95 transition-transform duration-200">
+<span class="material-symbols-outlined text-on-surface" data-icon="arrow_back">arrow_back</span>
+</button>
+<div class="w-10 h-10 rounded-full bg-primary-container flex items-center justify-center text-on-primary-container">
+<span class="material-symbols-outlined" data-icon="fitness_center">fitness_center</span>
+</div>
+<div class="flex flex-col">
+<h1 class="font-headline-md text-headline-md-mobile text-on-surface leading-tight">PRESS DE BANCA</h1>
+<span class="font-label-bold text-label-bold text-outline uppercase">Pecho · Barra</span>
+</div>
+</div>
+<button class="active:scale-95 transition-transform duration-200">
+<span class="material-symbols-outlined text-primary" data-icon="more_vert">more_vert</span>
+</button>
+</div>
+<div class="flex items-center gap-2 mt-1">
+<div class="h-[2px] w-12 bg-primary rounded-full"></div>
+<p class="font-label-bold text-[12px] text-primary">Último peso usado: 80 kg × 8 reps</p>
+</div>
+</header>
+<main class="mt-24 px-container-margin space-y-md">
+<!-- Bento Grid: Stat Tiles -->
+<div class="grid grid-cols-2 gap-gutter">
+<!-- 1RM Estimado -->
+<div class="bg-surface-container premium-border p-4 rounded-2xl flex flex-col gap-1 violet-glow">
+<span class="font-label-bold text-label-bold text-outline">1RM estimado</span>
+<div class="flex items-baseline gap-1">
+<span class="font-stat-value text-stat-value text-tertiary gold-glow">105</span>
+<span class="text-xs font-label-bold text-tertiary/60">kg</span>
+</div>
+<div class="mt-2 h-1 w-full bg-surface-container-highest rounded-full overflow-hidden">
+<div class="h-full w-3/4 bg-tertiary"></div>
+</div>
+</div>
+<!-- Mejor Serie -->
+<div class="bg-surface-container premium-border p-4 rounded-2xl flex flex-col gap-1">
+<span class="font-label-bold text-label-bold text-outline">mejor serie</span>
+<div class="flex items-baseline gap-1">
+<span class="font-stat-value text-stat-value text-primary">100×8</span>
+</div>
+<div class="mt-2 flex -space-x-2">
+<div class="w-6 h-6 rounded-full border-2 border-surface bg-surface-variant flex items-center justify-center text-[10px] font-bold">1</div>
+<div class="w-6 h-6 rounded-full border-2 border-surface bg-surface-variant flex items-center justify-center text-[10px] font-bold">2</div>
+<div class="w-6 h-6 rounded-full border-2 border-surface bg-primary text-on-primary-container flex items-center justify-center text-[10px] font-bold">8</div>
+</div>
+</div>
+<!-- Entrenos -->
+<div class="bg-surface-container premium-border p-4 rounded-2xl flex flex-col gap-1">
+<span class="font-label-bold text-label-bold text-outline">entrenos</span>
+<div class="flex items-center gap-3">
+<span class="font-stat-value text-stat-value text-secondary-fixed-dim">14</span>
+<span class="material-symbols-outlined text-secondary-fixed-dim text-lg" data-icon="calendar_today">calendar_today</span>
+</div>
+</div>
+<!-- Volumen Total -->
+<div class="bg-surface-container premium-border p-4 rounded-2xl flex flex-col gap-1">
+<span class="font-label-bold text-label-bold text-outline">volumen total</span>
+<div class="flex items-baseline gap-1">
+<span class="font-stat-value text-stat-value text-on-surface">24.500</span>
+<span class="text-xs font-label-bold text-outline">kg</span>
+</div>
+</div>
+</div>
+<!-- Chart Card -->
+<section class="bg-surface-container premium-border rounded-2xl overflow-hidden">
+<div class="p-gutter flex justify-between items-center">
+<h2 class="font-label-bold text-label-bold text-on-surface">Evolución del 1RM estimado</h2>
+<span class="material-symbols-outlined text-outline text-sm" data-icon="open_in_full">open_in_full</span>
+</div>
+<div class="h-48 w-full relative px-2">
+<!-- Line Chart Visualization (SVG) -->
+<svg class="w-full h-full" viewbox="0 0 400 150">
+<defs>
+<lineargradient id="chartFill" x1="0" x2="0" y1="0" y2="1">
+<stop offset="0%" stop-color="#6d5dfb" stop-opacity="0.3"></stop>
+<stop offset="100%" stop-color="#6d5dfb" stop-opacity="0"></stop>
+</lineargradient>
+</defs>
+<path d="M0,130 Q50,120 100,100 T200,80 T300,50 T400,30 L400,150 L0,150 Z" fill="url(#chartFill)"></path>
+<path d="M0,130 Q50,120 100,100 T200,80 T300,50 T400,30" fill="none" stroke="#c5c0ff" stroke-linecap="round" stroke-width="3"></path>
+<!-- Dots -->
+<circle cx="100" cy="100" fill="#c5c0ff" r="4"></circle>
+<circle cx="200" cy="80" fill="#c5c0ff" r="4"></circle>
+<circle cx="300" cy="50" fill="#c5c0ff" r="4"></circle>
+<circle class="animate-pulse" cx="400" cy="30" fill="#c5c0ff" r="5"></circle>
+</svg>
+<div class="absolute bottom-4 left-0 w-full flex justify-between px-gutter text-[10px] font-bold text-outline uppercase tracking-widest">
+<span>Ene</span>
+<span>Feb</span>
+<span>Mar</span>
+<span>Abr</span>
+<span>May</span>
+</div>
+</div>
+</section>
+<!-- Technique Card -->
+<section class="bg-surface-container premium-border rounded-2xl p-gutter space-y-3">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary" data-icon="auto_awesome">auto_awesome</span>
+<h2 class="font-label-bold text-label-bold text-on-surface uppercase tracking-wide">Técnica</h2>
+</div>
+<p class="font-body-md text-on-surface-variant leading-relaxed">
+                Mantén los pies plantados, retrae las escápulas y baja la barra de forma controlada hasta el pecho antes de empujar con explosividad.
+            </p>
+<div class="pt-2">
+<div class="w-full h-40 rounded-xl overflow-hidden bg-surface-variant">
+<img class="w-full h-full object-cover opacity-60" data-alt="A cinematic, high-contrast photograph of a professional athlete performing a bench press in a dark, high-end gym. The lighting is dramatic, highlighting muscle definition with cool violet and deep obsidian tones. The athlete has perfect form, with feet firmly planted and chest expanded. The atmosphere is intense and focused, reflecting a premium athletic performance environment." src="https://lh3.googleusercontent.com/aida-public/AB6AXuB7bkc0pespTT7eShi9lbyH0tjpjnyqdop7UexG7o2YdV8MBbkc02SZn5aCWB28di6BSIi3XPSHbicXKvRHl3gV163_hxPE-KiPXWTG3bqxlxFDOF-1WbiNQs2eTFEoflAUzF_DWoJA9EwfaoPXN4TQqaeau7jBgkd-3JiSH6sIip-BnFv0v7OpIT7k4vt2kCitifuwA2_Osz0DCZW1fhEpe0NISD5isPTb7QoEJ203ZrFCoiS28U_L4k6OXgsoGRGJLotan2B4Lv_g"/>
+</div>
+</div>
+</section>
+<!-- Video/Secondary Content Placeholder -->
+<section class="premium-border rounded-2xl p-4 flex items-center justify-between bg-surface-container-low">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 rounded-lg bg-surface-variant flex items-center justify-center">
+<span class="material-symbols-outlined text-on-surface-variant" data-icon="play_circle">play_circle</span>
+</div>
+<div class="flex flex-col">
+<span class="font-label-bold text-on-surface">Tutorial de ejecución</span>
+<span class="text-xs text-outline">2:45 • Alta Definición</span>
+</div>
+</div>
+<span class="material-symbols-outlined text-outline" data-icon="chevron_right">chevron_right</span>
+</section>
+</main>
+<!-- FAB: Log current set (Contextual) -->
+<button class="fixed bottom-24 right-container-margin w-14 h-14 bg-primary-container text-on-primary-container rounded-2xl shadow-xl flex items-center justify-center active:scale-90 transition-all duration-150 z-40">
+<span class="material-symbols-outlined" data-icon="add">add</span>
+</button>
+<!-- BottomNavBar (The Anchor) -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 py-2 pb-safe bg-surface-container-low/80 backdrop-blur-xl border-t border-outline-variant/20 shadow-lg rounded-t-xl">
+<!-- Inicio -->
+<a class="flex flex-col items-center justify-center text-outline p-2 hover:text-primary transition-colors active:scale-90 transition-all duration-150" href="#">
+<span class="material-symbols-outlined" data-icon="home">home</span>
+<span class="font-label-bold text-[10px] mt-1">Inicio</span>
+</a>
+<!-- Rutinas -->
+<a class="flex flex-col items-center justify-center text-outline p-2 hover:text-primary transition-colors active:scale-90 transition-all duration-150" href="#">
+<span class="material-symbols-outlined" data-icon="fitness_center">fitness_center</span>
+<span class="font-label-bold text-[10px] mt-1">Rutinas</span>
+</a>
+<!-- Ejercicios (ACTIVE) -->
+<a class="flex flex-col items-center justify-center bg-primary-container text-on-primary-container rounded-xl px-3 py-1.5 active:scale-90 transition-all duration-150" href="#">
+<span class="material-symbols-outlined" data-icon="list_alt" style="font-variation-settings: 'FILL' 1;">list_alt</span>
+<span class="font-label-bold text-[10px] mt-1">Ejercicios</span>
+</a>
+<!-- Cuerpo -->
+<a class="flex flex-col items-center justify-center text-outline p-2 hover:text-primary transition-colors active:scale-90 transition-all duration-150" href="#">
+<span class="material-symbols-outlined" data-icon="accessibility_new">accessibility_new</span>
+<span class="font-label-bold text-[10px] mt-1">Cuerpo</span>
+</a>
+<!-- Progreso -->
+<a class="flex flex-col items-center justify-center text-outline p-2 hover:text-primary transition-colors active:scale-90 transition-all duration-150" href="#">
+<span class="material-symbols-outlined" data-icon="query_stats">query_stats</span>
+<span class="font-label-bold text-[10px] mt-1">Progreso</span>
+</a>
+</nav>
+<script>
+        // Micro-interactions for stat tiles
+        document.querySelectorAll('.premium-border').forEach(card => {
+            card.addEventListener('touchstart', () => {
+                card.style.transform = 'scale(0.98)';
+                card.style.transition = 'transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
+            });
+            card.addEventListener('touchend', () => {
+                card.style.transform = 'scale(1)';
+            });
+        });
+
+        // Atmospheric parallax effect on background
+        window.addEventListener('scroll', () => {
+            const scrolled = window.pageYOffset;
+            document.body.style.backgroundPositionY = -(scrolled * 0.1) + 'px';
+        });
+    </script>
+</body></html>

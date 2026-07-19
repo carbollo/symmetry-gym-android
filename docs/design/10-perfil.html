@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Symmetry App - Perfil</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Montserrat:wght@700;800&family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&family=Montserrat:wght@100..900&display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "inverse-surface": "#e4e1e9",
+                        "primary-container": "#6d5dfb",
+                        "primary": "#c5c0ff",
+                        "surface-tint": "#c5c0ff",
+                        "on-surface": "#e4e1e9",
+                        "tertiary-fixed-dim": "#e9c400",
+                        "on-error": "#690005",
+                        "surface": "#131318",
+                        "outline": "#928ea1",
+                        "on-tertiary-fixed-variant": "#544600",
+                        "on-primary-fixed-variant": "#3c1fcb",
+                        "on-primary": "#2600a1",
+                        "on-primary-fixed": "#150067",
+                        "on-tertiary": "#3a3000",
+                        "inverse-on-surface": "#303036",
+                        "error": "#ffb4ab",
+                        "outline-variant": "#474555",
+                        "on-secondary-container": "#006c71",
+                        "on-background": "#e4e1e9",
+                        "on-secondary-fixed": "#002021",
+                        "on-primary-container": "#ffffff",
+                        "surface-container": "#1f1f25",
+                        "on-secondary-fixed-variant": "#004f53",
+                        "surface-container-lowest": "#0e0e13",
+                        "tertiary": "#e9c400",
+                        "secondary-container": "#00f4fe",
+                        "background": "#131318",
+                        "surface-bright": "#39383e",
+                        "surface-variant": "#35343a",
+                        "on-secondary": "#003739",
+                        "on-error-container": "#ffdad6",
+                        "error-container": "#93000a",
+                        "primary-fixed-dim": "#c5c0ff",
+                        "primary-fixed": "#e4dfff",
+                        "tertiary-fixed": "#ffe16d",
+                        "surface-container-highest": "#35343a",
+                        "inverse-primary": "#5542e2",
+                        "secondary": "#e6feff",
+                        "surface-container-high": "#2a292f",
+                        "on-tertiary-container": "#4c3f00",
+                        "on-tertiary-fixed": "#221b00",
+                        "surface-container-low": "#1b1b20",
+                        "secondary-fixed-dim": "#00dce5",
+                        "secondary-fixed": "#63f7ff",
+                        "tertiary-container": "#c9a900",
+                        "surface-dim": "#131318",
+                        "on-surface-variant": "#c8c4d8"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "xs": "4px",
+                        "xl": "64px",
+                        "sm": "12px",
+                        "md": "24px",
+                        "gutter": "16px",
+                        "lg": "40px",
+                        "container-margin": "20px",
+                        "base": "8px"
+                    },
+                    "fontFamily": {
+                        "body-md": ["Inter"],
+                        "headline-md": ["Montserrat"],
+                        "display-xl": ["Montserrat"],
+                        "stat-value": ["Montserrat"],
+                        "body-lg": ["Inter"],
+                        "headline-lg": ["Montserrat"],
+                        "display-xl-mobile": ["Montserrat"],
+                        "label-bold": ["Inter"]
+                    },
+                    "fontSize": {
+                        "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "headline-md": ["24px", { "lineHeight": "32px", "fontWeight": "700" }],
+                        "display-xl": ["48px", { "lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "800" }],
+                        "stat-value": ["24px", { "lineHeight": "24px", "fontWeight": "800" }],
+                        "body-lg": ["18px", { "lineHeight": "28px", "fontWeight": "400" }],
+                        "headline-lg": ["32px", { "lineHeight": "40px", "fontWeight": "700" }],
+                        "display-xl-mobile": ["36px", { "lineHeight": "44px", "letterSpacing": "-0.02em", "fontWeight": "800" }],
+                        "label-bold": ["14px", { "lineHeight": "20px", "letterSpacing": "0.05em", "fontWeight": "600" }]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            background-color: #0B0B10;
+            color: #e4e1e9;
+            -webkit-font-smoothing: antialiased;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .glass-card {
+            background: rgba(19, 19, 24, 0.8);
+            backdrop-filter: blur(12px);
+            border: 1px solid #1A1A24;
+        }
+        .chip-active {
+            background-color: #6d5dfb;
+            color: white;
+            border-color: transparent;
+        }
+        .chip-inactive {
+            background-color: #1A1A24;
+            color: #928ea1;
+            border: 1px solid #1A1A24;
+        }
+        /* Custom scrollbar for webkit */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #0B0B10; }
+        ::-webkit-scrollbar-thumb { background: #1A1A24; border-radius: 10px; }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="font-body-md overflow-x-hidden">
+<!-- TopAppBar -->
+<header class="fixed top-0 w-full z-50 bg-surface dark:bg-surface border-b border-outline-variant dark:border-outline-variant transition-colors duration-200 flex items-center px-gutter h-16 w-full">
+<div class="flex items-center gap-4">
+<button class="hover:bg-surface-variant dark:hover:bg-surface-variant p-2 rounded-full transition-colors duration-200">
+<span class="material-symbols-outlined text-primary dark:text-primary" style="font-variation-settings: 'FILL' 0;">arrow_back</span>
+</button>
+<h1 class="font-headline-md text-headline-md font-bold text-primary dark:text-primary">Perfil</h1>
+</div>
+</header>
+<main class="pt-24 pb-32 px-container-margin max-w-2xl mx-auto">
+<!-- Profile Header Image/Identity -->
+<div class="flex flex-col items-center mb-8">
+<div class="relative group">
+<div class="w-24 h-24 rounded-full border-2 border-primary-container overflow-hidden p-1">
+<img class="w-full h-full object-cover rounded-full" data-alt="A professional studio portrait of a fit athlete in a high-tech obsidian gym environment, cinematic soft violet lighting, sharp focus, high-end athletic aesthetics, 8k resolution, minimalist black background." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCyOXtbYFktpBVmffNFZK3jQxu4O7hoFOBkXAo4_q5PHvBaL90sLEAvxcesqhvyv17Vb5x16R_LOCFqGcY913Fc3rtnmp_gNYlNwSk9evqw9OxsC565fAgclN_4MjtG59CZvZKONmLWyuhXt3KMgMYV9I9iLOxwBNH4eu30PWn6cqp_U72CuL2GRUbpqgMxgOksZJDSoaIwvYWCwc2SryUS76wukKruupfy54UMDty08jCct0eewGAESnspxDCT-hhnuVq35aBJCgCD"/>
+</div>
+<div class="absolute bottom-0 right-0 bg-primary-container p-1 rounded-full border-2 border-surface flex items-center justify-center cursor-pointer">
+<span class="material-symbols-outlined text-[16px] text-white">edit</span>
+</div>
+</div>
+<h2 class="mt-4 font-headline-md text-headline-md">Atleta Symmetry</h2>
+<p class="text-outline font-body-md">Miembro desde 2024</p>
+</div>
+<!-- Main Form Card -->
+<div class="glass-card rounded-[24px] p-md space-y-md">
+<!-- Nombre -->
+<div class="space-y-xs">
+<label class="block font-label-bold text-label-bold text-outline">NOMBRE</label>
+<input class="w-full bg-[#1A1A24] border border-[#1A1A24] rounded-xl px-4 py-3 text-on-surface focus:outline-none focus:border-primary-container transition-all font-body-md" placeholder="Escribe tu nombre" type="text" value="Atleta Symmetry"/>
+</div>
+<!-- Sexo -->
+<div class="space-y-xs">
+<label class="block font-label-bold text-label-bold text-outline">SEXO</label>
+<div class="flex gap-sm">
+<button class="flex-1 py-3 px-4 rounded-xl font-label-bold text-label-bold transition-all chip-active">Hombre</button>
+<button class="flex-1 py-3 px-4 rounded-xl font-label-bold text-label-bold transition-all chip-inactive hover:border-outline">Mujer</button>
+<button class="flex-1 py-3 px-4 rounded-xl font-label-bold text-label-bold transition-all chip-inactive hover:border-outline">Otro</button>
+</div>
+</div>
+<!-- Peso & Altura -->
+<div class="grid grid-cols-2 gap-md">
+<div class="space-y-xs">
+<label class="block font-label-bold text-label-bold text-outline">PESO (KG)</label>
+<input class="w-full bg-[#1A1A24] border border-[#1A1A24] rounded-xl px-4 py-3 text-on-surface focus:outline-none focus:border-primary-container transition-all font-body-md" type="number" value="75"/>
+</div>
+<div class="space-y-xs">
+<label class="block font-label-bold text-label-bold text-outline">ALTURA (CM)</label>
+<input class="w-full bg-[#1A1A24] border border-[#1A1A24] rounded-xl px-4 py-3 text-on-surface focus:outline-none focus:border-primary-container transition-all font-body-md" type="number" value="180"/>
+</div>
+</div>
+<!-- Unidad de Peso -->
+<div class="space-y-xs">
+<label class="block font-label-bold text-label-bold text-outline">UNIDAD DE PESO</label>
+<div class="flex gap-sm w-1/2">
+<button class="flex-1 py-3 px-4 rounded-xl font-label-bold text-label-bold transition-all chip-active">kg</button>
+<button class="flex-1 py-3 px-4 rounded-xl font-label-bold text-label-bold transition-all chip-inactive hover:border-outline">lb</button>
+</div>
+</div>
+<!-- Experiencia -->
+<div class="space-y-xs">
+<label class="block font-label-bold text-label-bold text-outline">EXPERIENCIA</label>
+<div class="flex flex-col md:flex-row gap-sm">
+<button class="flex-1 py-3 px-4 rounded-xl font-label-bold text-label-bold transition-all chip-inactive hover:border-outline">Principiante</button>
+<button class="flex-1 py-3 px-4 rounded-xl font-label-bold text-label-bold transition-all chip-active">Intermedio</button>
+<button class="flex-1 py-3 px-4 rounded-xl font-label-bold text-label-bold transition-all chip-inactive hover:border-outline">Avanzado</button>
+</div>
+</div>
+<!-- Note -->
+<div class="pt-sm border-t border-[#1A1A24] flex items-start gap-2">
+<span class="material-symbols-outlined text-[18px] text-outline">info</span>
+<p class="text-[12px] text-outline leading-tight font-body-md">Tu peso corporal y sexo se usan para calcular tus rangos de fuerza.</p>
+</div>
+<!-- Save Button Inside Card -->
+<div class="pt-md">
+<button class="w-full bg-primary-container hover:bg-[#5a4ae0] text-white font-headline-md py-4 rounded-xl transition-all shadow-lg active:scale-[0.98]">
+                    Guardar perfil
+                </button>
+</div>
+</div>
+<!-- Additional Settings Section -->
+<div class="mt-lg space-y-md">
+<h3 class="font-headline-md text-[18px] px-2">Ajustes de cuenta</h3>
+<div class="glass-card rounded-2xl overflow-hidden">
+<div class="flex items-center justify-between p-4 border-b border-[#1A1A24] hover:bg-surface-variant cursor-pointer transition-all">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-outline">notifications</span>
+<span class="font-body-md">Notificaciones</span>
+</div>
+<span class="material-symbols-outlined text-outline">chevron_right</span>
+</div>
+<div class="flex items-center justify-between p-4 border-b border-[#1A1A24] hover:bg-surface-variant cursor-pointer transition-all">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-outline">security</span>
+<span class="font-body-md">Privacidad</span>
+</div>
+<span class="material-symbols-outlined text-outline">chevron_right</span>
+</div>
+<div class="flex items-center justify-between p-4 text-error hover:bg-error/10 cursor-pointer transition-all">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined">logout</span>
+<span class="font-body-md">Cerrar sesión</span>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-0 left-0 w-full z-50 bg-surface/40 dark:bg-surface/40 backdrop-blur-xl border-t border-outline-variant dark:border-outline-variant flex justify-around items-center px-4 py-2 pb-safe h-20">
+<!-- Home -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant p-3 transition-all hover:text-primary" href="#">
+<span class="material-symbols-outlined">home</span>
+</a>
+<!-- Workouts -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant p-3 transition-all hover:text-primary" href="#">
+<span class="material-symbols-outlined">fitness_center</span>
+</a>
+<!-- Explore -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant p-3 transition-all hover:text-primary" href="#">
+<span class="material-symbols-outlined">explore</span>
+</a>
+<!-- Body (Mapped as active based on 'Perfil' context) -->
+<a class="flex flex-col items-center justify-center bg-primary-container text-on-primary-container rounded-full p-3 transition-transform scale-95 active:scale-90" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">accessibility_new</span>
+</a>
+<!-- Stats -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant p-3 transition-all hover:text-primary" href="#">
+<span class="material-symbols-outlined">insights</span>
+</a>
+</nav>
+<script>
+        // Simple micro-interaction for chip selection
+        document.querySelectorAll('.flex.gap-sm button, .flex.flex-col.md\\:flex-row.gap-sm button').forEach(button => {
+            button.addEventListener('click', function() {
+                const parent = this.parentElement;
+                parent.querySelectorAll('button').forEach(btn => {
+                    btn.classList.remove('chip-active');
+                    btn.classList.add('chip-inactive');
+                });
+                this.classList.remove('chip-inactive');
+                this.classList.add('chip-active');
+            });
+        });
+
+        // Floating label effect or ripple could go here
+    </script>
+</body></html>

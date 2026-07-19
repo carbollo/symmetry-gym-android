@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Symmetry Fitness - Objetivos</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&amp;family=Inter:wght@400;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "surface-variant": "#35343a",
+                    "primary-fixed": "#e4dfff",
+                    "on-tertiary-fixed-variant": "#544600",
+                    "primary": "#c5c0ff",
+                    "surface-dim": "#131318",
+                    "on-secondary": "#003739",
+                    "surface-container": "#1f1f25",
+                    "surface": "#131318",
+                    "on-tertiary": "#3a3000",
+                    "tertiary-fixed-dim": "#e9c400",
+                    "outline-variant": "#474555",
+                    "on-secondary-fixed-variant": "#004f53",
+                    "on-secondary-container": "#006c71",
+                    "error": "#ffb4ab",
+                    "error-container": "#93000a",
+                    "inverse-on-surface": "#303036",
+                    "on-error-container": "#ffdad6",
+                    "outline": "#928ea1",
+                    "on-primary-container": "#ffffff",
+                    "on-primary-fixed-variant": "#3c1fcb",
+                    "secondary-fixed-dim": "#00dce5",
+                    "secondary-fixed": "#63f7ff",
+                    "on-tertiary-fixed": "#221b00",
+                    "on-error": "#690005",
+                    "tertiary-container": "#c9a900",
+                    "surface-container-low": "#1b1b20",
+                    "on-surface": "#e4e1e9",
+                    "on-primary": "#2600a1",
+                    "surface-container-high": "#2a292f",
+                    "secondary-container": "#00f4fe",
+                    "inverse-primary": "#5542e2",
+                    "surface-tint": "#c5c0ff",
+                    "surface-container-highest": "#35343a",
+                    "surface-bright": "#39383e",
+                    "on-surface-variant": "#c8c4d8",
+                    "primary-fixed-dim": "#c5c0ff",
+                    "on-secondary-fixed": "#002021",
+                    "surface-container-lowest": "#0e0e13",
+                    "on-background": "#e4e1e9",
+                    "tertiary": "#e9c400",
+                    "primary-container": "#6d5dfb",
+                    "background": "#131318",
+                    "tertiary-fixed": "#ffe16d",
+                    "inverse-surface": "#e4e1e9",
+                    "on-tertiary-container": "#4c3f00",
+                    "secondary": "#e6feff",
+                    "on-primary-fixed": "#150067"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "gutter": "16px",
+                    "container-margin": "20px",
+                    "xl": "64px",
+                    "lg": "40px",
+                    "base": "8px",
+                    "sm": "12px",
+                    "md": "24px",
+                    "xs": "4px"
+            },
+            "fontFamily": {
+                    "display-xl-mobile": ["Montserrat"],
+                    "label-bold": ["Inter"],
+                    "headline-lg": ["Montserrat"],
+                    "headline-md": ["Montserrat"],
+                    "body-lg": ["Inter"],
+                    "body-md": ["Inter"],
+                    "stat-value": ["Montserrat"],
+                    "display-xl": ["Montserrat"]
+            },
+            "fontSize": {
+                    "display-xl-mobile": ["36px", {"lineHeight": "44px", "letterSpacing": "-0.02em", "fontWeight": "800"}],
+                    "label-bold": ["14px", {"lineHeight": "20px", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                    "headline-lg": ["32px", {"lineHeight": "40px", "fontWeight": "700"}],
+                    "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "700"}],
+                    "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}],
+                    "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                    "stat-value": ["24px", {"lineHeight": "24px", "fontWeight": "800"}],
+                    "display-xl": ["48px", {"lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "800"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        body { background-color: #0B0B10; }
+        .glass-card {
+            background: rgba(19, 19, 26, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        .chip-active {
+            background: #6d5dfb;
+            color: white;
+            box-shadow: 0 0 15px rgba(109, 93, 251, 0.4);
+        }
+        .progress-glow-violet {
+            box-shadow: 0 0 10px rgba(109, 93, 251, 0.5);
+        }
+        .progress-glow-green {
+            box-shadow: 0 0 10px rgba(0, 219, 229, 0.5);
+        }
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #1f1f25; border-radius: 10px; }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+</head>
+<body class="font-body-md text-on-surface min-h-screen pb-32 overflow-x-hidden">
+<!-- Top App Bar -->
+<header class="sticky top-0 z-50 w-full bg-surface/80 backdrop-blur-xl border-b border-white/5">
+<div class="flex justify-between items-center px-gutter py-base w-full max-w-7xl mx-auto">
+<div class="flex items-center gap-4">
+<button aria-label="Volver" class="p-2 active:scale-95 transition-transform">
+<span class="material-symbols-outlined text-primary" data-icon="arrow_back">arrow_back</span>
+</button>
+<h1 class="font-headline-md text-headline-md uppercase font-black tracking-tighter text-on-surface">OBJETIVOS</h1>
+</div>
+<div class="w-10 h-10 rounded-full border border-primary/20 overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="A professional close-up studio portrait of a fit athlete with sharp lighting, set against a dark, moody gym background. The style is high-contrast, premium, and sophisticated, using a deep obsidian and violet color palette to match the elite fitness app aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBgs1zAE7K_CXP5CQ8jgqKcXKCXdCbxLv5FJOWQoJIH02WGcbWz1LbZ5Do0feTmnKBRrNdW5C4lV5x3xtpxwrUE9Nx0vjp6PmEaE5Gh1k-jK6f0XF16iBq-wacJ2TAINGX2jfh3w0asbAHAOmlUBHYOPClHwBv7DLpZdnToPv72UXhqR2rxWl-LdLqtqKeRACo9IFJwSifFL1IhPIxJWgyedgxuMsR8mkzfgNN7nRcZdNRF0CMTzpqzsyKtHJiLt0I_JABpPj_fSwBA"/>
+</div>
+</div>
+</header>
+<main class="max-w-7xl mx-auto px-gutter mt-md space-y-lg">
+<!-- Section 1: Nuevo Objetivo -->
+<section>
+<div class="glass-card rounded-xl p-md">
+<h2 class="font-headline-md text-headline-md uppercase font-black text-primary mb-md tracking-tight">NUEVO OBJETIVO</h2>
+<div class="space-y-md">
+<!-- Category Selection -->
+<div class="flex gap-sm overflow-x-auto pb-2 scrollbar-hide">
+<button class="flex-none px-4 py-2 rounded-full border border-outline/30 text-label-bold font-label-bold chip-active whitespace-nowrap transition-all">Peso corporal</button>
+<button class="flex-none px-4 py-2 rounded-full border border-outline/30 text-label-bold font-label-bold text-on-surface-variant hover:border-primary/50 whitespace-nowrap transition-all">Nº de entrenos</button>
+<button class="flex-none px-4 py-2 rounded-full border border-outline/30 text-label-bold font-label-bold text-on-surface-variant hover:border-primary/50 whitespace-nowrap transition-all">Fuerza</button>
+<button class="flex-none px-4 py-2 rounded-full border border-outline/30 text-label-bold font-label-bold text-on-surface-variant hover:border-primary/50 whitespace-nowrap transition-all">Personalizado</button>
+</div>
+<!-- Input Field -->
+<div class="space-y-xs">
+<label class="font-label-bold text-label-bold text-on-surface-variant ml-1">Meta (kg)</label>
+<input class="w-full bg-[#1A1A24] border border-outline-variant focus:border-primary-container focus:ring-1 focus:ring-primary-container rounded-lg px-md py-sm text-on-surface font-body-lg outline-none transition-all placeholder:text-outline/50" placeholder="Ej: 75.0" type="number"/>
+</div>
+<!-- Add Button -->
+<button class="w-full bg-primary-container hover:opacity-90 active:scale-[0.98] transition-all py-md rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-primary-container/20">
+<span class="material-symbols-outlined font-black" data-icon="add">add</span>
+<span class="font-headline-md text-label-bold uppercase">Añadir</span>
+</button>
+</div>
+</div>
+</section>
+<!-- Section 2: Goals List -->
+<section class="space-y-md">
+<h3 class="font-label-bold text-label-bold text-on-surface-variant uppercase tracking-widest px-1">Tus metas activas</h3>
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-md">
+<!-- Goal Card 1: Progress -->
+<div class="glass-card rounded-xl p-md relative overflow-hidden group">
+<div class="flex justify-between items-start mb-base">
+<div>
+<h4 class="font-headline-md text-headline-md text-on-surface">Bajar a 75kg</h4>
+<p class="font-body-md text-on-surface-variant">78,4 / 75 kg</p>
+</div>
+<button class="text-on-surface-variant hover:text-error transition-colors p-1 active:scale-90">
+<span class="material-symbols-outlined text-[20px]" data-icon="delete">delete</span>
+</button>
+</div>
+<!-- Progress Bar -->
+<div class="w-full h-3 bg-surface-container rounded-full mt-md overflow-hidden">
+<div class="h-full bg-primary-container progress-glow-violet w-[65%] rounded-full transition-all duration-1000 ease-out"></div>
+</div>
+<div class="flex justify-between mt-xs">
+<span class="text-[12px] font-label-bold text-primary-container">65% completado</span>
+<span class="text-[12px] font-label-bold text-on-surface-variant">3,4 kg restantes</span>
+</div>
+</div>
+<!-- Goal Card 2: Achieved -->
+<div class="glass-card rounded-xl p-md border-secondary/30 relative group">
+<div class="flex justify-between items-start mb-base">
+<div>
+<div class="flex items-center gap-2 mb-1">
+<h4 class="font-headline-md text-headline-md text-on-surface">15 Entrenos este mes</h4>
+<span class="bg-secondary/10 text-secondary border border-secondary/30 px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-tighter">¡Logrado!</span>
+</div>
+<p class="font-body-md text-secondary">15 / 15 entrenos</p>
+</div>
+<button class="text-on-surface-variant hover:text-error transition-colors p-1 active:scale-90">
+<span class="material-symbols-outlined text-[20px]" data-icon="delete">delete</span>
+</button>
+</div>
+<!-- Progress Bar -->
+<div class="w-full h-3 bg-surface-container rounded-full mt-md overflow-hidden">
+<div class="h-full bg-secondary progress-glow-green w-full rounded-full"></div>
+</div>
+<div class="flex justify-between mt-xs">
+<span class="text-[12px] font-label-bold text-secondary flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]" data-icon="check_circle" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+                            Meta alcanzada
+                        </span>
+</div>
+</div>
+<!-- Goal Card 3: Strength -->
+<div class="glass-card rounded-xl p-md relative overflow-hidden group">
+<div class="flex justify-between items-start mb-base">
+<div>
+<h4 class="font-headline-md text-headline-md text-on-surface">Press Banca 100kg</h4>
+<p class="font-body-md text-on-surface-variant">92,5 / 100 kg</p>
+</div>
+<button class="text-on-surface-variant hover:text-error transition-colors p-1 active:scale-90">
+<span class="material-symbols-outlined text-[20px]" data-icon="delete">delete</span>
+</button>
+</div>
+<!-- Progress Bar -->
+<div class="w-full h-3 bg-surface-container rounded-full mt-md overflow-hidden">
+<div class="h-full bg-primary-container progress-glow-violet w-[82%] rounded-full transition-all duration-1000 ease-out"></div>
+</div>
+<div class="flex justify-between mt-xs">
+<span class="text-[12px] font-label-bold text-primary-container">82% completado</span>
+<span class="text-[12px] font-label-bold text-on-surface-variant">7,5 kg para el PR</span>
+</div>
+</div>
+</div>
+</section>
+<!-- Dynamic Visualization (Atmospheric effect) -->
+<div class="relative w-full h-48 rounded-2xl overflow-hidden mt-xl border border-white/5">
+
+<div class="absolute inset-0 flex flex-col items-center justify-center text-center p-md z-10 bg-gradient-to-t from-[#0B0B10] to-transparent">
+<span class="material-symbols-outlined text-primary mb-2" data-icon="bolt">bolt</span>
+<p class="font-headline-md text-label-bold uppercase text-primary tracking-widest">Sigue así, campeón</p>
+<p class="text-on-surface-variant text-[14px] mt-1 max-w-xs">Has completado el 72% de tus objetivos mensuales.</p>
+</div>
+</div>
+</main>
+<!-- Bottom Navigation Bar -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-2 pb-6 pt-3 bg-surface-container/90 backdrop-blur-2xl border-t border-white/5 shadow-lg rounded-t-xl">
+<a class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary transition-colors active:scale-90 duration-150" href="#">
+<span class="material-symbols-outlined" data-icon="home">home</span>
+<span class="font-label-caps text-[10px] mt-1 font-bold uppercase">Inicio</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary transition-colors active:scale-90 duration-150" href="#">
+<span class="material-symbols-outlined" data-icon="fitness_center">fitness_center</span>
+<span class="font-label-caps text-[10px] mt-1 font-bold uppercase">Rutinas</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary transition-colors active:scale-90 duration-150" href="#">
+<span class="material-symbols-outlined" data-icon="exercise">exercise</span>
+<span class="font-label-caps text-[10px] mt-1 font-bold uppercase">Ejercicios</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary transition-colors active:scale-90 duration-150" href="#">
+<span class="material-symbols-outlined" data-icon="person_4">person_4</span>
+<span class="font-label-caps text-[10px] mt-1 font-bold uppercase">Cuerpo</span>
+</a>
+<!-- Active Tab: Progreso/Objetivos -->
+<a class="flex flex-col items-center justify-center text-primary-container drop-shadow-[0_0_8px_rgba(171,214,0,0.6)] active:scale-90 transition-transform duration-150" href="#">
+<span class="material-symbols-outlined" data-icon="insights" style="font-variation-settings: 'FILL' 1;">insights</span>
+<span class="font-label-caps text-[10px] mt-1 font-bold uppercase">Progreso</span>
+</a>
+</nav>
+<script>
+        // Simple micro-interaction for chips
+        document.querySelectorAll('button[class*="flex-none"]').forEach(chip => {
+            chip.addEventListener('click', () => {
+                document.querySelectorAll('button[class*="flex-none"]').forEach(c => {
+                    c.classList.remove('chip-active');
+                    c.classList.add('text-on-surface-variant');
+                });
+                chip.classList.add('chip-active');
+                chip.classList.remove('text-on-surface-variant');
+            });
+        });
+    </script>
+</body></html>

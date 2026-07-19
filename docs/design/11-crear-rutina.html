@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, viewport-fit=cover" name="viewport"/>
+<title>Symmetry - Crear Rutina</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&amp;family=Montserrat:wght@700;800;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-surface-variant": "#c8c4d8",
+                    "on-primary-fixed-variant": "#3c1fcb",
+                    "background": "#0B0B10", /* Overridden per user request but aligned with system */
+                    "outline-variant": "#474555",
+                    "primary-fixed-dim": "#c5c0ff",
+                    "on-surface": "#e4e1e9",
+                    "on-primary-fixed": "#150067",
+                    "surface-variant": "#35343a",
+                    "surface-container-highest": "#35343a",
+                    "secondary": "#e6feff",
+                    "outline": "#928ea1",
+                    "on-secondary-container": "#006c71",
+                    "surface-bright": "#39383e",
+                    "on-error-container": "#ffdad6",
+                    "surface-tint": "#c5c0ff",
+                    "on-secondary-fixed": "#002021",
+                    "on-primary": "#2600a1",
+                    "on-tertiary-container": "#4c3f00",
+                    "inverse-on-surface": "#303036",
+                    "surface-dim": "#131318",
+                    "primary-container": "#6d5dfb",
+                    "on-tertiary-fixed": "#221b00",
+                    "surface-container": "#1f1f25",
+                    "on-secondary-fixed-variant": "#004f53",
+                    "on-tertiary-fixed-variant": "#544600",
+                    "inverse-surface": "#e4e1e9",
+                    "surface-container-low": "#1b1b20",
+                    "secondary-fixed": "#63f7ff",
+                    "tertiary-fixed-dim": "#e9c400",
+                    "inverse-primary": "#5542e2",
+                    "on-tertiary": "#3a3000",
+                    "primary": "#c5c0ff",
+                    "error-container": "#93000a",
+                    "tertiary-container": "#c9a900",
+                    "primary-fixed": "#e4dfff",
+                    "tertiary": "#e9c400",
+                    "surface": "#131318",
+                    "surface-container-lowest": "#0e0e13",
+                    "secondary-fixed-dim": "#00dce5",
+                    "tertiary-fixed": "#ffe16d",
+                    "on-secondary": "#003739",
+                    "on-primary-container": "#ffffff",
+                    "error": "#ffb4ab",
+                    "on-background": "#e4e1e9",
+                    "secondary-container": "#00f4fe",
+                    "on-error": "#690005",
+                    "surface-container-high": "#2a292f"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "xl": "64px",
+                    "gutter": "16px",
+                    "xs": "4px",
+                    "sm": "12px",
+                    "lg": "40px",
+                    "base": "8px",
+                    "md": "24px",
+                    "container-margin": "20px"
+            },
+            "fontFamily": {
+                    "label-bold": ["Inter"],
+                    "body-lg": ["Inter"],
+                    "display-xl-mobile": ["Montserrat"],
+                    "headline-md": ["Montserrat"],
+                    "stat-value": ["Montserrat"],
+                    "display-xl": ["Montserrat"],
+                    "body-md": ["Inter"],
+                    "headline-lg": ["Montserrat"]
+            },
+            "fontSize": {
+                    "label-bold": ["14px", {"lineHeight": "20px", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                    "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}],
+                    "display-xl-mobile": ["36px", {"lineHeight": "44px", "letterSpacing": "-0.02em", "fontWeight": "800"}],
+                    "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "700"}],
+                    "stat-value": ["24px", {"lineHeight": "24px", "fontWeight": "800"}],
+                    "display-xl": ["48px", {"lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "800"}],
+                    "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                    "headline-lg": ["32px", {"lineHeight": "40px", "fontWeight": "700"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        body {
+            background-color: #0B0B10;
+            color: #e4e1e9;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .glass-header {
+            background: rgba(11, 11, 16, 0.8);
+            backdrop-filter: blur(12px);
+        }
+        .input-dark {
+            background-color: #1A1A24;
+            border: 1px solid #1A1A24;
+            transition: border-color 0.2s ease;
+        }
+        .input-dark:focus {
+            border-color: #6d5dfb;
+            outline: none;
+        }
+        .stat-input {
+            width: 100%;
+            text-align: center;
+            background: #13131A;
+            border: 1px solid #1A1A24;
+            border-radius: 8px;
+            padding: 8px 4px;
+            color: #ffffff;
+            font-family: 'Inter', sans-serif;
+            font-size: 14px;
+        }
+        .action-button-active:active {
+            transform: scale(0.96);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="font-body-md selection:bg-primary-container selection:text-on-primary-container">
+<!-- Top App Bar -->
+<header class="fixed top-0 left-0 right-0 z-50 glass-header">
+<div class="flex items-center justify-between px-container-margin py-stack-md h-16">
+<div class="flex items-center gap-4">
+<button class="flex items-center justify-center w-10 h-10 rounded-full hover:bg-surface-variant transition-colors action-button-active">
+<span class="material-symbols-outlined text-on-surface">arrow_back</span>
+</button>
+<h1 class="text-headline-md font-headline-md uppercase tracking-tight">Crear rutina</h1>
+</div>
+<button class="text-primary font-label-bold text-label-bold uppercase tracking-widest">Ayuda</button>
+</div>
+</header>
+<!-- Main Content Canvas -->
+<main class="pt-24 pb-32 px-container-margin max-w-2xl mx-auto space-y-lg">
+<!-- Routine Name Section -->
+<section class="space-y-sm">
+<label class="font-label-bold text-label-bold text-on-surface-variant uppercase tracking-wider block ml-1">Nombre de la rutina</label>
+<input class="w-full h-14 rounded-xl px-4 text-body-md font-body-md input-dark text-on-surface placeholder:text-outline/50" placeholder="Eje: Empuje Hipertrofia" type="text"/>
+</section>
+<!-- Day Card -->
+<section class="space-y-md" id="routine-days">
+<div class="bg-[#13131A] border border-[#1A1A24] rounded-2xl p-md shadow-xl transition-all hover:border-outline-variant/30 relative overflow-hidden group">
+<!-- Delete Day Icon -->
+<button class="absolute top-4 right-4 text-outline hover:text-error transition-colors p-2 rounded-full hover:bg-error/10">
+<span class="material-symbols-outlined text-md">delete</span>
+</button>
+<!-- Day Title (Editable) -->
+<div class="flex items-baseline gap-2 mb-md">
+<input class="bg-transparent border-none p-0 text-headline-md font-headline-md focus:ring-0 w-32 text-on-primary-fixed uppercase italic" type="text" value="Día 1"/>
+</div>
+<!-- Exercise List -->
+<div class="space-y-lg">
+<!-- Exercise Row 1 -->
+<div class="relative group/exercise border-b border-[#1A1A24] pb-lg last:border-0 last:pb-0">
+<div class="flex items-center justify-between mb-sm">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-lg bg-primary-container/20 flex items-center justify-center">
+<span class="material-symbols-outlined text-primary text-sm" style="font-variation-settings: 'FILL' 1;">fitness_center</span>
+</div>
+<span class="text-body-lg font-headline-md text-on-surface">Press de Banca</span>
+</div>
+<button class="text-outline hover:text-on-surface transition-colors p-1">
+<span class="material-symbols-outlined text-base">close</span>
+</button>
+</div>
+<!-- Grid of Stat Inputs -->
+<div class="grid grid-cols-4 gap-sm">
+<div class="flex flex-col gap-xs">
+<span class="text-[10px] font-label-bold uppercase text-outline-variant text-center">Series</span>
+<input class="stat-input" type="number" value="3"/>
+</div>
+<div class="flex flex-col gap-xs">
+<span class="text-[10px] font-label-bold uppercase text-outline-variant text-center">Reps mín</span>
+<input class="stat-input" type="number" value="8"/>
+</div>
+<div class="flex flex-col gap-xs">
+<span class="text-[10px] font-label-bold uppercase text-outline-variant text-center">Reps máx</span>
+<input class="stat-input" type="number" value="12"/>
+</div>
+<div class="flex flex-col gap-xs">
+<span class="text-[10px] font-label-bold uppercase text-outline-variant text-center">Peso kg</span>
+<input class="stat-input" placeholder="0" type="number" value="0"/>
+</div>
+</div>
+</div>
+<!-- Exercise Row 2 -->
+<div class="relative group/exercise border-b border-[#1A1A24] pb-lg last:border-0 last:pb-0">
+<div class="flex items-center justify-between mb-sm">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-lg bg-primary-container/20 flex items-center justify-center">
+<span class="material-symbols-outlined text-primary text-sm" style="font-variation-settings: 'FILL' 1;">fitness_center</span>
+</div>
+<span class="text-body-lg font-headline-md text-on-surface">Aperturas con mancuerna</span>
+</div>
+<button class="text-outline hover:text-on-surface transition-colors p-1">
+<span class="material-symbols-outlined text-base">close</span>
+</button>
+</div>
+<div class="grid grid-cols-4 gap-sm">
+<div class="flex flex-col gap-xs">
+<span class="text-[10px] font-label-bold uppercase text-outline-variant text-center">Series</span>
+<input class="stat-input" type="number" value="3"/>
+</div>
+<div class="flex flex-col gap-xs">
+<span class="text-[10px] font-label-bold uppercase text-outline-variant text-center">Reps mín</span>
+<input class="stat-input" type="number" value="10"/>
+</div>
+<div class="flex flex-col gap-xs">
+<span class="text-[10px] font-label-bold uppercase text-outline-variant text-center">Reps máx</span>
+<input class="stat-input" type="number" value="15"/>
+</div>
+<div class="flex flex-col gap-xs">
+<span class="text-[10px] font-label-bold uppercase text-outline-variant text-center">Peso kg</span>
+<input class="stat-input" placeholder="0" type="number" value="0"/>
+</div>
+</div>
+</div>
+</div>
+<!-- Add Exercise Button (Dashed) -->
+<button class="w-full mt-lg border-2 border-dashed border-primary-container/30 hover:border-primary-container hover:bg-primary-container/5 rounded-xl py-sm flex items-center justify-center gap-2 text-primary transition-all action-button-active">
+<span class="material-symbols-outlined text-base">add_circle</span>
+<span class="font-label-bold text-label-bold uppercase">Añadir ejercicio</span>
+</button>
+</div>
+<!-- Add Day Button -->
+<button class="w-full bg-primary-container/10 border border-primary-container/20 hover:bg-primary-container/20 rounded-2xl py-md flex items-center justify-center gap-2 text-primary-fixed transition-all action-button-active">
+<span class="material-symbols-outlined">calendar_add_on</span>
+<span class="font-label-bold text-label-bold uppercase tracking-widest">Añadir día</span>
+</button>
+</section>
+</main>
+<!-- Fixed Bottom Action -->
+<div class="fixed bottom-0 left-0 w-full px-container-margin pb-10 pt-4 bg-gradient-to-t from-background via-background/90 to-transparent z-40">
+<button class="w-full bg-[#7C5CFF] text-on-primary-container font-headline-md h-16 rounded-2xl shadow-[0_0_20px_rgba(124,92,255,0.4)] flex items-center justify-center gap-3 hover:brightness-110 active:scale-95 transition-all">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">save</span>
+<span class="uppercase tracking-tighter">Guardar rutina</span>
+</button>
+</div>
+<!-- Background Decorative Element (Atmospheric Blur) -->
+<div class="fixed top-0 right-0 w-64 h-64 bg-primary-container opacity-[0.03] blur-[120px] rounded-full pointer-events-none -z-10"></div>
+<div class="fixed bottom-0 left-0 w-96 h-96 bg-secondary-container opacity-[0.02] blur-[150px] rounded-full pointer-events-none -z-10"></div>
+<script>
+        // Simple micro-interaction for focus states and placeholder animations
+        const inputs = document.querySelectorAll('.stat-input');
+        inputs.forEach(input => {
+            input.addEventListener('focus', () => {
+                input.parentElement.querySelector('span').classList.replace('text-outline-variant', 'text-primary');
+            });
+            input.addEventListener('blur', () => {
+                input.parentElement.querySelector('span').classList.replace('text-primary', 'text-outline-variant');
+            });
+        });
+
+        // Add Day functionality simulation (UI only)
+        document.querySelector('button:has(.material-symbols-outlined:contains("calendar_add_on"))').addEventListener('click', () => {
+            // Visual feedback
+            console.log("Mock: Adding new day container...");
+        });
+    </script>
+</body></html>

@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Progreso - Elite Fitness</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&amp;family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "inverse-on-surface": "#303036",
+                        "surface-variant": "#35343a",
+                        "on-primary-fixed-variant": "#3c1fcb",
+                        "on-primary-fixed": "#150067",
+                        "tertiary-fixed": "#ffe16d",
+                        "secondary-fixed": "#63f7ff",
+                        "surface-container": "#1f1f25",
+                        "on-surface-variant": "#c8c4d8",
+                        "surface-container-low": "#1b1b20",
+                        "surface-tint": "#c5c0ff",
+                        "surface-container-lowest": "#0e0e13",
+                        "on-secondary-container": "#006c71",
+                        "inverse-primary": "#5542e2",
+                        "primary-fixed-dim": "#c5c0ff",
+                        "on-secondary": "#003739",
+                        "surface-container-high": "#2a292f",
+                        "on-primary-container": "#ffffff",
+                        "surface-bright": "#39383e",
+                        "secondary": "#e6feff",
+                        "error-container": "#93000a",
+                        "error": "#ffb4ab",
+                        "inverse-surface": "#e4e1e9",
+                        "tertiary-fixed-dim": "#e9c400",
+                        "outline": "#928ea1",
+                        "tertiary-container": "#c9a900",
+                        "tertiary": "#e9c400",
+                        "primary-container": "#6d5dfb",
+                        "on-secondary-fixed-variant": "#004f53",
+                        "on-error-container": "#ffdad6",
+                        "secondary-fixed-dim": "#00dce5",
+                        "surface-container-highest": "#35343a",
+                        "surface-dim": "#131318",
+                        "primary-fixed": "#e4dfff",
+                        "on-tertiary": "#3a3000",
+                        "primary": "#c5c0ff",
+                        "on-tertiary-fixed": "#221b00",
+                        "on-secondary-fixed": "#002021",
+                        "on-background": "#e4e1e9",
+                        "on-primary": "#2600a1",
+                        "on-error": "#690005",
+                        "secondary-container": "#00f4fe",
+                        "on-tertiary-container": "#4c3f00",
+                        "background": "#0B0B10",
+                        "on-tertiary-fixed-variant": "#544600",
+                        "on-surface": "#e4e1e9",
+                        "outline-variant": "#474555",
+                        "surface": "#13131A"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "2xl": "1.5rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "xs": "4px",
+                        "xl": "64px",
+                        "sm": "12px",
+                        "lg": "40px",
+                        "container-margin": "20px",
+                        "gutter": "16px",
+                        "base": "8px",
+                        "md": "24px"
+                    },
+                    "fontFamily": {
+                        "stat-value": ["Montserrat"],
+                        "headline-lg": ["Montserrat"],
+                        "display-xl": ["Montserrat"],
+                        "body-md": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "label-bold": ["Inter"],
+                        "display-xl-mobile": ["Montserrat"],
+                        "headline-md": ["Montserrat"]
+                    },
+                    "fontSize": {
+                        "stat-value": ["24px", {"lineHeight": "24px", "fontWeight": "800"}],
+                        "headline-lg": ["32px", {"lineHeight": "40px", "fontWeight": "700"}],
+                        "display-xl": ["48px", {"lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "800"}],
+                        "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                        "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}],
+                        "label-bold": ["14px", {"lineHeight": "20px", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                        "display-xl-mobile": ["36px", {"lineHeight": "44px", "letterSpacing": "-0.02em", "fontWeight": "800"}],
+                        "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "700"}]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            background-color: #0B0B10;
+            color: #e4e1e9;
+            font-family: 'Inter', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .glass-card {
+            background: rgba(19, 19, 26, 0.8);
+            backdrop-filter: blur(12px);
+            border: 1px solid #1A1A24;
+        }
+        .stat-glow-violet { box-shadow: 0 0 15px rgba(124, 92, 255, 0.15); }
+        .stat-glow-cyan { box-shadow: 0 0 15px rgba(0, 220, 229, 0.15); }
+        .stat-glow-gold { box-shadow: 0 0 15px rgba(233, 196, 0, 0.15); }
+        
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="min-h-screen pb-32">
+<!-- Top App Bar -->
+<header class="w-full sticky top-0 z-50 bg-background/80 backdrop-blur-md flex justify-between items-center px-container-margin py-4">
+<h1 class="font-headline-md text-headline-md font-black text-on-surface uppercase tracking-tighter">PROGRESO</h1>
+<div class="w-10 h-10 rounded-full border-2 border-primary-container overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="A professional studio portrait of a high-performance athlete with focused intensity. The lighting is dramatic, high-contrast chiaroscuro with a deep obsidian background. The athlete has subtle moisture on their skin to emphasize physical exertion. The color palette is dominated by deep blacks and cool grays with a sharp violet accent on their sportswear." src="https://lh3.googleusercontent.com/aida-public/AB6AXuD3zWaKvui4-rt14fG_pCx_3KooF8nRwunbgtToEx20Kgu4gXg1-5m5uBzLq61ykiTTJjHgar4PJmnOzF1G0xRzFhtwkHihrdlNI9UBPeAUdalkhHmYKj7bqaAQG6qGKHtqNzK54MbF4kCbIa0WwqkrLszoWpDgI0JFWZsri_h-g3s26jG9sESZuBZTCnrVT_ktFDJzJLxR2MXeQv4-8TuaIEev6S-Hf_OaSFTRXrQztIq7QVrgsm-CfP_gQRKcjrTzvEyzdkjLwtnE"/>
+</div>
+</header>
+<main class="px-container-margin space-y-lg mt-4">
+<!-- ESTA SEMANA Section -->
+<section class="space-y-md">
+<h2 class="font-label-bold text-label-bold text-on-surface-variant uppercase">ESTA SEMANA</h2>
+<div class="grid grid-cols-3 gap-gutter">
+<!-- Stat 1: Entrenos -->
+<div class="glass-card p-4 rounded-2xl flex flex-col items-center justify-center text-center border-t-2 border-t-[#7C5CFF]/40 stat-glow-violet">
+<span class="font-stat-value text-stat-value text-[#7C5CFF]">4</span>
+<span class="text-[10px] font-label-bold text-on-surface-variant uppercase mt-1 leading-tight">entrenos</span>
+</div>
+<!-- Stat 2: Volumen -->
+<div class="glass-card p-4 rounded-2xl flex flex-col items-center justify-center text-center border-t-2 border-t-secondary-container/40 stat-glow-cyan">
+<span class="font-stat-value text-stat-value text-secondary-container">18.4k</span>
+<span class="text-[10px] font-label-bold text-on-surface-variant uppercase mt-1 leading-tight">kg vol.</span>
+</div>
+<!-- Stat 3: Calorias -->
+<div class="glass-card p-4 rounded-2xl flex flex-col items-center justify-center text-center border-t-2 border-t-tertiary/40 stat-glow-gold">
+<span class="font-stat-value text-stat-value text-tertiary">2.150</span>
+<span class="text-[10px] font-label-bold text-on-surface-variant uppercase mt-1 leading-tight">kcal</span>
+</div>
+</div>
+</section>
+<!-- Quick Links -->
+<section class="grid grid-cols-2 gap-gutter">
+<button class="glass-card p-4 rounded-2xl flex items-center gap-3 active:scale-95 transition-transform">
+<div class="w-10 h-10 rounded-xl bg-primary-container/20 flex items-center justify-center text-primary-container">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">flag</span>
+</div>
+<span class="font-label-bold text-on-surface">Objetivos</span>
+</button>
+<button class="glass-card p-4 rounded-2xl flex items-center gap-3 active:scale-95 transition-transform">
+<div class="w-10 h-10 rounded-xl bg-secondary-container/20 flex items-center justify-center text-secondary-container">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">format_list_bulleted</span>
+</div>
+<span class="font-label-bold text-on-surface">Historial</span>
+</button>
+</section>
+<!-- Peso Corporal Card -->
+<section class="glass-card p-6 rounded-3xl space-y-md">
+<div class="flex justify-between items-end">
+<div>
+<h2 class="font-headline-md text-headline-md text-on-surface">Peso corporal</h2>
+<p class="font-body-md text-on-surface-variant opacity-70">Último: 78,4 kg</p>
+</div>
+<div class="text-secondary-container flex items-center gap-1 font-label-bold">
+<span class="material-symbols-outlined text-sm">trending_down</span>
+                    -0.8 kg
+                </div>
+</div>
+<!-- Chart Simulation -->
+<div class="h-32 w-full relative mt-4 overflow-hidden rounded-xl bg-[#1A1A24]/30">
+<svg class="w-full h-full" preserveaspectratio="none" viewbox="0 0 400 100">
+<defs>
+<lineargradient id="chartGradient" x1="0" x2="0" y1="0" y2="1">
+<stop offset="0%" stop-color="#00f4fe" stop-opacity="0.3"></stop>
+<stop offset="100%" stop-color="#00f4fe" stop-opacity="0"></stop>
+</lineargradient>
+</defs>
+<path d="M0,80 Q50,75 100,85 T200,60 T300,50 T400,45 V100 H0 Z" fill="url(#chartGradient)"></path>
+<path d="M0,80 Q50,75 100,85 T200,60 T300,50 T400,45" fill="none" stroke="#00f4fe" stroke-linecap="round" stroke-width="3"></path>
+<circle cx="400" cy="45" fill="#00f4fe" r="4"></circle>
+</svg>
+</div>
+<!-- Input Row -->
+<div class="flex gap-2">
+<div class="flex-grow">
+<input class="w-full bg-[#1A1A24] border-none rounded-xl px-4 py-3 text-on-surface placeholder:text-on-surface-variant/40 focus:ring-2 focus:ring-primary-container/50" placeholder="Peso (kg)" type="number"/>
+</div>
+<button class="bg-primary-container text-on-primary-container px-6 py-3 rounded-xl font-label-bold hover:brightness-110 active:scale-95 transition-all">
+                    Añadir
+                </button>
+</div>
+<!-- Recent Weight List -->
+<div class="space-y-1">
+<div class="flex justify-between items-center py-3 border-b border-[#1A1A24]">
+<div>
+<p class="font-body-md text-on-surface">78,4 kg</p>
+<p class="text-[12px] text-on-surface-variant">Hoy, 08:30</p>
+</div>
+<button class="text-on-surface-variant hover:text-error transition-colors">
+<span class="material-symbols-outlined">delete</span>
+</button>
+</div>
+<div class="flex justify-between items-center py-3 border-b border-[#1A1A24]">
+<div>
+<p class="font-body-md text-on-surface">78,9 kg</p>
+<p class="text-[12px] text-on-surface-variant">12 Oct 2023</p>
+</div>
+<button class="text-on-surface-variant hover:text-error transition-colors">
+<span class="material-symbols-outlined">delete</span>
+</button>
+</div>
+<div class="flex justify-between items-center py-3">
+<div>
+<p class="font-body-md text-on-surface">79,2 kg</p>
+<p class="text-[12px] text-on-surface-variant">05 Oct 2023</p>
+</div>
+<button class="text-on-surface-variant hover:text-error transition-colors">
+<span class="material-symbols-outlined">delete</span>
+</button>
+</div>
+</div>
+</section>
+<!-- Fotos de progreso Section -->
+<section class="space-y-md">
+<div class="flex justify-between items-center">
+<h2 class="font-headline-md text-headline-md text-on-surface">Fotos de progreso</h2>
+<button class="text-primary-container flex items-center gap-1 font-label-bold text-sm bg-primary-container/10 px-4 py-2 rounded-full active:scale-95 transition-transform">
+<span class="material-symbols-outlined text-base">add_a_photo</span>
+                    Añadir foto
+                </button>
+</div>
+<div class="flex gap-4 overflow-x-auto hide-scrollbar pb-4 snap-x">
+<!-- Photo Thumbnail 1 -->
+<div class="flex-shrink-0 w-44 aspect-[3/4] rounded-2xl overflow-hidden glass-card relative snap-start">
+<img class="w-full h-full object-cover" data-alt="A professional high-performance fitness progress portrait. A muscular individual stands in a minimalist dark gym environment with side-lighting that highlights muscle definition and physique symmetry. The aesthetic is clean, athletic, and sophisticated with a dark graphite and slate color palette." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDxbBCiLXMXPn9RXRyhwxMTJg5UN32J0ImGGkOp-WR3gw7RFBrUJAWbLjvP0fCcRudsRkmKxB6gf2McUs_hoajOuTBbWhi8ZNWFwHPAIqr0EDb5rToomjwDfNiHOW4i34wLVvbDGaG1KWyZUieBBAtFlq81Z81Isu3SfKb-HOis2JbEuFZZELlOeb1qzs83KNxsjzXrvdnjYf2paGbalwYoGZPIBsl3_3bXqMpHfTmhnA7pDB7vwYwCVCuyz9BfWy_e-y-VwMRt-SY8"/>
+<div class="absolute bottom-0 left-0 w-full p-3 bg-gradient-to-t from-black/80 to-transparent">
+<p class="text-[12px] font-label-bold text-white uppercase">15 SEP 2023</p>
+</div>
+</div>
+<!-- Photo Thumbnail 2 -->
+<div class="flex-shrink-0 w-44 aspect-[3/4] rounded-2xl overflow-hidden glass-card relative snap-start">
+<img class="w-full h-full object-cover" data-alt="A professional fitness transformation photo showing a peak athletic physique in a modern premium training facility. The lighting is crisp and cinematic, emphasizing shadows and body contours against a dark charcoal background. The image has a professional editorial feel with muted tones and a slight violet color grade in the highlights." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAWx-qwucyRA05r11uyQ_SFJC9ByXHfdPC2E6i8x5mSbvL_cHa4jh9vE30ta9e0XrnVqyX9-o8EIRzGQqAgCHFoUZdW4G1NhFrkF9h7tol7x9ANRTP5_OpIoqNySoZ8RKFLvbvM0tKJ-7wpZMvd3I7cuFh8dPtkV6zXJhK8ziQ8NSXAmzfiQY0j074tZqYl2bcI3xX7G_kQntzdEGVuAgnvyDX1Rq9N-qdV4QPkMa_ZhrBcw4F0YVh12t68lYOqGzI6u-XcBt8u8I2o"/>
+<div class="absolute bottom-0 left-0 w-full p-3 bg-gradient-to-t from-black/80 to-transparent">
+<p class="text-[12px] font-label-bold text-white uppercase">HOY</p>
+</div>
+</div>
+<!-- Empty Placeholder for "Add" -->
+<div class="flex-shrink-0 w-44 aspect-[3/4] rounded-2xl border-2 border-dashed border-[#1A1A24] flex flex-col items-center justify-center text-on-surface-variant/40 snap-start">
+<span class="material-symbols-outlined text-3xl mb-2">add</span>
+<p class="text-[10px] font-label-bold uppercase">Nueva foto</p>
+</div>
+</div>
+</section>
+</main>
+<!-- Bottom Nav Bar -->
+<nav class="fixed bottom-0 w-full z-50 rounded-t-2xl bg-surface-container shadow-[0_-4px_20px_rgba(109,93,251,0.15)] flex justify-around items-center px-4 h-20">
+<button class="flex flex-col items-center justify-center text-on-surface-variant opacity-60 hover:opacity-100 transition-all">
+<span class="material-symbols-outlined">home</span>
+</button>
+<button class="flex flex-col items-center justify-center text-on-surface-variant opacity-60 hover:opacity-100 transition-all">
+<span class="material-symbols-outlined">fitness_center</span>
+</button>
+<button class="flex flex-col items-center justify-center text-on-surface-variant opacity-60 hover:opacity-100 transition-all">
+<span class="material-symbols-outlined">leaderboard</span>
+</button>
+<button class="flex flex-col items-center justify-center text-on-surface-variant opacity-60 hover:opacity-100 transition-all">
+<span class="material-symbols-outlined">person</span>
+</button>
+<!-- ACTIVE TAB: PROGRESS -->
+<button class="flex flex-col items-center justify-center text-primary-container drop-shadow-[0_0_8px_rgba(109,93,251,0.5)] transition-all scale-110">
+<div class="bg-primary-container/20 px-4 py-1 rounded-full mb-1">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">event_note</span>
+</div>
+</button>
+</nav>
+<script>
+        // Micro-interactions and active states
+        document.querySelectorAll('nav button').forEach(btn => {
+            btn.addEventListener('click', function() {
+                // Simplified active state toggle for demo
+                console.log('Navigating...');
+            });
+        });
+
+        // Simple weight input effect
+        const weightInput = document.querySelector('input[type="number"]');
+        const addButton = weightInput?.nextElementSibling;
+        
+        addButton?.addEventListener('click', () => {
+            if (weightInput.value) {
+                const val = weightInput.value;
+                weightInput.value = '';
+                alert(`Peso de ${val} kg registrado correctamente.`);
+            }
+        });
+    </script>
+</body></html>

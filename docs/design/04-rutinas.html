@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, viewport-fit=cover" name="viewport"/>
+<title>Rutinas - SYMMETRY</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700;800&family=Inter:wght@400;600&family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&family=Montserrat:wght@100..900&display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "tertiary-container": "#c9a900",
+                        "surface-container-highest": "#35343a",
+                        "on-surface-variant": "#c8c4d8",
+                        "on-secondary-fixed": "#002021",
+                        "inverse-surface": "#e4e1e9",
+                        "primary-fixed": "#e4dfff",
+                        "tertiary-fixed": "#ffe16d",
+                        "on-secondary-container": "#006c71",
+                        "on-primary-container": "#ffffff",
+                        "surface-dim": "#131318",
+                        "on-primary-fixed-variant": "#3c1fcb",
+                        "on-primary-fixed": "#150067",
+                        "secondary-container": "#00f4fe",
+                        "on-surface": "#e4e1e9",
+                        "surface-bright": "#39383e",
+                        "on-primary": "#2600a1",
+                        "primary": "#c5c0ff",
+                        "on-tertiary-fixed-variant": "#544600",
+                        "tertiary-fixed-dim": "#e9c400",
+                        "secondary-fixed-dim": "#00dce5",
+                        "on-tertiary-fixed": "#221b00",
+                        "tertiary": "#e9c400",
+                        "surface-variant": "#35343a",
+                        "outline": "#928ea1",
+                        "inverse-on-surface": "#303036",
+                        "surface-container-lowest": "#0e0e13",
+                        "on-tertiary-container": "#4c3f00",
+                        "surface": "#131318",
+                        "on-secondary-fixed-variant": "#004f53",
+                        "primary-fixed-dim": "#c5c0ff",
+                        "on-error-container": "#ffdad6",
+                        "surface-container-low": "#1b1b20",
+                        "surface-container-high": "#2a292f",
+                        "secondary-fixed": "#63f7ff",
+                        "outline-variant": "#474555",
+                        "on-tertiary": "#3a3000",
+                        "surface-tint": "#c5c0ff",
+                        "on-background": "#e4e1e9",
+                        "background": "#131318",
+                        "inverse-primary": "#5542e2",
+                        "secondary": "#e6feff",
+                        "primary-container": "#6d5dfb",
+                        "on-secondary": "#003739",
+                        "surface-container": "#1f1f25",
+                        "error-container": "#93000a",
+                        "on-error": "#690005",
+                        "error": "#ffb4ab"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "xs": "4px",
+                        "md": "24px",
+                        "base": "8px",
+                        "sm": "12px",
+                        "xl": "64px",
+                        "gutter": "16px",
+                        "container-margin": "20px",
+                        "lg": "40px"
+                    },
+                    "fontFamily": {
+                        "display-xl": ["Montserrat"],
+                        "display-xl-mobile": ["Montserrat"],
+                        "body-md": ["Inter"],
+                        "label-bold": ["Inter"],
+                        "stat-value": ["Montserrat"],
+                        "headline-md": ["Montserrat"],
+                        "body-lg": ["Inter"],
+                        "headline-lg": ["Montserrat"]
+                    },
+                    "fontSize": {
+                        "display-xl": ["48px", {"lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "800"}],
+                        "display-xl-mobile": ["36px", {"lineHeight": "44px", "letterSpacing": "-0.02em", "fontWeight": "800"}],
+                        "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                        "label-bold": ["14px", {"lineHeight": "20px", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                        "stat-value": ["24px", {"lineHeight": "24px", "fontWeight": "800"}],
+                        "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "700"}],
+                        "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}],
+                        "headline-lg": ["32px", {"lineHeight": "40px", "fontWeight": "700"}]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            background-color: #0B0B10;
+            color: #e4e1e9;
+            -webkit-font-smoothing: antialiased;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .glass-card {
+            background: rgba(19, 19, 26, 0.7);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(26, 26, 36, 1);
+        }
+        .routine-active-border {
+            border: 1px solid #6d5dfb;
+            box-shadow: 0 0 15px rgba(109, 93, 251, 0.15);
+        }
+        ::-webkit-scrollbar {
+            display: none;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="font-body-md text-body-md overflow-x-hidden">
+<!-- TopAppBar -->
+<header class="fixed top-0 w-full z-50 bg-surface/40 backdrop-blur-xl border-b border-outline-variant/30 flex justify-between items-center px-gutter h-16">
+<div class="w-10 h-10 rounded-full overflow-hidden border border-outline-variant/30 flex items-center justify-center bg-surface-container">
+<img class="w-full h-full object-cover" data-alt="A professional high-performance athlete profile portrait in a dimly lit, high-tech gym setting. The lighting is dramatic and moody, focusing on a fit person with sharp features, reflecting a premium athletic lifestyle aesthetic. The background is slightly blurred, showing sleek black gym equipment with subtle violet LED accents." src="https://lh3.googleusercontent.com/aida-public/AB6AXuD9cfp6r1S9z_20sXL2iKyZcRuO1TJM7zIl0c-emZfLls444NcLTknknciitI1wfGwbweuzNPA3R8Ru00Qmt1T_TRkoGPCji_9QHPsAv5n67hV5VGcZ--IAe4FegDptwP_Hxi69WyABYPCQcyXS1PREdE4d8jiXL2PpSO_34N0rSoISw9mm4wBWtmDSpalw1SfepHNttQDANrk3KkQvXty3M1EKgd2x4mi8FzzH_EAESjjJz-t3oj3l_XuCBi9X3gXub59QmVULsbOM"/>
+</div>
+<h1 class="font-headline-md text-headline-md-mobile text-primary tracking-tighter">SYMMETRY</h1>
+<button class="w-10 h-10 flex items-center justify-center text-on-surface-variant hover:opacity-80 active:scale-95 transition-all">
+<span class="material-symbols-outlined">settings</span>
+</button>
+</header>
+<main class="pt-24 pb-32 px-gutter max-w-2xl mx-auto min-h-screen">
+<!-- Welcome Section -->
+<section class="mb-lg">
+<h2 class="font-headline-lg text-headline-lg-mobile mb-xs">RUTINAS</h2>
+<p class="text-on-surface-variant text-body-md">Gestiona tus entrenamientos de alto rendimiento.</p>
+</section>
+<!-- Quick Actions -->
+<section class="grid grid-cols-1 gap-base mb-lg">
+<button class="bg-primary-container text-on-primary-container h-14 rounded-xl flex items-center justify-center gap-2 font-label-bold text-label-bold active:scale-[0.98] transition-transform shadow-lg shadow-primary-container/20">
+<span class="material-symbols-outlined">add</span>
+                Crear rutina
+            </button>
+<button class="border border-outline-variant text-on-surface h-14 rounded-xl flex items-center justify-center gap-2 font-label-bold text-label-bold active:scale-[0.98] transition-transform bg-surface-container-low/50">
+<span class="material-symbols-outlined">description</span>
+                Importar desde PDF/texto
+            </button>
+</section>
+<!-- Routine List -->
+<section class="space-y-sm">
+<div class="flex items-center justify-between px-xs mb-sm">
+<span class="font-label-bold text-label-bold text-on-surface-variant uppercase tracking-widest">Mis Planes</span>
+<span class="text-xs text-outline">3 Total</span>
+</div>
+<!-- Active Routine Card -->
+<div class="glass-card routine-active-border rounded-xl p-4 flex items-center gap-4 cursor-pointer active:scale-[0.99] transition-all relative overflow-hidden">
+<div class="absolute top-0 right-0 p-2">
+<span class="bg-primary/20 text-primary text-[10px] font-bold px-2 py-0.5 rounded-full border border-primary/30 uppercase tracking-tighter">Activa</span>
+</div>
+<div class="w-12 h-12 rounded-full bg-primary-container/20 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">fitness_center</span>
+</div>
+<div class="flex-1">
+<h3 class="font-headline-md text-body-lg text-on-surface leading-tight">Push Pull Legs</h3>
+<p class="text-sm text-outline-variant font-medium">Manual · 12 jul 2026</p>
+</div>
+<span class="material-symbols-outlined text-outline">chevron_right</span>
+</div>
+<!-- Routine Card 2 -->
+<div class="glass-card rounded-xl p-4 flex items-center gap-4 cursor-pointer active:scale-[0.99] transition-all">
+<div class="w-12 h-12 rounded-full bg-surface-container-highest flex items-center justify-center text-on-surface-variant">
+<span class="material-symbols-outlined">sports_gymnastics</span>
+</div>
+<div class="flex-1">
+<h3 class="font-headline-md text-body-lg text-on-surface leading-tight">Torso Pierna</h3>
+<p class="text-sm text-outline-variant font-medium">PDF · 3 jul 2026</p>
+</div>
+<span class="material-symbols-outlined text-outline">chevron_right</span>
+</div>
+<!-- Routine Card 3 -->
+<div class="glass-card rounded-xl p-4 flex items-center gap-4 cursor-pointer active:scale-[0.99] transition-all">
+<div class="w-12 h-12 rounded-full bg-surface-container-highest flex items-center justify-center text-on-surface-variant">
+<span class="material-symbols-outlined">list_alt</span>
+</div>
+<div class="flex-1">
+<h3 class="font-headline-md text-body-lg text-on-surface leading-tight">Full Body</h3>
+<p class="text-sm text-outline-variant font-medium">Manual · 28 jun 2026</p>
+</div>
+<span class="material-symbols-outlined text-outline">chevron_right</span>
+</div>
+</section>
+<!-- Aesthetic Bento Stat (Contextual) -->
+<section class="mt-lg">
+<div class="glass-card rounded-2xl p-6 relative overflow-hidden group">
+<div class="flex flex-col gap-1">
+<span class="text-on-surface-variant font-label-bold text-xs uppercase tracking-[0.2em]">Eficiencia Semanal</span>
+<span class="font-stat-value text-display-xl-mobile text-primary">84%</span>
+</div>
+<div class="mt-4 flex gap-1 items-end h-16">
+<div class="w-full bg-primary-container/20 rounded-t-sm h-1/2 group-hover:h-[60%] transition-all duration-500"></div>
+<div class="w-full bg-primary-container/20 rounded-t-sm h-3/4 group-hover:h-[80%] transition-all duration-500 delay-75"></div>
+<div class="w-full bg-primary-container rounded-t-sm h-full shadow-[0_-4px_10px_rgba(109,93,251,0.3)]"></div>
+<div class="w-full bg-primary-container/20 rounded-t-sm h-2/3 group-hover:h-[75%] transition-all duration-500 delay-100"></div>
+<div class="w-full bg-primary-container/20 rounded-t-sm h-4/5 group-hover:h-[85%] transition-all duration-500 delay-150"></div>
+</div>
+</div>
+</section>
+</main>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 py-2 pb-6 bg-surface-container-low/80 backdrop-blur-xl border-t border-outline-variant/20 shadow-lg rounded-t-xl">
+<!-- Inicio -->
+<a class="flex flex-col items-center justify-center text-outline p-2 hover:text-primary transition-colors active:scale-90 duration-150" href="#">
+<span class="material-symbols-outlined">home</span>
+<span class="font-label-bold text-[10px] mt-1 uppercase">Inicio</span>
+</a>
+<!-- Rutinas (Active) -->
+<a class="flex flex-col items-center justify-center bg-primary-container text-on-primary-container rounded-xl px-3 py-1.5 active:scale-90 transition-all duration-150" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">fitness_center</span>
+<span class="font-label-bold text-[10px] mt-0.5 uppercase">Rutinas</span>
+</a>
+<!-- Ejercicios -->
+<a class="flex flex-col items-center justify-center text-outline p-2 hover:text-primary transition-colors active:scale-90 duration-150" href="#">
+<span class="material-symbols-outlined">list_alt</span>
+<span class="font-label-bold text-[10px] mt-1 uppercase">Ejercicios</span>
+</a>
+<!-- Cuerpo -->
+<a class="flex flex-col items-center justify-center text-outline p-2 hover:text-primary transition-colors active:scale-90 duration-150" href="#">
+<span class="material-symbols-outlined">accessibility_new</span>
+<span class="font-label-bold text-[10px] mt-1 uppercase">Cuerpo</span>
+</a>
+<!-- Progreso -->
+<a class="flex flex-col items-center justify-center text-outline p-2 hover:text-primary transition-colors active:scale-90 duration-150" href="#">
+<span class="material-symbols-outlined">query_stats</span>
+<span class="font-label-bold text-[10px] mt-1 uppercase">Progreso</span>
+</a>
+</nav>
+<script>
+        // Simple interactive feedback for cards
+        document.querySelectorAll('.glass-card').forEach(card => {
+            card.addEventListener('touchstart', () => {
+                card.style.transform = 'scale(0.98)';
+            });
+            card.addEventListener('touchend', () => {
+                card.style.transform = 'scale(1)';
+            });
+        });
+    </script>
+</body></html>
