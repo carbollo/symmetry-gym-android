@@ -46,6 +46,10 @@ class WorkoutViewModel(
     var summary by mutableStateOf<WorkoutSummary?>(null)
         private set
 
+    /** All-time best set per exercise, shown as "RÉCORD" on the workout card. */
+    var records by mutableStateOf<Map<String, SetLogEntity>>(emptyMap())
+        private set
+
     init {
         viewModelScope.launch {
             val s = repo.sessionById(sessionId) ?: return@launch
@@ -60,6 +64,12 @@ class WorkoutViewModel(
                 map[it.item.exerciseId] = ProgressiveOverload.suggest(it.item, it.exercise, last)
             }
             suggestions = map
+
+            val recs = HashMap<String, SetLogEntity>()
+            for (it in items) {
+                repo.bestSetForExercise(it.item.exerciseId)?.let { best -> recs[it.item.exerciseId] = best }
+            }
+            records = recs
 
             // First time this session opens: pre-load every planned set (pending confirmation).
             if (repo.setCountForSession(sessionId) == 0) {

@@ -162,6 +162,16 @@ interface WorkoutDao {
     )
     suspend fun lastSetsForExercise(exerciseId: String, exceptSessionId: Long): List<SetLogEntity>
 
+    /** All-time best working set for an exercise (heaviest, then most reps). */
+    @Query(
+        """
+        SELECT * FROM set_logs
+        WHERE exerciseId = :exerciseId AND completed = 1 AND isWarmup = 0
+        ORDER BY weightKg DESC, reps DESC LIMIT 1
+        """
+    )
+    suspend fun bestSetForExercise(exerciseId: String): SetLogEntity?
+
     /** Every set (in order) from the most recent previous session that contained this exercise. */
     @Query(
         """
