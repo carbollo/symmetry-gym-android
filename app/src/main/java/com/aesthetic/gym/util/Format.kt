@@ -36,6 +36,9 @@ fun formatWeight(kg: Double, unit: WeightUnit): String =
 
 fun formatWeightValue(kg: Double, unit: WeightUnit): String = trimZeros(kgToUnit(kg, unit))
 
+/** Formats a raw kg amount with no unit suffix, trimming trailing zeros: "62.5", "60". */
+fun formatKg(kg: Double): String = trimZeros(kg)
+
 /** Epley estimated one-rep max. */
 fun epley1RM(weightKg: Double, reps: Int): Double =
     if (reps <= 1) weightKg else weightKg * (1.0 + reps / 30.0)

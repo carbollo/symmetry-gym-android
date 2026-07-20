@@ -31,8 +31,12 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Bolt
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.EmojiEvents
+import androidx.compose.material.icons.filled.FitnessCenter
 import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.LocalFireDepartment
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Timer
 import androidx.compose.material3.AlertDialog
@@ -87,6 +91,8 @@ import com.aesthetic.gym.ui.theme.SurfaceElevated
 import com.aesthetic.gym.ui.theme.SurfaceVariant
 import com.aesthetic.gym.ui.theme.TextMuted
 import com.aesthetic.gym.ui.theme.TextSecondary
+import com.aesthetic.gym.util.PlateCalculator
+import com.aesthetic.gym.util.formatKg
 import com.aesthetic.gym.util.formatWeightValue
 import kotlinx.coroutines.delay
 import kotlin.math.roundToInt
@@ -97,6 +103,7 @@ fun WorkoutScreen(navController: NavController, sessionId: Long) {
     val bell = rememberBell()
     val vm: WorkoutViewModel = viewModel(factory = WorkoutViewModel.factory(repo, bell, sessionId))
     val session by vm.session.collectAsState()
+    val profile by vm.profile.collectAsState()
     val planned = vm.plannedItems
     val records = vm.records
     val activity = LocalContext.current as? Activity
@@ -107,6 +114,8 @@ fun WorkoutScreen(navController: NavController, sessionId: Long) {
 
     var selectedIndex by remember { mutableIntStateOf(0) }
     var showConfirm by remember { mutableStateOf(false) }
+    var optionsFor by remember { mutableStateOf<SetLogEntity?>(null) }
+    var platesFor by remember { mutableStateOf<Double?>(null) }
     val safeIndex = selectedIndex.coerceIn(0, (planned.size - 1).coerceAtLeast(0))
 
     // Locked during the workout: back minimizes instead of closing/leaving.
@@ -202,8 +211,23 @@ fun WorkoutScreen(navController: NavController, sessionId: Long) {
                         if (record != null)
                             "RÉCORD: ${formatWeightValue(record.weightKg, WeightUnit.KG)} KG x ${record.reps}"
                         else "SIN RÉCORD TODAVÍA",
-                        color = Lime, fontSize = 11.sp, fontWeight = FontWeight.Bold
+                        color = Lime, fontSize = 11.sp, fontWeight = FontWeight.Bold,
+                        modifier = Modifier.weight(1f)
                     )
+                    Spacer(Modifier.width(8.dp))
+                    Row(
+                        Modifier.clip(RoundedCornerShape(50)).background(SurfaceVariant)
+                            .clickable {
+                                platesFor = sets.firstOrNull { !it.completed }?.weightKg
+                                    ?: sets.firstOrNull()?.weightKg ?: 20.0
+                            }
+                            .padding(horizontal = 12.dp, vertical = 7.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(Icons.Filled.FitnessCenter, null, tint = Cyan, modifier = Modifier.size(13.dp))
+                        Spacer(Modifier.width(5.dp))
+                        Text("DISCOS", color = Cyan, fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                    }
                 }
 
                 Spacer(Modifier.height(16.dp))
@@ -219,10 +243,13 @@ fun WorkoutScreen(navController: NavController, sessionId: Long) {
                 sets.forEach { set ->
                     SetRow(
                         set = set,
+                        isPr = set.id in vm.prSetIds,
+                        showRir = profile?.showRpe == true,
                         onWeightSet = { vm.setWeight(set, it) },
                         onRepsSet = { vm.setReps(set, it) },
                         onToggle = { vm.toggleCompleted(set) },
-                        onDelete = { vm.deleteSet(set) }
+                        onRirSet = { vm.setRir(set, it) },
+                        onLongPress = { optionsFor = set }
                     )
                     Spacer(Modifier.height(10.dp))
                 }
@@ -239,6 +266,11 @@ fun WorkoutScreen(navController: NavController, sessionId: Long) {
                 }
                 Spacer(Modifier.height(8.dp))
             }
+        }
+
+        // ---------- NEW RECORD ----------
+        vm.prEvent?.let { pr ->
+            PrBanner(pr) { vm.dismissPr() }
         }
 
         // ---------- REST COUNTDOWN ----------
@@ -287,8 +319,220 @@ fun WorkoutScreen(navController: NavController, sessionId: Long) {
         )
     }
 
+    optionsFor?.let { set ->
+        SetOptionsDialog(
+            set = set,
+            onWarmup = { vm.toggleWarmup(set); optionsFor = null },
+            onDelete = { vm.deleteSet(set); optionsFor = null },
+            onDismiss = { optionsFor = null }
+        )
+    }
+
+    platesFor?.let { weight ->
+        PlateDialog(
+            initialKg = weight,
+            barKg = profile?.barWeightKg ?: 20.0,
+            onBarChange = { vm.setBarWeight(it) },
+            onDismiss = { platesFor = null }
+        )
+    }
+
     vm.summary?.let { s ->
         WorkoutSummaryDialog(s) { navController.popBackStack() }
+    }
+}
+
+/** Celebration shown right after a set that beats a personal record. */
+@Composable
+private fun PrBanner(pr: PrEvent, onDismiss: () -> Unit) {
+    LaunchedEffect(pr.setId, pr.text) {
+        delay(4500)
+        onDismiss()
+    }
+    Row(
+        Modifier.padding(horizontal = 16.dp).padding(bottom = 10.dp).fillMaxWidth()
+            .clip(RoundedCornerShape(16.dp)).background(Gold.copy(alpha = 0.16f))
+            .border(BorderStroke(1.dp, Gold), RoundedCornerShape(16.dp))
+            .clickable(onClick = onDismiss)
+            .padding(horizontal = 14.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Icon(Icons.Filled.EmojiEvents, null, tint = Gold, modifier = Modifier.size(24.dp))
+        Spacer(Modifier.width(10.dp))
+        Column(Modifier.weight(1f)) {
+            Text(
+                "¡NUEVO RÉCORD!", color = Gold, fontSize = 12.sp,
+                fontWeight = FontWeight.Black, letterSpacing = 1.sp
+            )
+            Spacer(Modifier.height(2.dp))
+            Text(pr.text, color = Color.White, fontSize = 13.sp, fontWeight = FontWeight.Bold, maxLines = 2)
+            Text(pr.exerciseName, color = TextSecondary, fontSize = 10.sp, maxLines = 1)
+        }
+        Icon(Icons.Filled.Close, "Cerrar", tint = TextMuted, modifier = Modifier.size(18.dp))
+    }
+}
+
+/** Long-press menu on a set: warm-up toggle and delete. */
+@Composable
+private fun SetOptionsDialog(
+    set: SetLogEntity,
+    onWarmup: () -> Unit,
+    onDelete: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    Dialog(onDismissRequest = onDismiss) {
+        Column(
+            Modifier.widthIn(max = 340.dp).clip(RoundedCornerShape(22.dp)).background(Surface).padding(20.dp)
+        ) {
+            Text("SERIE ${set.setNumber}", color = TextMuted, fontSize = 10.sp, fontWeight = FontWeight.Bold)
+            Spacer(Modifier.height(14.dp))
+            Row(
+                Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp))
+                    .clickable(onClick = onWarmup).padding(vertical = 12.dp, horizontal = 4.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(Icons.Filled.LocalFireDepartment, null, tint = Gold, modifier = Modifier.size(20.dp))
+                Spacer(Modifier.width(12.dp))
+                Column {
+                    Text(
+                        if (set.isWarmup) "Marcar como serie normal" else "Marcar como calentamiento",
+                        color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        "El calentamiento no cuenta para volumen, récords ni rangos",
+                        color = TextMuted, fontSize = 10.sp
+                    )
+                }
+            }
+            Row(
+                Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp))
+                    .clickable(onClick = onDelete).padding(vertical = 12.dp, horizontal = 4.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(Icons.Filled.Delete, null, tint = Magenta, modifier = Modifier.size(20.dp))
+                Spacer(Modifier.width(12.dp))
+                Text("Eliminar serie", color = Magenta, fontSize = 14.sp, fontWeight = FontWeight.Bold)
+            }
+            Spacer(Modifier.height(6.dp))
+            TextButton(onClick = onDismiss, modifier = Modifier.align(Alignment.End)) {
+                Text("Cerrar", color = TextSecondary)
+            }
+        }
+    }
+}
+
+/** Plate calculator: how to load the bar for a given weight. */
+@Composable
+private fun PlateDialog(
+    initialKg: Double,
+    barKg: Double,
+    onBarChange: (Double) -> Unit,
+    onDismiss: () -> Unit
+) {
+    var target by remember { mutableStateOf(initialKg) }
+    val result = remember(target, barKg) { PlateCalculator.compute(target, barKg) }
+
+    Dialog(onDismissRequest = onDismiss) {
+        Column(
+            Modifier.widthIn(max = 360.dp).clip(RoundedCornerShape(24.dp)).background(Surface).padding(22.dp)
+        ) {
+            Text(
+                "CALCULADORA DE DISCOS", color = Cyan, fontSize = 11.sp,
+                fontWeight = FontWeight.Black, letterSpacing = 1.sp
+            )
+            Spacer(Modifier.height(14.dp))
+
+            // Target weight with fine adjustment.
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                StepChip("-2.5") { target = (target - 2.5).coerceAtLeast(0.0) }
+                Spacer(Modifier.width(10.dp))
+                Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(
+                        "${formatKg(target)} kg", color = Color.White,
+                        fontWeight = FontWeight.Black, fontSize = 28.sp, maxLines = 1
+                    )
+                    Text("objetivo", color = TextMuted, fontSize = 10.sp)
+                }
+                Spacer(Modifier.width(10.dp))
+                StepChip("+2.5") { target += 2.5 }
+            }
+
+            Spacer(Modifier.height(18.dp))
+            Text("POR CADA LADO", color = TextMuted, fontSize = 9.sp, fontWeight = FontWeight.Bold)
+            Spacer(Modifier.height(8.dp))
+
+            when {
+                result.belowBar -> Text(
+                    "Menos que la barra (${formatKg(barKg)} kg).",
+                    color = TextSecondary, fontSize = 13.sp
+                )
+                result.perSide.isEmpty() -> Text(
+                    "Solo la barra.", color = Color.White, fontSize = 15.sp, fontWeight = FontWeight.Bold
+                )
+                else -> Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    PlateCalculator.grouped(result.perSide).forEach { (plate, count) ->
+                        Row(
+                            Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp))
+                                .background(SurfaceVariant).padding(horizontal = 14.dp, vertical = 10.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                "${formatKg(plate)} kg", color = Color.White,
+                                fontSize = 15.sp, fontWeight = FontWeight.Black, modifier = Modifier.weight(1f)
+                            )
+                            Text("× $count", color = Cyan, fontSize = 15.sp, fontWeight = FontWeight.Black)
+                        }
+                    }
+                }
+            }
+
+            if (result.approximate && !result.belowBar) {
+                Spacer(Modifier.height(10.dp))
+                Text(
+                    "Con estos discos salen ${formatKg(result.achievedKg)} kg " +
+                        "(faltan ${formatKg(result.leftoverKg)} kg).",
+                    color = Gold, fontSize = 11.sp
+                )
+            }
+
+            Spacer(Modifier.height(18.dp))
+            Text("BARRA", color = TextMuted, fontSize = 9.sp, fontWeight = FontWeight.Bold)
+            Spacer(Modifier.height(8.dp))
+            Row(
+                Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                PlateCalculator.BAR_OPTIONS.forEach { bar ->
+                    val selected = bar == barKg
+                    Box(
+                        Modifier.clip(RoundedCornerShape(50))
+                            .background(if (selected) Cyan else SurfaceVariant)
+                            .clickable { onBarChange(bar) }
+                            .padding(horizontal = 14.dp, vertical = 7.dp)
+                    ) {
+                        Text(
+                            if (bar == 0.0) "Sin barra" else "${formatKg(bar)} kg",
+                            color = if (selected) OnLime else TextSecondary,
+                            fontSize = 11.sp, fontWeight = FontWeight.Bold, maxLines = 1, softWrap = false
+                        )
+                    }
+                }
+            }
+
+            Spacer(Modifier.height(18.dp))
+            PrimaryButton("Cerrar", onDismiss, Modifier.fillMaxWidth())
+        }
+    }
+}
+
+@Composable
+private fun StepChip(label: String, onClick: () -> Unit) {
+    Box(
+        Modifier.size(52.dp).clip(RoundedCornerShape(14.dp)).background(SurfaceVariant)
+            .clickable(onClick = onClick),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(label, color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Black)
     }
 }
 
@@ -498,71 +742,132 @@ private fun MeasureToggle(current: MeasureType, onSelect: (MeasureType) -> Unit)
 @Composable
 private fun SetRow(
     set: SetLogEntity,
+    isPr: Boolean,
+    showRir: Boolean,
     onWeightSet: (Double) -> Unit,
     onRepsSet: (Int) -> Unit,
     onToggle: () -> Unit,
-    onDelete: () -> Unit
+    onRirSet: (Int) -> Unit,
+    onLongPress: () -> Unit
 ) {
     var weightText by remember(set.id) { mutableStateOf(formatWeightValue(set.weightKg, WeightUnit.KG)) }
     var repsText by remember(set.id) { mutableStateOf(set.reps.toString()) }
     val done = set.completed
+    val warmup = set.isWarmup
+    val accent = if (warmup) Gold else Lime
 
-    Row(
+    Column(
         Modifier.fillMaxWidth()
             .clip(RoundedCornerShape(16.dp))
             .background(Surface)
-            .then(if (done) Modifier.border(BorderStroke(1.dp, Lime.copy(alpha = 0.6f)), RoundedCornerShape(16.dp)) else Modifier)
-            .combinedClickable(onClick = {}, onLongClick = onDelete)
-            .padding(horizontal = 14.dp, vertical = 12.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Column(Modifier.weight(1.1f)) {
-            Text(
-                "SERIE ${set.setNumber}",
-                color = if (done) Lime else TextMuted,
-                fontSize = 9.sp, fontWeight = FontWeight.Bold, maxLines = 1
+            .then(
+                if (done) Modifier.border(
+                    BorderStroke(1.dp, accent.copy(alpha = 0.6f)), RoundedCornerShape(16.dp)
+                ) else Modifier
             )
-            Spacer(Modifier.height(2.dp))
-            if (done) {
-                Text(
-                    "Hecha", color = Lime, fontSize = 15.sp,
-                    fontWeight = FontWeight.Black, fontStyle = FontStyle.Italic, maxLines = 1
-                )
-            } else {
-                Text(
-                    "%02d".format(set.setNumber), color = TextMuted,
-                    fontSize = 20.sp, fontWeight = FontWeight.Black, maxLines = 1
+            .combinedClickable(onClick = {}, onLongClick = onLongPress)
+            .padding(horizontal = 14.dp, vertical = 12.dp)
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Column(Modifier.weight(1.1f)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    if (warmup) {
+                        Icon(
+                            Icons.Filled.LocalFireDepartment, null,
+                            tint = Gold, modifier = Modifier.size(11.dp)
+                        )
+                        Spacer(Modifier.width(3.dp))
+                    }
+                    Text(
+                        if (warmup) "CALENT." else "SERIE ${set.setNumber}",
+                        color = if (warmup) Gold else if (done) Lime else TextMuted,
+                        fontSize = 9.sp, fontWeight = FontWeight.Bold, maxLines = 1
+                    )
+                    if (isPr) {
+                        Spacer(Modifier.width(4.dp))
+                        Icon(
+                            Icons.Filled.EmojiEvents, "Récord",
+                            tint = Gold, modifier = Modifier.size(12.dp)
+                        )
+                    }
+                }
+                Spacer(Modifier.height(2.dp))
+                if (done) {
+                    Text(
+                        "Hecha", color = accent, fontSize = 15.sp,
+                        fontWeight = FontWeight.Black, fontStyle = FontStyle.Italic, maxLines = 1
+                    )
+                } else {
+                    Text(
+                        "%02d".format(set.setNumber), color = TextMuted,
+                        fontSize = 20.sp, fontWeight = FontWeight.Black, maxLines = 1
+                    )
+                }
+            }
+            Spacer(Modifier.width(6.dp))
+            NumberBox("KG", weightText, done, Modifier.weight(1f)) {
+                weightText = it
+                it.replace(',', '.').toDoubleOrNull()?.let { w -> onWeightSet(w) }
+            }
+            Spacer(Modifier.width(8.dp))
+            NumberBox(
+                if (set.measure == MeasureType.SECONDS) "SEG" else "REPS",
+                repsText, done, Modifier.weight(1f)
+            ) {
+                repsText = it
+                it.toIntOrNull()?.let { r -> onRepsSet(r) }
+            }
+            Spacer(Modifier.width(10.dp))
+            Box(
+                Modifier.size(42.dp).clip(CircleShape)
+                    .then(
+                        if (done) Modifier.background(accent)
+                        else Modifier.border(BorderStroke(2.dp, Outline), CircleShape)
+                    )
+                    .clickable(onClick = onToggle),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    Icons.Filled.Check, "Confirmar serie",
+                    tint = if (done) OnLime else TextMuted,
+                    modifier = Modifier.size(20.dp)
                 )
             }
         }
-        Spacer(Modifier.width(6.dp))
-        NumberBox("KG", weightText, done, Modifier.weight(1f)) {
-            weightText = it
-            it.replace(',', '.').toDoubleOrNull()?.let { w -> onWeightSet(w) }
+
+        if (showRir && done && !warmup) {
+            Spacer(Modifier.height(10.dp))
+            RirChips(set.rpe) { onRirSet(it) }
         }
+    }
+}
+
+/** Reps-in-reserve picker shown under a confirmed set (stored as RPE = 10 - RIR). */
+@Composable
+private fun RirChips(rpe: Double?, onSelect: (Int) -> Unit) {
+    val current = rpe?.let { (WorkoutViewModel.RIR_MAX_RPE - it).roundToInt() }
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Text(
+            "RIR", color = TextMuted, fontSize = 9.sp,
+            fontWeight = FontWeight.Bold, letterSpacing = 1.sp
+        )
         Spacer(Modifier.width(8.dp))
-        NumberBox(
-            if (set.measure == MeasureType.SECONDS) "SEG" else "REPS",
-            repsText, done, Modifier.weight(1f)
-        ) {
-            repsText = it
-            it.toIntOrNull()?.let { r -> onRepsSet(r) }
-        }
-        Spacer(Modifier.width(10.dp))
-        Box(
-            Modifier.size(42.dp).clip(CircleShape)
-                .then(
-                    if (done) Modifier.background(Lime)
-                    else Modifier.border(BorderStroke(2.dp, Outline), CircleShape)
-                )
-                .clickable(onClick = onToggle),
-            contentAlignment = Alignment.Center
-        ) {
-            Icon(
-                Icons.Filled.Check, "Confirmar serie",
-                tint = if (done) OnLime else TextMuted,
-                modifier = Modifier.size(20.dp)
-            )
+        Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            (0..4).forEach { rir ->
+                val selected = current == rir
+                Box(
+                    Modifier.clip(RoundedCornerShape(50))
+                        .background(if (selected) Cyan else SurfaceVariant)
+                        .clickable { onSelect(rir) }
+                        .padding(horizontal = 11.dp, vertical = 5.dp)
+                ) {
+                    Text(
+                        if (rir == 4) "4+" else "$rir",
+                        color = if (selected) OnLime else TextSecondary,
+                        fontSize = 11.sp, fontWeight = FontWeight.Bold
+                    )
+                }
+            }
         }
     }
 }
@@ -628,6 +933,28 @@ private fun WorkoutSummaryDialog(summary: WorkoutSummary, onDone: () -> Unit) {
                 }
                 Spacer(Modifier.height(10.dp))
                 Text("${summary.sets} series completadas", color = TextSecondary, fontSize = 12.sp)
+
+                if (summary.prs.isNotEmpty()) {
+                    Spacer(Modifier.height(16.dp))
+                    Column(
+                        Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp))
+                            .background(Gold.copy(alpha = 0.12f)).padding(14.dp),
+                        verticalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(Icons.Filled.EmojiEvents, null, tint = Gold, modifier = Modifier.size(14.dp))
+                            Spacer(Modifier.width(6.dp))
+                            Text(
+                                "RÉCORDS DE HOY", color = Gold, fontSize = 10.sp,
+                                fontWeight = FontWeight.Black, letterSpacing = 1.sp
+                            )
+                        }
+                        summary.prs.forEach {
+                            Text(it, color = Color.White, fontSize = 12.sp)
+                        }
+                    }
+                }
+
                 Spacer(Modifier.height(20.dp))
                 PrimaryButton("Hecho", onDone, Modifier.fillMaxWidth())
             }

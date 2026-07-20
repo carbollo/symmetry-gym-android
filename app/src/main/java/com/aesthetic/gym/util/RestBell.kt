@@ -92,10 +92,18 @@ class RestBell(private val context: Context) {
         } catch (_: Exception) {
             // Audio is a nice-to-have: never crash the workout because of it.
         }
-        vibrate()
+        vibrate(longArrayOf(0, 180, 120, 180, 120, 300))
     }
 
-    private fun vibrate() {
+    /**
+     * Short distinctive buzz for a new personal record. Vibration only on purpose:
+     * a record happens right after a set, and the bell means "rest is over".
+     */
+    fun celebrate() {
+        vibrate(longArrayOf(0, 60, 60, 60, 60, 220))
+    }
+
+    private fun vibrate(pattern: LongArray) {
         try {
             val vibrator = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                 (context.getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as? VibratorManager)?.defaultVibrator
@@ -103,7 +111,6 @@ class RestBell(private val context: Context) {
                 @Suppress("DEPRECATION")
                 context.getSystemService(Context.VIBRATOR_SERVICE) as? Vibrator
             } ?: return
-            val pattern = longArrayOf(0, 180, 120, 180, 120, 300)
             vibrator.vibrate(VibrationEffect.createWaveform(pattern, -1))
         } catch (_: Exception) {
         }

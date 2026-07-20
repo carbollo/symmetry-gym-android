@@ -12,7 +12,8 @@ object WorkoutMath {
 
     /** Total weight moved (kg) across completed rep-based working sets: Σ peso × reps. */
     fun volumeKg(sets: List<SetLogEntity>): Double =
-        sets.filter { it.completed && it.measure == MeasureType.REPS }.sumOf { it.weightKg * it.reps }
+        sets.filter { it.completed && !it.isWarmup && it.measure == MeasureType.REPS }
+            .sumOf { it.weightKg * it.reps }
 
     /** Session duration in minutes, real if available, otherwise estimated from set count. */
     fun durationMinutes(session: WorkoutSessionEntity, completedSets: Int): Double {

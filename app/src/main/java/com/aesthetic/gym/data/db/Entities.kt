@@ -23,7 +23,11 @@ data class ProfileEntity(
     val unit: WeightUnit = WeightUnit.KG,
     val experienceLevel: Int = 1,
     val onboarded: Boolean = false,
-    val createdAt: Long = 0L
+    val createdAt: Long = 0L,
+    /** Weight of the user's barbell, used by the plate calculator. */
+    val barWeightKg: Double = 20.0,
+    /** Whether to ask for RIR/RPE after confirming a set. */
+    val showRpe: Boolean = false
 )
 
 @Entity(tableName = "exercises")

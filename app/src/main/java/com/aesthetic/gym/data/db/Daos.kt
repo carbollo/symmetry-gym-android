@@ -15,6 +15,21 @@ data class SetWithDate(
     val date: Long
 )
 
+/** Flattened row used to export the whole training history to CSV. */
+data class ExportRow(
+    val date: Long,
+    val sessionName: String,
+    val exercise: String,
+    val muscle: String,
+    val setNumber: Int,
+    val isWarmup: Boolean,
+    val measure: String,
+    val weightKg: Double,
+    val reps: Int,
+    val rpe: Double?,
+    val completed: Boolean
+)
+
 @Dao
 interface ProfileDao {
     @Query("SELECT * FROM profile WHERE id = 1")
@@ -216,6 +231,21 @@ interface WorkoutDao {
 
     @Query("SELECT DISTINCT exerciseId FROM set_logs")
     fun loggedExerciseIdsFlow(): Flow<List<String>>
+
+    /** Every logged set, flattened with session and exercise data, for the CSV export. */
+    @Query(
+        """
+        SELECT s.startedAt AS date, s.name AS sessionName, e.name AS exercise,
+               e.primaryMuscle AS muscle, sl.setNumber AS setNumber, sl.isWarmup AS isWarmup,
+               sl.measure AS measure, sl.weightKg AS weightKg, sl.reps AS reps,
+               sl.rpe AS rpe, sl.completed AS completed
+        FROM set_logs sl
+        JOIN sessions s ON s.id = sl.sessionId
+        JOIN exercises e ON e.id = sl.exerciseId
+        ORDER BY s.startedAt DESC, e.name, sl.setNumber
+        """
+    )
+    suspend fun exportRows(): List<ExportRow>
 }
 
 @Dao

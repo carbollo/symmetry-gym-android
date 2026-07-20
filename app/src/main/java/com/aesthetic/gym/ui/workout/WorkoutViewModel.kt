@@ -8,6 +8,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
+import com.aesthetic.gym.data.db.ProfileEntity
 import com.aesthetic.gym.data.db.RoutineItemWithExercise
 import com.aesthetic.gym.data.db.SessionWithSets
 import com.aesthetic.gym.data.db.SetLogEntity
@@ -17,6 +18,8 @@ import com.aesthetic.gym.domain.overload.OverloadSuggestion
 import com.aesthetic.gym.domain.overload.ProgressiveOverload
 import com.aesthetic.gym.util.RestBell
 import com.aesthetic.gym.util.WorkoutMath
+import com.aesthetic.gym.util.epley1RM
+import com.aesthetic.gym.util.formatKg
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.SharingStarted
@@ -29,8 +32,19 @@ data class WorkoutSummary(
     val durationMin: Int,
     val kcal: Int,
     val volumeKg: Double,
-    val sets: Int
+    val sets: Int,
+    val prs: List<String> = emptyList()
 )
+
+/** A record broken during the session, shown as a celebration banner. */
+data class PrEvent(
+    val setId: Long,
+    val exerciseName: String,
+    val text: String,
+    val kind: PrKind
+)
+
+enum class PrKind { WEIGHT, REPS, E1RM }
 
 class WorkoutViewModel(
     private val repo: GymRepository,
@@ -61,6 +75,19 @@ class WorkoutViewModel(
     /** All-time best set per exercise, shown as "RÉCORD" on the workout card. */
     var records by mutableStateOf<Map<String, SetLogEntity>>(emptyMap())
         private set
+
+    /** User preferences (bar weight for the plate calculator, RIR tracking on/off). */
+    val profile = repo.profileHot
+
+    /** Latest record broken, shown as a banner until dismissed. */
+    var prEvent by mutableStateOf<PrEvent?>(null)
+        private set
+
+    /** Ids of the sets that broke a record in this session (trophy on the row). */
+    var prSetIds by mutableStateOf<Set<Long>>(emptySet())
+        private set
+
+    private val prLog = mutableListOf<String>()
 
     init {
         viewModelScope.launch {
@@ -121,6 +148,8 @@ class WorkoutViewModel(
                         setNumber = n,
                         reps = ref?.reps ?: fallbackReps,
                         weightKg = ref?.weightKg ?: fallbackWeight,
+                        // Warm-up marking sticks: if set 1 was a warm-up last time, it is again.
+                        isWarmup = prevByNumber[n]?.isWarmup ?: false,
                         completed = false,
                         measure = measure
                     )
@@ -182,10 +211,73 @@ class WorkoutViewModel(
             val nowCompleted = !set.completed
             repo.updateSet(set.copy(completed = nowCompleted))
             if (nowCompleted) {
-                repo.updateExerciseLastWeight(set.exerciseId, set.weightKg)
-                repo.updateExerciseLastReps(set.exerciseId, set.reps)
-                startRest(restSecondsFor(set.exerciseId))
+                if (!set.isWarmup) {
+                    repo.updateExerciseLastWeight(set.exerciseId, set.weightKg)
+                    repo.updateExerciseLastReps(set.exerciseId, set.reps)
+                    checkPersonalRecord(set)
+                }
+                // Warm-up sets get a short rest instead of the full working-set rest.
+                val rest = restSecondsFor(set.exerciseId)
+                startRest(if (set.isWarmup) minOf(rest, WARMUP_REST_SECONDS) else rest)
             }
+        }
+    }
+
+    /** Marks a set as a warm-up (or back to a working set). Warm-ups don't count for volume or records. */
+    fun toggleWarmup(set: SetLogEntity) {
+        viewModelScope.launch {
+            repo.updateSet(set.copy(isWarmup = !set.isWarmup))
+            if (!set.isWarmup) prSetIds = prSetIds - set.id
+        }
+    }
+
+    /** Stores the reps in reserve for a set (null clears it). */
+    fun setRir(set: SetLogEntity, rir: Int?) {
+        viewModelScope.launch {
+            val current = set.rpe?.let { RIR_MAX_RPE - it }?.roundToInt()
+            val value = if (current == rir) null else rir?.let { RIR_MAX_RPE - it }
+            repo.updateSet(set.copy(rpe = value))
+        }
+    }
+
+    /**
+     * Compares a just-confirmed set with the all-time best and raises a celebration
+     * when it beats it on weight, on reps at that weight, or on estimated 1RM.
+     */
+    private fun checkPersonalRecord(set: SetLogEntity) {
+        if (set.measure != MeasureType.REPS || set.weightKg <= 0.0 || set.reps <= 0) return
+        val name = plannedItems.firstOrNull { it.item.exerciseId == set.exerciseId }?.exercise?.name
+            ?: return
+        val best = records[set.exerciseId]
+        val kind = when {
+            best == null -> PrKind.WEIGHT
+            set.weightKg > best.weightKg -> PrKind.WEIGHT
+            set.weightKg == best.weightKg && set.reps > best.reps -> PrKind.REPS
+            epley1RM(set.weightKg, set.reps) > epley1RM(best.weightKg, best.reps) + 0.01 -> PrKind.E1RM
+            else -> return
+        }
+        val weightLabel = "${formatKg(set.weightKg)} kg × ${set.reps}"
+        val text = when (kind) {
+            PrKind.WEIGHT -> "Peso máximo: $weightLabel"
+            PrKind.REPS -> "Más reps a ${formatKg(set.weightKg)} kg: ${set.reps}"
+            PrKind.E1RM -> "Mejor 1RM estimado: ${formatKg(epley1RM(set.weightKg, set.reps))} kg"
+        }
+        records = records + (set.exerciseId to set.copy(completed = true))
+        prSetIds = prSetIds + set.id
+        prLog += "$name — $text"
+        prEvent = PrEvent(set.id, name, text, kind)
+        bell.celebrate()
+    }
+
+    fun dismissPr() {
+        prEvent = null
+    }
+
+    /** Barbell weight used by the plate calculator (stored in the profile). */
+    fun setBarWeight(kg: Double) {
+        viewModelScope.launch {
+            val current = repo.getProfile() ?: ProfileEntity()
+            repo.saveProfile(current.copy(barWeightKg = kg))
         }
     }
 
@@ -252,13 +344,18 @@ class WorkoutViewModel(
                 durationMin = finished?.let { WorkoutMath.durationMinutes(it, completed).roundToInt() } ?: 0,
                 kcal = finished?.let { WorkoutMath.caloriesKcal(it, sets, bw) } ?: 0,
                 volumeKg = WorkoutMath.volumeKg(sets),
-                sets = completed
+                sets = completed,
+                prs = prLog.toList()
             )
         }
     }
 
     companion object {
         const val DEFAULT_REST_SECONDS = 90
+        const val WARMUP_REST_SECONDS = 45
+
+        /** RIR 0 means RPE 10, RIR 3 means RPE 7, etc. */
+        const val RIR_MAX_RPE = 10.0
 
         fun factory(repo: GymRepository, bell: RestBell, sessionId: Long) =
             viewModelFactory { initializer { WorkoutViewModel(repo, bell, sessionId) } }
