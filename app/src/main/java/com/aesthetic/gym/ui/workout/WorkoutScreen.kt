@@ -11,6 +11,8 @@ import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -73,6 +75,7 @@ import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.aesthetic.gym.data.db.SetLogEntity
+import com.aesthetic.gym.domain.model.Equipment
 import com.aesthetic.gym.domain.model.MeasureType
 import com.aesthetic.gym.domain.model.WeightUnit
 import com.aesthetic.gym.ui.components.MuscleIcons
@@ -115,7 +118,7 @@ fun WorkoutScreen(navController: NavController, sessionId: Long) {
     var selectedIndex by remember { mutableIntStateOf(0) }
     var showConfirm by remember { mutableStateOf(false) }
     var optionsFor by remember { mutableStateOf<SetLogEntity?>(null) }
-    var platesFor by remember { mutableStateOf<Double?>(null) }
+    var platesFor by remember { mutableStateOf<PlateTarget?>(null) }
     val safeIndex = selectedIndex.coerceIn(0, (planned.size - 1).coerceAtLeast(0))
 
     // Locked during the workout: back minimizes instead of closing/leaving.
@@ -218,8 +221,11 @@ fun WorkoutScreen(navController: NavController, sessionId: Long) {
                     Row(
                         Modifier.clip(RoundedCornerShape(50)).background(SurfaceVariant)
                             .clickable {
-                                platesFor = sets.firstOrNull { !it.completed }?.weightKg
-                                    ?: sets.firstOrNull()?.weightKg ?: 20.0
+                                platesFor = PlateTarget(
+                                    exerciseId = exId,
+                                    kg = sets.firstOrNull { !it.completed }?.weightKg
+                                        ?: sets.firstOrNull()?.weightKg ?: 0.0
+                                )
                             }
                             .padding(horizontal = 12.dp, vertical = 7.dp),
                         verticalAlignment = Alignment.CenterVertically
@@ -328,11 +334,13 @@ fun WorkoutScreen(navController: NavController, sessionId: Long) {
         )
     }
 
-    platesFor?.let { weight ->
+    platesFor?.let { target ->
+        val exercise = planned.firstOrNull { it.item.exerciseId == target.exerciseId }?.exercise
         PlateDialog(
-            initialKg = weight,
-            barKg = profile?.barWeightKg ?: 20.0,
-            onBarChange = { vm.setBarWeight(it) },
+            initialKg = target.kg,
+            points = exercise?.loadPoints ?: PlateCalculator.DEFAULT_POINTS,
+            isDumbbell = exercise?.equipment == Equipment.DUMBBELL,
+            onPointsChange = { vm.setLoadPoints(target.exerciseId, it) },
             onDismiss = { platesFor = null }
         )
     }
@@ -421,56 +429,144 @@ private fun SetOptionsDialog(
     }
 }
 
-/** Plate calculator: how to load the bar for a given weight. */
+/** Which exercise the plate calculator was opened from, and with what starting weight. */
+private data class PlateTarget(val exerciseId: String, val kg: Double)
+
+/**
+ * Plate calculator: how many plates to load, per loading point, for a target weight.
+ * The bar/sled is never discounted — the target is the weight of the plates themselves.
+ */
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun PlateDialog(
     initialKg: Double,
-    barKg: Double,
-    onBarChange: (Double) -> Unit,
+    points: Int,
+    isDumbbell: Boolean,
+    onPointsChange: (Int) -> Unit,
     onDismiss: () -> Unit
 ) {
-    var target by remember { mutableStateOf(initialKg) }
-    val result = remember(target, barKg) { PlateCalculator.compute(target, barKg) }
+    // The typed text is the single source of truth, so the user can just write "3.75".
+    var targetText by remember { mutableStateOf(if (initialKg > 0) formatKg(initialKg) else "") }
+    val target = targetText.replace(',', '.').toDoubleOrNull() ?: 0.0
+    val result = remember(target, points) { PlateCalculator.compute(target, points) }
+    val word = PlateCalculator.pointWord(points)
+    val unitWord = if (points == 1) "sitio" else if (points == 2) "lado" else "palo"
+    val step = result.stepKg
 
     Dialog(onDismissRequest = onDismiss) {
         Column(
-            Modifier.widthIn(max = 360.dp).clip(RoundedCornerShape(24.dp)).background(Surface).padding(22.dp)
+            Modifier.widthIn(max = 360.dp).clip(RoundedCornerShape(24.dp)).background(Surface)
+                .verticalScroll(rememberScrollState()).padding(22.dp)
         ) {
             Text(
                 "CALCULADORA DE DISCOS", color = Cyan, fontSize = 11.sp,
                 fontWeight = FontWeight.Black, letterSpacing = 1.sp
             )
-            Spacer(Modifier.height(14.dp))
+            Spacer(Modifier.height(4.dp))
+            Text(
+                "Solo discos. El peso de la barra o del carro no cuenta.",
+                color = TextMuted, fontSize = 10.sp, lineHeight = 14.sp
+            )
 
-            // Target weight with fine adjustment.
+            // ---- Target weight: typed directly, or nudged in reachable steps ----
+            Spacer(Modifier.height(16.dp))
             Row(verticalAlignment = Alignment.CenterVertically) {
-                StepChip("-2.5") { target = (target - 2.5).coerceAtLeast(0.0) }
-                Spacer(Modifier.width(10.dp))
-                Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text(
-                        "${formatKg(target)} kg", color = Color.White,
-                        fontWeight = FontWeight.Black, fontSize = 28.sp, maxLines = 1
-                    )
-                    Text("objetivo", color = TextMuted, fontSize = 10.sp)
+                StepChip("-${formatKg(step)}") {
+                    targetText = formatKg((result.best.totalKg - step).coerceAtLeast(0.0))
                 }
                 Spacer(Modifier.width(10.dp))
-                StepChip("+2.5") { target += 2.5 }
+                Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
+                    Box(
+                        Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp))
+                            .background(SurfaceVariant).padding(vertical = 6.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        if (targetText.isEmpty()) {
+                            Text("0", color = TextMuted, fontWeight = FontWeight.Black, fontSize = 28.sp)
+                        }
+                        BasicTextField(
+                            value = targetText,
+                            onValueChange = { typed ->
+                                targetText = typed.filter { it.isDigit() || it == '.' || it == ',' }.take(8)
+                            },
+                            singleLine = true,
+                            textStyle = TextStyle(
+                                color = Color.White, fontSize = 28.sp,
+                                fontWeight = FontWeight.Black, textAlign = TextAlign.Center
+                            ),
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                            cursorBrush = SolidColor(Cyan),
+                            modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp)
+                        )
+                    }
+                    Spacer(Modifier.height(3.dp))
+                    Text("kg de discos que quieres cargar", color = TextMuted, fontSize = 10.sp)
+                }
+                Spacer(Modifier.width(10.dp))
+                StepChip("+${formatKg(step)}") {
+                    targetText = formatKg(result.best.totalKg + step)
+                }
             }
 
+            // ---- Where the plates go ----
             Spacer(Modifier.height(18.dp))
-            Text("POR CADA LADO", color = TextMuted, fontSize = 9.sp, fontWeight = FontWeight.Bold)
+            Text(
+                "¿DÓNDE METES LOS DISCOS?", color = TextMuted, fontSize = 9.sp,
+                fontWeight = FontWeight.Bold, letterSpacing = 1.sp
+            )
+            Spacer(Modifier.height(8.dp))
+            // FlowRow, not a scrolling Row: the four chips are wider than the dialog and the
+            // fourth one would sit off-screen with no hint that it is there.
+            FlowRow(
+                Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                verticalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                PlateCalculator.POINT_OPTIONS.forEach { option ->
+                    val selected = option == points
+                    Box(
+                        Modifier.clip(RoundedCornerShape(50))
+                            .background(if (selected) Cyan else SurfaceVariant)
+                            .clickable { onPointsChange(option) }
+                            .padding(horizontal = 13.dp, vertical = 7.dp)
+                    ) {
+                        Text(
+                            when (option) {
+                                1 -> "1 sitio"
+                                2 -> "Barra · 2 lados"
+                                4 -> "Prensa · 4 palos"
+                                else -> "$option palos"
+                            },
+                            color = if (selected) OnLime else TextSecondary,
+                            fontSize = 11.sp, fontWeight = FontWeight.Bold, maxLines = 1, softWrap = false
+                        )
+                    }
+                }
+            }
+            Spacer(Modifier.height(6.dp))
+            Text(
+                "Cuenta cada sitio donde entran discos: una barra normal son 2 (uno por lado) " +
+                    "y una prensa de 4 palos son 4.",
+                color = TextMuted, fontSize = 10.sp, lineHeight = 14.sp
+            )
+
+            // ---- The plates themselves ----
+            Spacer(Modifier.height(18.dp))
+            Text(
+                when {
+                    points == 1 -> "DISCOS A PONER"
+                    points == 2 -> "EN CADA LADO (2 lados)"
+                    else -> "EN CADA PALO ($points palos)"
+                },
+                color = TextMuted, fontSize = 9.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp
+            )
             Spacer(Modifier.height(8.dp))
 
-            when {
-                result.belowBar -> Text(
-                    "Menos que la barra (${formatKg(barKg)} kg).",
-                    color = TextSecondary, fontSize = 13.sp
-                )
-                result.perSide.isEmpty() -> Text(
-                    "Solo la barra.", color = Color.White, fontSize = 15.sp, fontWeight = FontWeight.Bold
-                )
-                else -> Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                    PlateCalculator.grouped(result.perSide).forEach { (plate, count) ->
+            if (result.best.perPoint.isEmpty()) {
+                Text("Sin discos.", color = Color.White, fontSize = 15.sp, fontWeight = FontWeight.Bold)
+            } else {
+                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    PlateCalculator.grouped(result.best.perPoint).forEach { (plate, count) ->
                         Row(
                             Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp))
                                 .background(SurfaceVariant).padding(horizontal = 14.dp, vertical = 10.dp),
@@ -484,44 +580,92 @@ private fun PlateDialog(
                         }
                     }
                 }
+                Spacer(Modifier.height(8.dp))
+                Text(
+                    if (points == 1)
+                        "${formatKg(result.best.totalKg)} kg de discos en un solo sitio."
+                    else
+                        "$points $word × ${formatKg(result.best.perPointKg)} kg = " +
+                            "${formatKg(result.best.totalKg)} kg de discos",
+                    color = Cyan, fontSize = 11.sp, fontWeight = FontWeight.Bold
+                )
+                if (result.best.perPoint.size > 7) {
+                    Spacer(Modifier.height(4.dp))
+                    Text(
+                        "Son muchos discos por $unitWord; comprueba que caben.",
+                        color = TextMuted, fontSize = 10.sp
+                    )
+                }
             }
 
-            if (result.approximate && !result.belowBar) {
-                Spacer(Modifier.height(10.dp))
+            if (isDumbbell) {
+                Spacer(Modifier.height(6.dp))
                 Text(
-                    "Con estos discos salen ${formatKg(result.achievedKg)} kg " +
-                        "(faltan ${formatKg(result.leftoverKg)} kg).",
-                    color = Gold, fontSize = 11.sp
+                    "Esto es para una mancuerna. Repite lo mismo en la otra.",
+                    color = TextMuted, fontSize = 10.sp
                 )
             }
 
-            Spacer(Modifier.height(18.dp))
-            Text("BARRA", color = TextMuted, fontSize = 9.sp, fontWeight = FontWeight.Bold)
-            Spacer(Modifier.height(8.dp))
-            Row(
-                Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
-                horizontalArrangement = Arrangement.spacedBy(6.dp)
-            ) {
-                PlateCalculator.BAR_OPTIONS.forEach { bar ->
-                    val selected = bar == barKg
-                    Box(
-                        Modifier.clip(RoundedCornerShape(50))
-                            .background(if (selected) Cyan else SurfaceVariant)
-                            .clickable { onBarChange(bar) }
-                            .padding(horizontal = 14.dp, vertical = 7.dp)
-                    ) {
-                        Text(
-                            if (bar == 0.0) "Sin barra" else "${formatKg(bar)} kg",
-                            color = if (selected) OnLime else TextSecondary,
-                            fontSize = 11.sp, fontWeight = FontWeight.Bold, maxLines = 1, softWrap = false
-                        )
+            // ---- When the target isn't reachable ----
+            if (!result.isExact) {
+                Spacer(Modifier.height(14.dp))
+                Text(
+                    "NO SALE EXACTO", color = Gold, fontSize = 10.sp,
+                    fontWeight = FontWeight.Black, letterSpacing = 1.sp
+                )
+                Spacer(Modifier.height(4.dp))
+                Text(
+                    if (result.diffKg < 0)
+                        "Lo más cerca de ${formatKg(result.targetKg)} kg son " +
+                            "${formatKg(result.best.totalKg)} kg (te quedas a " +
+                            "${formatKg(-result.diffKg)} kg)."
+                    else
+                        "Lo más cerca de ${formatKg(result.targetKg)} kg son " +
+                            "${formatKg(result.best.totalKg)} kg (" +
+                            "${formatKg(result.diffKg)} kg de más).",
+                    color = Gold, fontSize = 11.sp, lineHeight = 15.sp
+                )
+                Spacer(Modifier.height(8.dp))
+                FlowRow(
+                    Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    verticalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    if (result.below.totalKg > 0.0) {
+                        AdjustChip("Poner ${formatKg(result.below.totalKg)} kg") {
+                            targetText = formatKg(result.below.totalKg)
+                        }
+                    }
+                    AdjustChip("Poner ${formatKg(result.above.totalKg)} kg") {
+                        targetText = formatKg(result.above.totalKg)
                     }
                 }
+                Spacer(Modifier.height(6.dp))
+                Text(
+                    if (points == 1)
+                        "Con 1 sitio solo se puede subir de ${formatKg(step)} en ${formatKg(step)} kg."
+                    else
+                        "Con $points $word solo se puede subir de ${formatKg(step)} " +
+                            "en ${formatKg(step)} kg.",
+                    color = TextMuted, fontSize = 10.sp, lineHeight = 14.sp
+                )
             }
 
             Spacer(Modifier.height(18.dp))
             PrimaryButton("Cerrar", onDismiss, Modifier.fillMaxWidth())
         }
+    }
+}
+
+@Composable
+private fun AdjustChip(label: String, onClick: () -> Unit) {
+    Box(
+        Modifier.clip(RoundedCornerShape(50)).background(Gold.copy(alpha = 0.18f))
+            .border(BorderStroke(1.dp, Gold), RoundedCornerShape(50))
+            .clickable(onClick = onClick)
+            .padding(horizontal = 14.dp, vertical = 7.dp)
+    ) {
+        Text(label, color = Gold, fontSize = 11.sp, fontWeight = FontWeight.Bold, maxLines = 1, softWrap = false)
     }
 }
 
@@ -805,7 +949,8 @@ private fun SetRow(
                 }
             }
             Spacer(Modifier.width(6.dp))
-            NumberBox("KG", weightText, done, Modifier.weight(1f)) {
+            // Decimal keyboard: a plain number keypad hides the "." and 3.75 kg is untypeable.
+            NumberBox("KG", weightText, done, Modifier.weight(1f), KeyboardType.Decimal) {
                 weightText = it
                 it.replace(',', '.').toDoubleOrNull()?.let { w -> onWeightSet(w) }
             }
@@ -878,6 +1023,7 @@ private fun NumberBox(
     value: String,
     highlighted: Boolean,
     modifier: Modifier = Modifier,
+    keyboard: KeyboardType = KeyboardType.Number,
     onValueChange: (String) -> Unit
 ) {
     Column(modifier, horizontalAlignment = Alignment.CenterHorizontally) {
@@ -900,7 +1046,7 @@ private fun NumberBox(
                     color = if (highlighted) Lime else Color.White,
                     fontSize = 16.sp, fontWeight = FontWeight.Black, textAlign = TextAlign.Center
                 ),
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                keyboardOptions = KeyboardOptions(keyboardType = keyboard),
                 cursorBrush = SolidColor(Lime),
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp)
             )

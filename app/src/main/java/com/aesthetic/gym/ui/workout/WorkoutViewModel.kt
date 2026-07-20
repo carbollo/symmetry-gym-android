@@ -8,7 +8,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
-import com.aesthetic.gym.data.db.ProfileEntity
 import com.aesthetic.gym.data.db.RoutineItemWithExercise
 import com.aesthetic.gym.data.db.SessionWithSets
 import com.aesthetic.gym.data.db.SetLogEntity
@@ -16,6 +15,7 @@ import com.aesthetic.gym.data.repo.GymRepository
 import com.aesthetic.gym.domain.model.MeasureType
 import com.aesthetic.gym.domain.overload.OverloadSuggestion
 import com.aesthetic.gym.domain.overload.ProgressiveOverload
+import com.aesthetic.gym.util.PlateCalculator
 import com.aesthetic.gym.util.RestBell
 import com.aesthetic.gym.util.WorkoutMath
 import com.aesthetic.gym.util.epley1RM
@@ -76,7 +76,7 @@ class WorkoutViewModel(
     var records by mutableStateOf<Map<String, SetLogEntity>>(emptyMap())
         private set
 
-    /** User preferences (bar weight for the plate calculator, RIR tracking on/off). */
+    /** User preferences (RIR tracking on/off). */
     val profile = repo.profileHot
 
     /** Latest record broken, shown as a banner until dismissed. */
@@ -260,7 +260,10 @@ class WorkoutViewModel(
         val text = when (kind) {
             PrKind.WEIGHT -> "Peso máximo: $weightLabel"
             PrKind.REPS -> "Más reps a ${formatKg(set.weightKg)} kg: ${set.reps}"
-            PrKind.E1RM -> "Mejor 1RM estimado: ${formatKg(epley1RM(set.weightKg, set.reps))} kg"
+            // The 1RM is an estimate: one decimal, not the three a real load deserves.
+            PrKind.E1RM ->
+                "Mejor 1RM estimado: " +
+                    "${formatKg((epley1RM(set.weightKg, set.reps) * 10).roundToInt() / 10.0)} kg"
         }
         records = records + (set.exerciseId to set.copy(completed = true))
         prSetIds = prSetIds + set.id
@@ -273,11 +276,19 @@ class WorkoutViewModel(
         prEvent = null
     }
 
-    /** Barbell weight used by the plate calculator (stored in the profile). */
-    fun setBarWeight(kg: Double) {
+    /**
+     * Loading points of an exercise (barbell = 2, four-post press = 4), remembered per exercise.
+     * [plannedItems] is a snapshot taken in init, so it has to be patched by hand exactly like
+     * [setRest] does — otherwise the dialog would keep showing the old value.
+     */
+    fun setLoadPoints(exerciseId: String, points: Int) {
+        val value = points.coerceIn(1, PlateCalculator.MAX_POINTS)
         viewModelScope.launch {
-            val current = repo.getProfile() ?: ProfileEntity()
-            repo.saveProfile(current.copy(barWeightKg = kg))
+            repo.updateExerciseLoadPoints(exerciseId, value)
+            plannedItems = plannedItems.map {
+                if (it.item.exerciseId == exerciseId) it.copy(exercise = it.exercise?.copy(loadPoints = value))
+                else it
+            }
         }
     }
 

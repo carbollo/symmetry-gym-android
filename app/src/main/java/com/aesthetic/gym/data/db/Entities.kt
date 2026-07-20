@@ -24,7 +24,11 @@ data class ProfileEntity(
     val experienceLevel: Int = 1,
     val onboarded: Boolean = false,
     val createdAt: Long = 0L,
-    /** Weight of the user's barbell, used by the plate calculator. */
+    /**
+     * Obsolete since v1.21: the plate calculator no longer discounts the bar.
+     * Kept because SQLite < 3.35 (minSdk 26) has no DROP COLUMN and rebuilding the table
+     * is exactly the kind of migration where data gets lost. Do not use.
+     */
     val barWeightKg: Double = 20.0,
     /** Whether to ask for RIR/RPE after confirming a set. */
     val showRpe: Boolean = false
@@ -42,7 +46,9 @@ data class ExerciseEntity(
     val isCustom: Boolean = false,
     val lastWeightKg: Double? = null,
     val lastReps: Int? = null,
-    val measure: MeasureType = MeasureType.REPS
+    val measure: MeasureType = MeasureType.REPS,
+    /** Spots where plates go: 2 = normal barbell (one per side), 4 = four-post leg press. */
+    val loadPoints: Int = 2
 )
 
 @Entity(tableName = "routines")

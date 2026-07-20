@@ -45,5 +45,12 @@ val MIGRATION_4_5 = object : Migration(4, 5) {
     }
 }
 
+// v5 -> v6: loading points per exercise (plate calculator: barbell = 2, four-post press = 4).
+val MIGRATION_5_6 = object : Migration(5, 6) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("ALTER TABLE `exercises` ADD COLUMN `loadPoints` INTEGER NOT NULL DEFAULT 2")
+    }
+}
+
 val ALL_MIGRATIONS: Array<Migration> =
-    arrayOf(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5)
+    arrayOf(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6)

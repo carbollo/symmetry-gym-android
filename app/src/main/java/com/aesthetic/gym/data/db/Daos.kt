@@ -70,6 +70,9 @@ interface ExerciseDao {
 
     @Query("UPDATE exercises SET measure = :measure WHERE id = :id")
     suspend fun updateMeasure(id: String, measure: com.aesthetic.gym.domain.model.MeasureType)
+
+    @Query("UPDATE exercises SET loadPoints = :points WHERE id = :id")
+    suspend fun updateLoadPoints(id: String, points: Int)
 }
 
 @Dao

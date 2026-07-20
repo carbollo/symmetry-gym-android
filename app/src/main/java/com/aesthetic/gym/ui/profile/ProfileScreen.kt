@@ -74,7 +74,6 @@ fun ProfileScreen(navController: NavController) {
     var height by remember { mutableStateOf("175") }
     var unit by remember { mutableStateOf(WeightUnit.KG) }
     var experience by remember { mutableStateOf(1) }
-    var barWeight by remember { mutableStateOf("20") }
     var showRpe by remember { mutableStateOf(false) }
     var loaded by remember { mutableStateOf(false) }
     var saved by remember { mutableStateOf(false) }
@@ -99,7 +98,7 @@ fun ProfileScreen(navController: NavController) {
             name = p.name; sex = p.sex
             weight = trimDouble(p.bodyweightKg); height = trimDouble(p.heightCm)
             unit = p.unit; experience = p.experienceLevel
-            barWeight = trimDouble(p.barWeightKg); showRpe = p.showRpe
+            showRpe = p.showRpe
             loaded = true
         }
     }
@@ -164,11 +163,11 @@ fun ProfileScreen(navController: NavController) {
                 Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     Column(Modifier.weight(1f)) {
                         FieldLabel("PESO (KG)")
-                        DarkField(weight, "75", KeyboardType.Number) { weight = it; saved = false }
+                        DarkField(weight, "75", KeyboardType.Decimal) { weight = it; saved = false }
                     }
                     Column(Modifier.weight(1f)) {
                         FieldLabel("ALTURA (CM)")
-                        DarkField(height, "180", KeyboardType.Number) { height = it; saved = false }
+                        DarkField(height, "180", KeyboardType.Decimal) { height = it; saved = false }
                     }
                 }
 
@@ -197,15 +196,6 @@ fun ProfileScreen(navController: NavController) {
                         )
                     }
                 }
-
-                Spacer(Modifier.height(16.dp))
-                FieldLabel("PESO DE LA BARRA (KG)")
-                DarkField(barWeight, "20", KeyboardType.Number) { barWeight = it; saved = false }
-                Spacer(Modifier.height(4.dp))
-                Text(
-                    "Lo usa la calculadora de discos durante el entreno.",
-                    color = TextMuted, fontSize = 10.sp
-                )
 
                 Spacer(Modifier.height(16.dp))
                 Row(
@@ -252,8 +242,10 @@ fun ProfileScreen(navController: NavController) {
                 Box(
                     Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)).background(Violet)
                         .clickable {
+                            // Copy the stored profile instead of rebuilding it: @Upsert replaces
+                            // the whole row, so any field not listed here would be wiped.
                             vm.save(
-                                ProfileEntity(
+                                (profile ?: ProfileEntity()).copy(
                                     id = 1,
                                     name = name,
                                     sex = sex,
@@ -263,7 +255,6 @@ fun ProfileScreen(navController: NavController) {
                                     experienceLevel = experience,
                                     onboarded = true,
                                     createdAt = profile?.createdAt ?: 0L,
-                                    barWeightKg = barWeight.replace(',', '.').toDoubleOrNull() ?: 20.0,
                                     showRpe = showRpe
                                 )
                             )
