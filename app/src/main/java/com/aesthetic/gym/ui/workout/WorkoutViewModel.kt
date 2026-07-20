@@ -387,8 +387,13 @@ class WorkoutViewModel(
         val name = plannedItems.firstOrNull { it.item.exerciseId == set.exerciseId }?.exercise?.name
             ?: return
         val best = records[set.exerciseId]
+        // First ever set of an exercise: it becomes the baseline, but is not a record.
+        // You have only broken a record once you have something to beat.
+        if (best == null) {
+            records = records + (set.exerciseId to set.copy(completed = true))
+            return
+        }
         val kind = when {
-            best == null -> PrKind.WEIGHT
             set.weightKg > best.weightKg -> PrKind.WEIGHT
             set.weightKg == best.weightKg && set.reps > best.reps -> PrKind.REPS
             epley1RM(set.weightKg, set.reps) > epley1RM(best.weightKg, best.reps) + 0.01 -> PrKind.E1RM
