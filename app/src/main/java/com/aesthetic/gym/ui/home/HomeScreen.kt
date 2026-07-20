@@ -22,7 +22,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.FormatListBulleted
-import androidx.compose.material.icons.filled.ArrowOutward
 import androidx.compose.material.icons.filled.Bolt
 import androidx.compose.material.icons.filled.FitnessCenter
 import androidx.compose.material.icons.filled.Leaderboard
@@ -208,32 +207,6 @@ fun HomeScreen(navController: NavController) {
             }
         }
 
-        // ---------- BIOMETRIC ANALYSIS ----------
-        Box(
-            Modifier.fillMaxWidth().clip(RoundedCornerShape(20.dp))
-                .background(Violet.copy(alpha = 0.10f))
-                .border(1.dp, Violet.copy(alpha = 0.30f), RoundedCornerShape(20.dp))
-                .padding(16.dp)
-        ) {
-            Column {
-                Text("Análisis Biométrico", color = Violet, fontWeight = FontWeight.Bold, fontSize = 16.sp)
-                Spacer(Modifier.height(6.dp))
-                Text(insightText(state), color = TextSecondary, fontSize = 12.sp, lineHeight = 17.sp)
-                Spacer(Modifier.height(14.dp))
-                Row(
-                    Modifier.clip(RoundedCornerShape(12.dp)).background(SurfaceVariant)
-                        .border(1.dp, Outline, RoundedCornerShape(12.dp))
-                        .clickable { navController.navigate(Routes.PROGRESS) }
-                        .padding(horizontal = 14.dp, vertical = 10.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text("Revisar progreso", color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
-                    Spacer(Modifier.width(6.dp))
-                    Icon(Icons.Filled.ArrowOutward, null, tint = Color.White, modifier = Modifier.size(14.dp))
-                }
-            }
-        }
-
         // Ad at the very bottom of the home screen, and nowhere else: never during a
         // workout, and never next to a button that could be tapped by accident.
         // Nada de pedir anuncio hasta haber leido el perfil: con loading = true todavia
@@ -246,13 +219,6 @@ fun HomeScreen(navController: NavController) {
             )
         }
     }
-}
-
-private fun insightText(state: HomeUiState): String = when {
-    state.totalWorkouts == 0 -> "Empieza a entrenar y aquí verás cómo evoluciona tu composición de entrenamiento."
-    state.volumeChangePct == null -> "Sigue entrenando esta semana para poder comparar tu progreso con la anterior."
-    state.volumeChangePct >= 0 -> "Tu volumen de entrenamiento ha mejorado un ${state.volumeChangePct}% esta semana."
-    else -> "Tu volumen ha bajado un ${-state.volumeChangePct}% esta semana. ¡A por ello!"
 }
 
 @Composable
