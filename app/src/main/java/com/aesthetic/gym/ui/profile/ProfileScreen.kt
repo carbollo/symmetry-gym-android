@@ -75,6 +75,7 @@ fun ProfileScreen(navController: NavController) {
     var unit by remember { mutableStateOf(WeightUnit.KG) }
     var experience by remember { mutableStateOf(1) }
     var showRpe by remember { mutableStateOf(false) }
+    var adsTestMode by remember { mutableStateOf(false) }
     var loaded by remember { mutableStateOf(false) }
     var saved by remember { mutableStateOf(false) }
 
@@ -98,7 +99,7 @@ fun ProfileScreen(navController: NavController) {
             name = p.name; sex = p.sex
             weight = trimDouble(p.bodyweightKg); height = trimDouble(p.heightCm)
             unit = p.unit; experience = p.experienceLevel
-            showRpe = p.showRpe
+            showRpe = p.showRpe; adsTestMode = p.adsTestMode
             loaded = true
         }
     }
@@ -255,7 +256,8 @@ fun ProfileScreen(navController: NavController) {
                                     experienceLevel = experience,
                                     onboarded = true,
                                     createdAt = profile?.createdAt ?: 0L,
-                                    showRpe = showRpe
+                                    showRpe = showRpe,
+                                    adsTestMode = adsTestMode
                                 )
                             )
                             saved = true
@@ -307,6 +309,53 @@ fun ProfileScreen(navController: NavController) {
                     Spacer(Modifier.height(10.dp))
                     Text(it, color = Violet, fontSize = 12.sp, fontWeight = FontWeight.Bold)
                 }
+            }
+        }
+
+        // ---------- ADS ----------
+        Spacer(Modifier.height(16.dp))
+        Box(
+            Modifier.fillMaxWidth().clip(RoundedCornerShape(20.dp)).background(Surface)
+                .border(1.dp, Outline, RoundedCornerShape(20.dp)).padding(16.dp)
+        ) {
+            Column {
+                FieldLabel("ANUNCIOS")
+                Row(
+                    Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp))
+                        .background(SurfaceVariant)
+                        .clickable { adsTestMode = !adsTestMode; saved = false }
+                        .padding(horizontal = 14.dp, vertical = 13.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(Modifier.weight(1f)) {
+                        Text(
+                            "Anuncios de prueba",
+                            color = Color.White, fontWeight = FontWeight.Bold, fontSize = 13.sp
+                        )
+                        Text(
+                            "Usa la unidad de prueba de Google, que siempre tiene anuncio, " +
+                                "y muestra el error cuando falla. Sirve para comprobar que la " +
+                                "integración funciona.",
+                            color = TextMuted, fontSize = 10.sp, lineHeight = 14.sp
+                        )
+                    }
+                    Spacer(Modifier.width(10.dp))
+                    Box(
+                        Modifier.width(46.dp).height(26.dp).clip(RoundedCornerShape(50))
+                            .background(if (adsTestMode) Violet else Outline),
+                        contentAlignment = if (adsTestMode) Alignment.CenterEnd else Alignment.CenterStart
+                    ) {
+                        Box(
+                            Modifier.padding(horizontal = 3.dp).size(20.dp)
+                                .clip(CircleShape).background(Color.White)
+                        )
+                    }
+                }
+                Spacer(Modifier.height(8.dp))
+                Text(
+                    "Acuérdate de guardar el perfil para aplicar el cambio.",
+                    color = TextMuted, fontSize = 10.sp
+                )
             }
         }
     }

@@ -2,7 +2,7 @@ package com.aesthetic.gym
 
 import android.app.Application
 import com.aesthetic.gym.di.AppContainer
-import com.google.android.gms.ads.MobileAds
+import com.aesthetic.gym.ui.ads.Ads
 import com.tom_roush.pdfbox.android.PDFBoxResourceLoader
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -22,6 +22,6 @@ class ZenitApp : Application() {
         container = AppContainer(this)
         appScope.launch { container.repository.ensureSeeded() }
         // Off the main thread on purpose: initialize() does disk I/O and would stutter the launch.
-        appScope.launch { runCatching { MobileAds.initialize(this@ZenitApp) } }
+        appScope.launch { Ads.initialize(this@ZenitApp) }
     }
 }

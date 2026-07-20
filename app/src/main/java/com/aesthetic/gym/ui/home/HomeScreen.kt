@@ -236,7 +236,15 @@ fun HomeScreen(navController: NavController) {
 
         // Ad at the very bottom of the home screen, and nowhere else: never during a
         // workout, and never next to a button that could be tapped by accident.
-        NativeAdCard()
+        // Nada de pedir anuncio hasta haber leido el perfil: con loading = true todavia
+        // no sabemos si el modo de prueba esta activo, y pediriamos contra la unidad real
+        // una peticion que habria que repetir acto seguido.
+        if (!state.loading) {
+            NativeAdCard(
+                testMode = state.adsTestMode,
+                showDiagnostics = state.adsTestMode
+            )
+        }
     }
 }
 

@@ -19,7 +19,7 @@ import androidx.room.TypeConverters
         BodyMetricEntity::class,
         GoalEntity::class
     ],
-    version = 7,
+    version = 8,
     exportSchema = true
 )
 @TypeConverters(Converters::class)

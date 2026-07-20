@@ -29,7 +29,9 @@ data class HomeUiState(
     val activeRoutine: RoutineWithDays? = null,
     val recent: List<WorkoutSessionEntity> = emptyList(),
     val volumeChangePct: Int? = null,
-    val loading: Boolean = true
+    val loading: Boolean = true,
+    /** Diagnostics switch for the ad slot (Perfil > Anuncios). */
+    val adsTestMode: Boolean = false
 )
 
 class HomeViewModel(private val repo: GymRepository) : ViewModel() {
@@ -65,7 +67,8 @@ class HomeViewModel(private val repo: GymRepository) : ViewModel() {
             activeRoutine = active,
             recent = sessions.take(5),
             volumeChangePct = changePct,
-            loading = false
+            loading = false,
+            adsTestMode = profile?.adsTestMode == true
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), HomeUiState())
 
