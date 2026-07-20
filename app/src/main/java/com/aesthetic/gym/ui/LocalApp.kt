@@ -22,3 +22,7 @@ fun rememberImporter(): RoutineImporter = appContainer().importer
 
 @Composable
 fun rememberBell(): RestBell = appContainer().bell
+
+/** Cuándo se instaló la app: distingue un regreso real de una restauración de datos. */
+@Composable
+fun rememberFirstSeenAt(): Long = appContainer().install.firstSeenAt

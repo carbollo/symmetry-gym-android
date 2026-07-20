@@ -43,6 +43,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import com.aesthetic.gym.ui.nav.Routes
 import com.aesthetic.gym.ui.rememberRepository
 import com.aesthetic.gym.ui.theme.Cyan
 import com.aesthetic.gym.ui.theme.Gold
@@ -134,7 +135,9 @@ fun HistoryScreen(navController: NavController) {
         }
 
         itemsIndexed(state.sessions, key = { _, s -> s.session.id }) { i, s ->
-            SessionCard(s, accents[i % accents.size])
+            SessionCard(s, accents[i % accents.size]) {
+                navController.navigate(Routes.sessionDetail(s.session.id))
+            }
         }
 
         if (state.sessions.isNotEmpty()) {
@@ -164,11 +167,12 @@ fun HistoryScreen(navController: NavController) {
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun SessionCard(s: SessionSummary, accent: Color) {
+private fun SessionCard(s: SessionSummary, accent: Color, onClick: () -> Unit) {
     Box(
         Modifier.fillMaxWidth().padding(bottom = 12.dp)
             .clip(RoundedCornerShape(16.dp)).background(Surface)
             .border(1.dp, Outline, RoundedCornerShape(16.dp))
+            .clickable(onClick = onClick)
     ) {
         Row(Modifier.fillMaxWidth().height(IntrinsicSize.Min)) {
             Box(Modifier.width(4.dp).fillMaxHeight().background(accent))
@@ -192,7 +196,7 @@ private fun SessionCard(s: SessionSummary, accent: Color) {
                     verticalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
                     Pill("${s.kcal} KCAL", Violet)
-                    Pill("${s.sets} SERIES", Cyan)
+                    Pill(if (s.sets == 1) "1 SERIE" else "${s.sets} SERIES", Cyan)
                     Pill("${s.volumeKg.roundToInt()} KG", accent)
                 }
             }

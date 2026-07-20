@@ -22,6 +22,8 @@ import com.aesthetic.gym.data.db.RoutineItemEntity
 import com.aesthetic.gym.data.db.SetLogEntity
 import com.aesthetic.gym.data.db.WorkoutSessionEntity
 import com.aesthetic.gym.data.seed.ExerciseCatalog
+import com.aesthetic.gym.pdf.MuscleGuesser
+import com.aesthetic.gym.util.normalizeText
 
 /** Single point of access to the database for the rest of the app. */
 class GymRepository(private val db: AppDatabase) {
@@ -67,6 +69,30 @@ class GymRepository(private val db: AppDatabase) {
         exerciseDao.updateMeasure(id, measure)
     suspend fun updateExerciseLoadPoints(id: String, points: Int) =
         exerciseDao.updateLoadPoints(id, points)
+    suspend fun updateExerciseRest(id: String, seconds: Int) = exerciseDao.updateRest(id, seconds)
+
+    /**
+     * Creates a user-defined exercise with a unique id, guessing muscle and equipment
+     * from the name. Shared by "create routine" and by a free workout.
+     */
+    suspend fun createCustomExercise(rawName: String): ExerciseEntity? {
+        val trimmed = rawName.trim()
+        if (trimmed.isBlank()) return null
+        val base = "custom-" + normalizeText(trimmed).replace(' ', '-').take(40).trim('-')
+        val existing = exerciseDao.getAll().map { it.id }.toSet()
+        var id = base.ifBlank { "custom-${System.nanoTime()}" }
+        var n = 1
+        while (id in existing) { id = "$base-$n"; n++ }
+        val exercise = ExerciseEntity(
+            id = id,
+            name = trimmed,
+            primaryMuscle = MuscleGuesser.guessMuscle(trimmed),
+            equipment = MuscleGuesser.guessEquipment(trimmed),
+            isCustom = true
+        )
+        exerciseDao.upsert(exercise)
+        return exercise
+    }
 
     suspend fun ensureSeeded() {
         if (exerciseDao.count() == 0) {
@@ -116,6 +142,14 @@ class GymRepository(private val db: AppDatabase) {
     suspend fun previousSetsForExercise(exerciseId: String, exceptSessionId: Long) =
         workoutDao.previousSetsForExercise(exerciseId, exceptSessionId)
     suspend fun bestSetForExercise(exerciseId: String) = workoutDao.bestSetForExercise(exerciseId)
+
+    suspend fun setsForSession(sessionId: Long) = workoutDao.setsForSession(sessionId)
+    suspend fun loggedSessionStartsBefore(exceptSessionId: Long, limit: Int) =
+        workoutDao.recentLoggedSessionStarts(exceptSessionId, limit)
+    suspend fun loggedSessionCountBefore(exceptSessionId: Long) =
+        workoutDao.loggedSessionCount(exceptSessionId)
+    suspend fun markComeback(id: Long, days: Int) = workoutDao.markComeback(id, days)
+    suspend fun comebackDays(id: Long) = workoutDao.comebackDays(id)
 
     suspend fun exportRows() = workoutDao.exportRows()
 

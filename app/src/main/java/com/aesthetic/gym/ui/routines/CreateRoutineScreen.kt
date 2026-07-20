@@ -57,6 +57,7 @@ import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.aesthetic.gym.data.db.ExerciseEntity
+import com.aesthetic.gym.ui.components.ExercisePickerDialog
 import com.aesthetic.gym.ui.components.MuscleIcons
 import com.aesthetic.gym.ui.nav.Routes
 import com.aesthetic.gym.ui.rememberRepository
@@ -302,84 +303,6 @@ private fun NumCol(label: String, initial: String, key: String, modifier: Modifi
                 cursorBrush = SolidColor(Violet),
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp)
             )
-        }
-    }
-}
-
-@Composable
-private fun ExercisePickerDialog(
-    exercises: List<ExerciseEntity>,
-    onPick: (ExerciseEntity) -> Unit,
-    onCreate: (String) -> Unit,
-    onDismiss: () -> Unit
-) {
-    var query by remember { mutableStateOf("") }
-    val nq = normalizeText(query)
-    val filtered = if (nq.isBlank()) exercises else exercises.filter { normalizeText(it.name).contains(nq) }
-    val exactMatch = filtered.any { normalizeText(it.name) == nq }
-
-    Dialog(onDismissRequest = onDismiss) {
-        Box(Modifier.clip(RoundedCornerShape(22.dp)).background(Surface).padding(16.dp)) {
-            Column {
-                Text("Añadir ejercicio", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 18.sp)
-                Spacer(Modifier.height(12.dp))
-                Row(
-                    Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(SurfaceVariant)
-                        .padding(horizontal = 12.dp, vertical = 12.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(Icons.Filled.Search, null, tint = TextMuted, modifier = Modifier.size(17.dp))
-                    Spacer(Modifier.width(8.dp))
-                    Box(Modifier.weight(1f)) {
-                        if (query.isEmpty()) Text("Buscar o crear", color = TextMuted, fontSize = 13.sp)
-                        BasicTextField(
-                            value = query, onValueChange = { query = it }, singleLine = true,
-                            textStyle = TextStyle(color = Color.White, fontSize = 13.sp),
-                            cursorBrush = SolidColor(Violet), modifier = Modifier.fillMaxWidth()
-                        )
-                    }
-                }
-                if (query.isNotBlank() && !exactMatch) {
-                    Spacer(Modifier.height(8.dp))
-                    Row(
-                        Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp))
-                            .background(Violet.copy(alpha = 0.16f)).clickable { onCreate(query) }.padding(12.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Icon(Icons.Filled.Add, null, tint = Violet, modifier = Modifier.size(17.dp))
-                        Spacer(Modifier.width(8.dp))
-                        Text("Crear \"${query.trim()}\"", color = Violet, fontWeight = FontWeight.SemiBold, fontSize = 13.sp)
-                    }
-                }
-                Spacer(Modifier.height(8.dp))
-                LazyColumn(Modifier.heightIn(max = 340.dp)) {
-                    items(filtered, key = { it.id }) { ex ->
-                        Row(
-                            Modifier.fillMaxWidth().clickable { onPick(ex) }.padding(vertical = 10.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Box(
-                                Modifier.size(32.dp).clip(CircleShape).background(SurfaceVariant),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Icon(
-                                    MuscleIcons.forMuscle(ex.primaryMuscle), null,
-                                    tint = Violet, modifier = Modifier.size(16.dp)
-                                )
-                            }
-                            Spacer(Modifier.width(10.dp))
-                            Column(Modifier.weight(1f)) {
-                                Text(
-                                    ex.name, color = Color.White, fontSize = 14.sp,
-                                    fontWeight = FontWeight.SemiBold,
-                                    maxLines = 1, overflow = TextOverflow.Ellipsis
-                                )
-                                Text(ex.primaryMuscle.displayName, color = TextSecondary, fontSize = 11.sp)
-                            }
-                        }
-                    }
-                }
-            }
         }
     }
 }

@@ -23,10 +23,12 @@ object Routes {
     const val ROUTINE_DETAIL = "routine/{routineId}"
     const val WORKOUT = "workout/{sessionId}"
     const val EXERCISE_DETAIL = "exercise/{exerciseId}"
+    const val SESSION_DETAIL = "session/{sessionId}"
 
     fun routineDetail(routineId: Long) = "routine/$routineId"
     fun workout(sessionId: Long) = "workout/$sessionId"
     fun exerciseDetail(exerciseId: String) = "exercise/$exerciseId"
+    fun sessionDetail(sessionId: Long) = "session/$sessionId"
 }
 
 data class BottomDest(val route: String, val label: String, val icon: ImageVector)

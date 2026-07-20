@@ -11,6 +11,8 @@ import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -157,9 +159,26 @@ fun HomeScreen(navController: NavController) {
         }
 
         // ---------- STAT TILES ----------
-        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            StatCard(Icons.Filled.Bolt, Violet, "${state.streak} días", "DE RACHA", Modifier.weight(1f))
-            StatCard(Icons.Filled.FitnessCenter, Cyan, "${state.totalWorkouts}", "ENTRENOS TOTALES", Modifier.weight(1f))
+        Row(
+            Modifier.height(IntrinsicSize.Min),
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            StatCard(
+                icon = Icons.Filled.Bolt,
+                iconTint = if (state.weekly.currentWeekComplete) Lime else Violet,
+                value = state.weekly.valueLabel,
+                label = "SEMANAS SEGUIDAS",
+                modifier = Modifier.weight(1f).fillMaxHeight(),
+                hint = state.weekly.hintLabel,
+                progress = state.weekly.fraction
+            )
+            StatCard(
+                icon = Icons.Filled.FitnessCenter,
+                iconTint = Cyan,
+                value = "${state.totalWorkouts}",
+                label = "ENTRENOS TOTALES",
+                modifier = Modifier.weight(1f).fillMaxHeight()
+            )
         }
 
         // ---------- ACTIVE ROUTINE ----------
@@ -189,6 +208,12 @@ fun HomeScreen(navController: NavController) {
                             name = "${routine.routine.name} · ${day.day.name}"
                         ) { sessionId -> navController.navigate(Routes.workout(sessionId)) }
                     }
+                }
+            }
+            // También con rutina activa: hay días sueltos en los que uno entrena otra cosa.
+            FreeWorkoutRow {
+                vm.startSession(null, null, "Entreno libre") { id ->
+                    navController.navigate(Routes.workout(id))
                 }
             }
         } else {
@@ -226,6 +251,12 @@ fun HomeScreen(navController: NavController) {
                             fontSize = 14.sp, fontWeight = FontWeight.SemiBold
                         )
                     }
+                    Spacer(Modifier.height(10.dp))
+                    FreeWorkoutRow {
+                        vm.startSession(null, null, "Entreno libre") { id ->
+                            navController.navigate(Routes.workout(id))
+                        }
+                    }
                 }
             }
         }
@@ -260,7 +291,9 @@ private fun StatCard(
     iconTint: Color,
     value: String,
     label: String,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    hint: String? = null,
+    progress: Float? = null
 ) {
     Box(
         modifier.clip(RoundedCornerShape(18.dp)).background(Surface)
@@ -272,6 +305,23 @@ private fun StatCard(
             Text(value, color = Color.White, fontWeight = FontWeight.Black, fontSize = 22.sp, maxLines = 1)
             Spacer(Modifier.height(2.dp))
             Text(label, color = TextMuted, fontSize = 9.sp, fontWeight = FontWeight.Bold, letterSpacing = 0.6.sp)
+            if (progress != null) {
+                Spacer(Modifier.height(8.dp))
+                Box(
+                    Modifier.fillMaxWidth().height(4.dp).clip(RoundedCornerShape(50))
+                        .background(SurfaceVariant)
+                ) {
+                    Box(
+                        Modifier.fillMaxWidth(progress.coerceIn(0f, 1f)).height(4.dp)
+                            .clip(RoundedCornerShape(50))
+                            .background(Brush.horizontalGradient(listOf(Cyan, Lime)))
+                    )
+                }
+            }
+            if (hint != null) {
+                Spacer(Modifier.height(6.dp))
+                Text(hint, color = TextSecondary, fontSize = 10.sp, maxLines = 1)
+            }
         }
     }
 }
@@ -346,5 +396,26 @@ private fun IconLabel(icon: ImageVector, text: String) {
         Icon(icon, null, tint = TextMuted, modifier = Modifier.size(13.dp))
         Spacer(Modifier.width(5.dp))
         Text(text, color = TextSecondary, fontSize = 11.sp)
+    }
+}
+
+/** Entry point to a workout with no routine behind it. */
+@Composable
+private fun FreeWorkoutRow(onClick: () -> Unit) {
+    Row(
+        Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp))
+            .background(SurfaceVariant)
+            .border(1.dp, Outline, RoundedCornerShape(14.dp))
+            .clickable(onClick = onClick)
+            .padding(horizontal = 14.dp, vertical = 13.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Icon(Icons.Filled.Bolt, null, tint = Cyan, modifier = Modifier.size(18.dp))
+        Spacer(Modifier.width(10.dp))
+        Column(Modifier.weight(1f)) {
+            Text("ENTRENO LIBRE", color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Black)
+            Text("Registra series sin rutina", color = TextMuted, fontSize = 10.sp)
+        }
+        Icon(Icons.Filled.PlayArrow, null, tint = Cyan, modifier = Modifier.size(18.dp))
     }
 }

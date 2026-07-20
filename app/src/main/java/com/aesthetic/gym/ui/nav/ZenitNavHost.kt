@@ -28,6 +28,7 @@ import com.aesthetic.gym.ui.exercises.ExerciseDetailScreen
 import com.aesthetic.gym.ui.exercises.ExercisesScreen
 import com.aesthetic.gym.ui.goals.GoalsScreen
 import com.aesthetic.gym.ui.history.HistoryScreen
+import com.aesthetic.gym.ui.history.SessionDetailScreen
 import com.aesthetic.gym.ui.home.HomeScreen
 import com.aesthetic.gym.ui.profile.ProfileScreen
 import com.aesthetic.gym.ui.progress.ProgressScreen
@@ -87,6 +88,15 @@ fun ZenitRoot() {
                 arguments = listOf(navArgument("sessionId") { type = NavType.LongType })
             ) { entry ->
                 WorkoutScreen(
+                    navController,
+                    entry.arguments?.getLong("sessionId") ?: 0L
+                )
+            }
+            composable(
+                Routes.SESSION_DETAIL,
+                arguments = listOf(navArgument("sessionId") { type = NavType.LongType })
+            ) { entry ->
+                SessionDetailScreen(
                     navController,
                     entry.arguments?.getLong("sessionId") ?: 0L
                 )

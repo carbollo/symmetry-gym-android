@@ -69,7 +69,19 @@ val MIGRATION_7_8 = object : Migration(7, 8) {
     }
 }
 
+// v8 -> v9: two nullable columns, in a single migration so there can never be two different
+// schemas both called "v9" depending on which feature shipped first.
+//   exercises.defaultRestSeconds -> rest per exercise: a free workout has no routine_item to
+//     hang it on (an UPDATE against id = 0 would touch no rows).
+//   sessions.comebackDays        -> days away rewarded here, so finishing is idempotent.
+val MIGRATION_8_9 = object : Migration(8, 9) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("ALTER TABLE `exercises` ADD COLUMN `defaultRestSeconds` INTEGER")
+        db.execSQL("ALTER TABLE `sessions` ADD COLUMN `comebackDays` INTEGER")
+    }
+}
+
 val ALL_MIGRATIONS: Array<Migration> = arrayOf(
     MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5,
-    MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8
+    MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9
 )

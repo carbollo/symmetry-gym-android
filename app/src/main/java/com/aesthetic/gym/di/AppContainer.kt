@@ -3,6 +3,7 @@ package com.aesthetic.gym.di
 import android.content.Context
 import com.aesthetic.gym.data.db.AppDatabase
 import com.aesthetic.gym.data.repo.GymRepository
+import com.aesthetic.gym.util.InstallMarker
 import com.aesthetic.gym.pdf.RoutineImporter
 import com.aesthetic.gym.util.RestBell
 
@@ -10,6 +11,7 @@ import com.aesthetic.gym.util.RestBell
 class AppContainer(context: Context) {
     val database: AppDatabase = AppDatabase.get(context)
     val repository: GymRepository = GymRepository(database)
+    val install: InstallMarker = InstallMarker(context.applicationContext)
     val importer: RoutineImporter = RoutineImporter(repository)
     val bell: RestBell = RestBell(context.applicationContext)
 }

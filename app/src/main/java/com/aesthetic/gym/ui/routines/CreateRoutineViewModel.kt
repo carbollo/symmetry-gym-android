@@ -82,23 +82,8 @@ class CreateRoutineViewModel(private val repo: GymRepository) : ViewModel() {
 
     /** Creates a brand-new custom exercise from typed text (muscle guessed) and returns it. */
     fun createCustomExercise(rawName: String, onCreated: (ExerciseEntity) -> Unit) {
-        val trimmed = rawName.trim()
-        if (trimmed.isBlank()) return
         viewModelScope.launch {
-            val base = "custom-" + normalizeText(trimmed).replace(' ', '-').take(40).trim('-')
-            val existing = repo.getAllExercises().map { it.id }.toSet()
-            var id = base.ifBlank { "custom-${System.nanoTime()}" }
-            var n = 1
-            while (id in existing) { id = "$base-$n"; n++ }
-            val exercise = ExerciseEntity(
-                id = id,
-                name = trimmed,
-                primaryMuscle = MuscleGuesser.guessMuscle(trimmed),
-                equipment = MuscleGuesser.guessEquipment(trimmed),
-                isCustom = true
-            )
-            repo.upsertExercise(exercise)
-            onCreated(exercise)
+            repo.createCustomExercise(rawName)?.let(onCreated)
         }
     }
 

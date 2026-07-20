@@ -12,8 +12,8 @@ android {
         applicationId = "com.aesthetic.gym"
         minSdk = 26
         targetSdk = 34
-        versionCode = 25
-        versionName = "1.24"
+        versionCode = 26
+        versionName = "1.25"
         vectorDrawables { useSupportLibrary = true }
     }
 

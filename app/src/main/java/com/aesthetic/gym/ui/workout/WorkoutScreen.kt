@@ -80,11 +80,15 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.aesthetic.gym.data.db.SetLogEntity
 import com.aesthetic.gym.domain.model.Equipment
+import com.aesthetic.gym.domain.comeback.ComebackBonus
+import com.aesthetic.gym.domain.comeback.ComebackTier
 import com.aesthetic.gym.domain.model.MeasureType
 import com.aesthetic.gym.domain.model.WeightUnit
+import com.aesthetic.gym.ui.components.ExercisePickerDialog
 import com.aesthetic.gym.ui.components.MuscleIcons
 import com.aesthetic.gym.ui.components.PrimaryButton
 import com.aesthetic.gym.ui.rememberBell
+import com.aesthetic.gym.ui.rememberFirstSeenAt
 import com.aesthetic.gym.ui.rememberRepository
 import com.aesthetic.gym.ui.theme.Background
 import com.aesthetic.gym.ui.theme.Cyan
@@ -98,6 +102,7 @@ import com.aesthetic.gym.ui.theme.SurfaceElevated
 import com.aesthetic.gym.ui.theme.SurfaceVariant
 import com.aesthetic.gym.ui.theme.TextMuted
 import com.aesthetic.gym.ui.theme.TextSecondary
+import com.aesthetic.gym.ui.theme.Violet
 import com.aesthetic.gym.util.PlateCalculator
 import com.aesthetic.gym.util.formatKg
 import com.aesthetic.gym.util.formatWeightValue
@@ -108,7 +113,7 @@ import kotlin.math.roundToInt
 fun WorkoutScreen(navController: NavController, sessionId: Long) {
     val repo = rememberRepository()
     val bell = rememberBell()
-    val vm: WorkoutViewModel = viewModel(factory = WorkoutViewModel.factory(repo, bell, sessionId))
+    val vm: WorkoutViewModel = viewModel(factory = WorkoutViewModel.factory(repo, bell, sessionId, rememberFirstSeenAt()))
     val session by vm.session.collectAsState()
     val profile by vm.profile.collectAsState()
     val planned = vm.plannedItems
@@ -123,6 +128,9 @@ fun WorkoutScreen(navController: NavController, sessionId: Long) {
     var showConfirm by remember { mutableStateOf(false) }
     var optionsFor by remember { mutableStateOf<SetLogEntity?>(null) }
     var platesFor by remember { mutableStateOf<PlateTarget?>(null) }
+    var showPicker by remember { mutableStateOf(false) }
+    var removeFor by remember { mutableStateOf<String?>(null) }
+    val catalog by repo.exercisesHot.collectAsState()
     val safeIndex = selectedIndex.coerceIn(0, (planned.size - 1).coerceAtLeast(0))
 
     // Locked during the workout: back minimizes instead of closing/leaving.
@@ -174,7 +182,7 @@ fun WorkoutScreen(navController: NavController, sessionId: Long) {
         }
 
         // ---------- EXERCISE BUBBLES ----------
-        if (planned.isNotEmpty()) {
+        if (planned.isNotEmpty() || vm.freeMode) {
             Row(
                 Modifier.fillMaxWidth().horizontalScroll(rememberScrollState())
                     .padding(horizontal = 16.dp, vertical = 8.dp),
@@ -192,6 +200,7 @@ fun WorkoutScreen(navController: NavController, sessionId: Long) {
                         onClick = { selectedIndex = i }
                     )
                 }
+                if (vm.freeMode) AddBubble { showPicker = true }
             }
         }
 
@@ -200,7 +209,13 @@ fun WorkoutScreen(navController: NavController, sessionId: Long) {
             Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(horizontal = 16.dp)
         ) {
             if (planned.isEmpty()) {
-                Text("Cargando ejercicios…", color = TextSecondary, modifier = Modifier.padding(8.dp))
+                when {
+                    !vm.loaded ->
+                        Text("Cargando ejercicios…", color = TextSecondary, modifier = Modifier.padding(8.dp))
+                    vm.freeMode -> FreeWorkoutEmpty { showPicker = true }
+                    else ->
+                        Text("Este día no tiene ejercicios.", color = TextSecondary, modifier = Modifier.padding(8.dp))
+                }
             } else {
                 val item = planned[safeIndex]
                 val exId = item.item.exerciseId
@@ -228,6 +243,16 @@ fun WorkoutScreen(navController: NavController, sessionId: Long) {
                         color = Lime, fontSize = 11.sp, fontWeight = FontWeight.Bold,
                         modifier = Modifier.weight(1f)
                     )
+                    if (vm.freeMode) {
+                        Spacer(Modifier.width(6.dp))
+                        Box(
+                            Modifier.clip(RoundedCornerShape(50)).background(SurfaceVariant)
+                                .clickable { removeFor = exId }
+                                .padding(horizontal = 12.dp, vertical = 7.dp)
+                        ) {
+                            Text("QUITAR", color = TextMuted, fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                        }
+                    }
                     Spacer(Modifier.width(8.dp))
                     Row(
                         Modifier.clip(RoundedCornerShape(50)).background(SurfaceVariant)
@@ -252,7 +277,7 @@ fun WorkoutScreen(navController: NavController, sessionId: Long) {
 
                 Spacer(Modifier.height(12.dp))
                 RestSelector(
-                    seconds = item.item.restSeconds ?: WorkoutViewModel.DEFAULT_REST_SECONDS,
+                    seconds = vm.restSecondsFor(exId),
                     onChange = { vm.setRest(item, it) }
                 )
 
@@ -324,13 +349,29 @@ fun WorkoutScreen(navController: NavController, sessionId: Long) {
             containerColor = Surface,
             titleContentColor = Color.White,
             textContentColor = TextSecondary,
-            title = { Text("¿Finalizar entrenamiento?") },
-            text = { Text("Se guardará el entreno y verás el resumen.") },
+            title = {
+                Text(
+                    if (vm.hasCompletedSets) "¿Finalizar entrenamiento?"
+                    else "¿Descartar entrenamiento?"
+                )
+            },
+            text = {
+                Text(
+                    if (vm.hasCompletedSets) "Se guardará el entreno y verás el resumen."
+                    else "No has confirmado ninguna serie. Este entreno se descartará y no contará."
+                )
+            },
             confirmButton = {
+                val finishing = vm.hasCompletedSets
                 TextButton(onClick = {
                     showConfirm = false
-                    vm.finishWorkout()
-                }) { Text("Finalizar", color = Magenta, fontWeight = FontWeight.Bold) }
+                    vm.finishWorkout { navController.popBackStack() }
+                }) {
+                    Text(
+                        if (finishing) "Finalizar" else "Descartar",
+                        color = Magenta, fontWeight = FontWeight.Bold
+                    )
+                }
             },
             dismissButton = {
                 TextButton(onClick = { showConfirm = false }) {
@@ -359,6 +400,45 @@ fun WorkoutScreen(navController: NavController, sessionId: Long) {
             onPointsChange = { vm.setLoadPoints(target.exerciseId, it) },
             onPlatesChange = { vm.setPlates(it) },
             onDismiss = { platesFor = null }
+        )
+    }
+
+    if (showPicker) {
+        ExercisePickerDialog(
+            exercises = catalog,
+            onPick = { ex ->
+                showPicker = false
+                vm.addExercise(ex) { index -> selectedIndex = index }
+            },
+            onCreate = { name ->
+                vm.createCustomExercise(name) { ex ->
+                    showPicker = false
+                    vm.addExercise(ex) { index -> selectedIndex = index }
+                }
+            },
+            onDismiss = { showPicker = false }
+        )
+    }
+
+    removeFor?.let { exId ->
+        val name = planned.firstOrNull { it.item.exerciseId == exId }?.exercise?.name ?: "este ejercicio"
+        AlertDialog(
+            onDismissRequest = { removeFor = null },
+            containerColor = Surface,
+            titleContentColor = Color.White,
+            textContentColor = TextSecondary,
+            title = { Text("¿Quitar $name?") },
+            text = { Text("Se borrarán sus series de este entreno.") },
+            confirmButton = {
+                TextButton(onClick = {
+                    removeFor = null
+                    selectedIndex = 0
+                    vm.removeExercise(exId)
+                }) { Text("Quitar", color = Magenta, fontWeight = FontWeight.Bold) }
+            },
+            dismissButton = {
+                TextButton(onClick = { removeFor = null }) { Text("Cancelar", color = TextSecondary) }
+            }
         )
     }
 
@@ -1202,6 +1282,11 @@ private fun WorkoutSummaryDialog(summary: WorkoutSummary, onDone: () -> Unit) {
                 Spacer(Modifier.height(10.dp))
                 Text("${summary.sets} series completadas", color = TextSecondary, fontSize = 12.sp)
 
+                summary.comeback?.let { bonus ->
+                    Spacer(Modifier.height(16.dp))
+                    ComebackBlock(bonus)
+                }
+
                 if (summary.prs.isNotEmpty()) {
                     Spacer(Modifier.height(16.dp))
                     Column(
@@ -1246,3 +1331,82 @@ private fun SummaryTile(value: String, label: String, color: Color, modifier: Mo
 
 private fun formatDuration(minutes: Int): String =
     if (minutes >= 60) "${minutes / 60}h ${minutes % 60}m" else "$minutes min"
+
+/**
+ * Shown when the user comes back after a gap. Supportive on purpose: it never says they
+ * stopped training, only that no sessions were logged, and it never blames them.
+ */
+@Composable
+private fun ComebackBlock(bonus: ComebackBonus) {
+    Column(
+        Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp))
+            .background(Violet.copy(alpha = 0.14f)).padding(14.dp),
+        verticalArrangement = Arrangement.spacedBy(6.dp)
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Icon(Icons.Filled.Bolt, null, tint = Violet, modifier = Modifier.size(14.dp))
+            Spacer(Modifier.width(6.dp))
+            Text(
+                "BONUS DE REGRESO", color = Violet, fontSize = 10.sp,
+                fontWeight = FontWeight.Black, letterSpacing = 1.sp
+            )
+        }
+        Text(
+            comebackHeadline(bonus.tier),
+            color = Color.White, fontSize = 13.sp, fontWeight = FontWeight.Bold
+        )
+        Text(comebackDetail(bonus.days), color = TextSecondary, fontSize = 11.sp, lineHeight = 15.sp)
+    }
+}
+
+private fun comebackHeadline(tier: ComebackTier): String = when (tier) {
+    ComebackTier.SHORT -> "Has vuelto, y eso es lo que cuenta."
+    ComebackTier.MEDIUM -> "Qué bien tenerte de vuelta."
+    ComebackTier.LONG -> "Aquí estás otra vez."
+}
+
+private fun comebackDetail(days: Int): String = when {
+    days < 60 -> "Primera sesión en $days días. Y la has terminado."
+    days < 365 -> "Han pasado ${days / 30} meses. Retomar cuenta igual que seguir."
+    else -> "Ha pasado más de un año. Retomar cuenta igual que seguir."
+}
+
+/** Bubble that opens the exercise picker in a free workout. */
+@Composable
+private fun AddBubble(onClick: () -> Unit) {
+    Box(
+        Modifier.size(48.dp).clip(CircleShape)
+            .border(BorderStroke(2.dp, Cyan), CircleShape)
+            .clickable(onClick = onClick),
+        contentAlignment = Alignment.Center
+    ) {
+        Icon(Icons.Filled.Add, "Añadir ejercicio", tint = Cyan, modifier = Modifier.size(22.dp))
+    }
+}
+
+/** First screen of a free workout, before any exercise has been added. */
+@Composable
+private fun FreeWorkoutEmpty(onAdd: () -> Unit) {
+    Column(Modifier.fillMaxWidth().padding(top = 24.dp)) {
+        Text(
+            "ENTRENO LIBRE", color = Cyan, fontSize = 11.sp,
+            fontWeight = FontWeight.Black, letterSpacing = 1.5.sp
+        )
+        Spacer(Modifier.height(8.dp))
+        Text(
+            "Añade ejercicios sobre la marcha. Se rellenan solos con lo que hiciste la última vez.",
+            color = TextSecondary, fontSize = 13.sp, lineHeight = 18.sp
+        )
+        Spacer(Modifier.height(20.dp))
+        Row(
+            Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(Cyan)
+                .clickable(onClick = onAdd).padding(vertical = 15.dp),
+            horizontalArrangement = Arrangement.Center,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(Icons.Filled.Add, null, tint = OnLime, modifier = Modifier.size(18.dp))
+            Spacer(Modifier.width(8.dp))
+            Text("AÑADIR EJERCICIO", color = OnLime, fontWeight = FontWeight.Black, fontSize = 14.sp)
+        }
+    }
+}

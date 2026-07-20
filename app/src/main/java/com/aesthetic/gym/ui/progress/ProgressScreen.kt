@@ -108,7 +108,7 @@ fun ProgressScreen(navController: NavController) {
         }
 
         Spacer(Modifier.height(16.dp))
-        Text("ESTA SEMANA", color = TextMuted, fontSize = 9.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.5.sp)
+        Text("ÚLTIMOS 7 DÍAS", color = TextMuted, fontSize = 9.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.5.sp)
         Spacer(Modifier.height(10.dp))
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             WeekTile("${weekly.workouts}", "ENTRENOS", Violet, Modifier.weight(1f))

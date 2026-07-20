@@ -10,17 +10,25 @@ import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import android.os.SystemClock
 import com.aesthetic.gym.data.db.ProfileEntity
+import com.aesthetic.gym.data.db.ExerciseEntity
+import com.aesthetic.gym.data.db.RoutineItemEntity
 import com.aesthetic.gym.data.db.RoutineItemWithExercise
 import com.aesthetic.gym.data.db.SessionWithSets
 import com.aesthetic.gym.data.db.SetLogEntity
+import com.aesthetic.gym.data.db.WorkoutSessionEntity
 import com.aesthetic.gym.data.repo.GymRepository
 import com.aesthetic.gym.domain.model.MeasureType
 import com.aesthetic.gym.domain.overload.OverloadSuggestion
 import com.aesthetic.gym.domain.overload.ProgressiveOverload
+import com.aesthetic.gym.domain.comeback.CADENCE_WINDOW
+import com.aesthetic.gym.domain.comeback.ComebackBonus
+import com.aesthetic.gym.domain.comeback.evaluate
+import com.aesthetic.gym.domain.streak.weeklyTargetFor
 import com.aesthetic.gym.util.PlateCalculator
 import com.aesthetic.gym.util.RestBell
 import com.aesthetic.gym.util.WorkoutMath
 import com.aesthetic.gym.util.epley1RM
+import com.aesthetic.gym.util.epochToLocalDate
 import com.aesthetic.gym.util.formatKg
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -36,7 +44,8 @@ data class WorkoutSummary(
     val kcal: Int,
     val volumeKg: Double,
     val sets: Int,
-    val prs: List<String> = emptyList()
+    val prs: List<String> = emptyList(),
+    val comeback: ComebackBonus? = null
 )
 
 /** A record broken during the session, shown as a celebration banner. */
@@ -52,7 +61,8 @@ enum class PrKind { WEIGHT, REPS, E1RM }
 class WorkoutViewModel(
     private val repo: GymRepository,
     private val bell: RestBell,
-    private val sessionId: Long
+    private val sessionId: Long,
+    private val firstSeenAt: Long
 ) : ViewModel() {
 
     /** Rest countdown (seconds left, 0 = not resting). */
@@ -77,6 +87,17 @@ class WorkoutViewModel(
 
     var plannedItems by mutableStateOf<List<RoutineItemWithExercise>>(emptyList())
         private set
+
+    /** True when this session has no routine behind it and exercises are added by hand. */
+    var freeMode by mutableStateOf(false)
+        private set
+
+    /** False until the session has been read: tells "still loading" apart from "empty". */
+    var loaded by mutableStateOf(false)
+        private set
+
+    private var freeOrder by mutableStateOf<List<String>>(emptyList())
+    private val freeExercises = mutableMapOf<String, ExerciseEntity>()
 
     var suggestions by mutableStateOf<Map<String, OverloadSuggestion>>(emptyMap())
         private set
@@ -103,70 +124,173 @@ class WorkoutViewModel(
 
     init {
         viewModelScope.launch {
-            val s = repo.sessionById(sessionId) ?: return@launch
-            val routine = s.routineId?.let { repo.routineWithDays(it) }
-            val day = routine?.days?.firstOrNull { it.day.id == s.dayId }
-            val items = day?.sortedItems ?: emptyList()
-            plannedItems = items
-
-            val map = HashMap<String, OverloadSuggestion>()
-            for (it in items) {
-                val last = repo.lastSetsForExercise(it.item.exerciseId, sessionId)
-                map[it.item.exerciseId] = ProgressiveOverload.suggest(it.item, it.exercise, last)
+            val s = repo.sessionById(sessionId)
+            // No routine and no day: this is a free workout, exercises are added as you go.
+            freeMode = s == null || s.routineId == null || s.dayId == null
+            if (s != null) {
+                if (freeMode) initFree() else initRoutine(s)
             }
-            suggestions = map
-
-            val recs = HashMap<String, SetLogEntity>()
-            for (it in items) {
-                repo.bestSetForExercise(it.item.exerciseId)?.let { best -> recs[it.item.exerciseId] = best }
-            }
-            records = recs
-
-            // First time this session opens: pre-load every planned set (pending confirmation).
-            if (repo.setCountForSession(sessionId) == 0) {
-                autoPopulate(items, map)
-            }
+            loaded = true
         }
     }
 
-    private suspend fun autoPopulate(
-        items: List<RoutineItemWithExercise>,
-        suggestionsMap: Map<String, OverloadSuggestion>
-    ) {
-        for (item in items) {
-            val sugg = suggestionsMap[item.item.exerciseId]
-            val ex = item.exercise
-            val measure = ex?.measure ?: MeasureType.REPS
+    private suspend fun initRoutine(s: WorkoutSessionEntity) {
+        val routine = s.routineId?.let { repo.routineWithDays(it) }
+        val day = routine?.days?.firstOrNull { it.day.id == s.dayId }
+        val items = day?.sortedItems ?: emptyList()
+        plannedItems = items
 
-            // Restore each set from the corresponding set of the previous session (per set number).
-            val previous = repo.previousSetsForExercise(item.item.exerciseId, sessionId)
-            val prevByNumber = previous.associateBy { it.setNumber }
+        val map = HashMap<String, OverloadSuggestion>()
+        for (it in items) {
+            val last = repo.lastSetsForExercise(it.item.exerciseId, sessionId)
+            map[it.item.exerciseId] = ProgressiveOverload.suggest(it.item, it.exercise, last)
+        }
+        suggestions = map
 
-            val fallbackWeight = ex?.lastWeightKg ?: sugg?.weightKg ?: item.item.targetWeightKg ?: 20.0
-            val fallbackReps = ex?.lastReps ?: if (measure == MeasureType.SECONDS) 30 else when {
-                item.item.amrap -> sugg?.repsHigh ?: 10
-                item.item.repsMax > 0 -> item.item.repsMax
-                else -> 10
-            }
+        val recs = HashMap<String, SetLogEntity>()
+        for (it in items) {
+            repo.bestSetForExercise(it.item.exerciseId)?.let { best -> recs[it.item.exerciseId] = best }
+        }
+        records = recs
 
-            val total = item.item.targetSets.coerceIn(1, 20)
-            for (n in 1..total) {
-                val ref = prevByNumber[n] ?: previous.lastOrNull()
-                repo.addSet(
-                    SetLogEntity(
-                        sessionId = sessionId,
-                        exerciseId = item.item.exerciseId,
-                        routineItemId = item.item.id,
-                        setNumber = n,
-                        reps = ref?.reps ?: fallbackReps,
-                        weightKg = ref?.weightKg ?: fallbackWeight,
-                        // Warm-up marking sticks: if set 1 was a warm-up last time, it is again.
-                        isWarmup = prevByNumber[n]?.isWarmup ?: false,
-                        completed = false,
-                        measure = measure
-                    )
+        // First time this session opens: pre-load every planned set (pending confirmation).
+        if (repo.setCountForSession(sessionId) == 0) {
+            for (item in items) seedSets(item, map[item.item.exerciseId])
+        }
+    }
+
+    /** Rebuilds a free workout from the sets already stored, so leaving and coming back works. */
+    private suspend fun initFree() {
+        val existing = repo.setsForSession(sessionId)
+        val order = existing.map { it.exerciseId }.distinct()
+        val recs = HashMap<String, SetLogEntity>()
+        val map = HashMap<String, OverloadSuggestion>()
+        for (id in order) {
+            val ex = repo.getExercise(id) ?: continue
+            freeExercises[id] = ex
+            repo.bestSetForExercise(id)?.let { recs[id] = it }
+            val last = repo.lastSetsForExercise(id, sessionId)
+            map[id] = ProgressiveOverload.suggest(syntheticItem(id, 0).item, ex, last)
+        }
+        freeOrder = order.filter { freeExercises.containsKey(it) }
+        records = recs
+        suggestions = map
+        rebuildFreeItems()
+    }
+
+    /**
+     * A routine item that only lives in memory, so the workout screen can treat a free
+     * exercise exactly like a planned one. id = 0 is the marker for "no row in the database":
+     * [setRest], [seedSets] and [addSet] all check it before writing anything.
+     */
+    private fun syntheticItem(exerciseId: String, orderIndex: Int): RoutineItemWithExercise {
+        val ex = freeExercises[exerciseId]
+        return RoutineItemWithExercise(
+            item = RoutineItemEntity(
+                id = 0L,
+                dayId = 0L,
+                exerciseId = exerciseId,
+                orderIndex = orderIndex,
+                targetSets = DEFAULT_FREE_SETS,
+                repsMin = 8,
+                repsMax = 12,
+                targetWeightKg = null,
+                restSeconds = null,
+                amrap = false,
+                rawText = ex?.name ?: exerciseId
+            ),
+            exercise = ex
+        )
+    }
+
+    private fun rebuildFreeItems() {
+        plannedItems = freeOrder.mapIndexed { index, id -> syntheticItem(id, index) }
+    }
+
+    /** Adds an exercise to a free workout, seeding its sets from the last time it was done. */
+    fun addExercise(exercise: ExerciseEntity, onSelected: (Int) -> Unit = {}) {
+        val existing = freeOrder.indexOf(exercise.id)
+        if (existing >= 0) {
+            onSelected(existing)
+            return
+        }
+        viewModelScope.launch {
+            freeExercises[exercise.id] = exercise
+            freeOrder = freeOrder + exercise.id
+            // The record has to be known BEFORE seeding: otherwise the first confirmed set
+            // celebrates a personal best that is really just the first one ever seen.
+            repo.bestSetForExercise(exercise.id)?.let { records = records + (exercise.id to it) }
+            val item = syntheticItem(exercise.id, freeOrder.size - 1)
+            val last = repo.lastSetsForExercise(exercise.id, sessionId)
+            val sugg = ProgressiveOverload.suggest(item.item, exercise, last)
+            suggestions = suggestions + (exercise.id to sugg)
+            rebuildFreeItems()
+            seedSets(item, sugg)
+            onSelected(freeOrder.size - 1)
+        }
+    }
+
+    /** Removes an exercise from a free workout, deleting the sets it had in this session. */
+    fun removeExercise(exerciseId: String) {
+        viewModelScope.launch {
+            val sets = repo.setsForSession(sessionId).filter { it.exerciseId == exerciseId }
+            if (sets.any { it.id == setTimerSetId }) stopSetTimer()
+            sets.forEach { repo.deleteSet(it.id) }
+            freeOrder = freeOrder - exerciseId
+            freeExercises.remove(exerciseId)
+            suggestions = suggestions - exerciseId
+            // Drop the in-memory record too, or a re-added exercise would show a stale
+            // "RÉCORD" for a set that was just deleted (set_logs stays the source of truth).
+            records = records - exerciseId
+            prSetIds = prSetIds - sets.map { it.id }.toSet()
+            rebuildFreeItems()
+        }
+    }
+
+    fun createCustomExercise(rawName: String, onCreated: (ExerciseEntity) -> Unit) {
+        viewModelScope.launch { repo.createCustomExercise(rawName)?.let(onCreated) }
+    }
+
+    private suspend fun seedSets(item: RoutineItemWithExercise, sugg: OverloadSuggestion?) {
+        val ex = item.exercise
+        val measure = ex?.measure ?: MeasureType.REPS
+        val free = item.item.id == 0L
+
+        // Restore each set from the corresponding set of the previous session (per set number).
+        val previous = repo.previousSetsForExercise(item.item.exerciseId, sessionId)
+        val prevByNumber = previous.associateBy { it.setNumber }
+
+        val fallbackWeight = ex?.lastWeightKg ?: sugg?.weightKg ?: item.item.targetWeightKg ?: 20.0
+        val fallbackReps = ex?.lastReps ?: if (measure == MeasureType.SECONDS) 30 else when {
+            item.item.amrap -> sugg?.repsHigh ?: 10
+            item.item.repsMax > 0 -> item.item.repsMax
+            else -> 10
+        }
+
+        // A free exercise repeats however many sets it had last time; a planned one obeys the routine.
+        val total = when {
+            !free -> item.item.targetSets.coerceIn(1, 20)
+            previous.isEmpty() -> DEFAULT_FREE_SETS
+            else -> previous.size.coerceIn(1, 20)
+        }
+
+        for (n in 1..total) {
+            val ref = prevByNumber[n] ?: previous.lastOrNull()
+            repo.addSet(
+                SetLogEntity(
+                    sessionId = sessionId,
+                    exerciseId = item.item.exerciseId,
+                    // A synthetic item has no row in routine_items: storing 0 would be a lie.
+                    routineItemId = item.item.id.takeIf { it != 0L },
+                    setNumber = n,
+                    reps = ref?.reps ?: fallbackReps,
+                    weightKg = ref?.weightKg ?: fallbackWeight,
+                    // Warm-up marking sticks: if set 1 was a warm-up last time, it is again.
+                    isWarmup = prevByNumber[n]?.isWarmup ?: false,
+                    completed = false,
+                    measure = measure
                 )
-            }
+            )
         }
     }
 
@@ -191,7 +315,7 @@ class WorkoutViewModel(
                 SetLogEntity(
                     sessionId = sessionId,
                     exerciseId = item.item.exerciseId,
-                    routineItemId = item.item.id,
+                    routineItemId = item.item.id.takeIf { it != 0L },
                     setNumber = setNumber,
                     reps = reps,
                     weightKg = weight,
@@ -322,14 +446,25 @@ class WorkoutViewModel(
     }
 
     /** Configured rest for an exercise (defaults to 90s when the routine doesn't set one). */
-    fun restSecondsFor(exerciseId: String): Int =
-        plannedItems.firstOrNull { it.item.exerciseId == exerciseId }?.item?.restSeconds
+    fun restSecondsFor(exerciseId: String): Int {
+        val planned = plannedItems.firstOrNull { it.item.exerciseId == exerciseId }
+        return planned?.item?.restSeconds
+            ?: planned?.exercise?.defaultRestSeconds
             ?: DEFAULT_REST_SECONDS
+    }
 
     /** Persists a new rest time for this routine exercise. */
     fun setRest(item: RoutineItemWithExercise, seconds: Int) {
         val value = seconds.coerceIn(0, 600)
         viewModelScope.launch {
+            if (item.item.id == 0L) {
+                // Free workout: no routine item to hang it on, so it lives on the exercise.
+                val exId = item.item.exerciseId
+                repo.updateExerciseRest(exId, value)
+                freeExercises[exId]?.let { freeExercises[exId] = it.copy(defaultRestSeconds = value) }
+                rebuildFreeItems()
+                return@launch
+            }
             repo.updateItemRest(item.item.id, value)
             plannedItems = plannedItems.map {
                 if (it.item.id == item.item.id) it.copy(item = it.item.copy(restSeconds = value)) else it
@@ -413,12 +548,25 @@ class WorkoutViewModel(
     }
 
     /** Finishes the session and produces a summary (duration, calories, volume) to show the user. */
-    fun finishWorkout() {
+    /** True while the session has at least one confirmed set. */
+    val hasCompletedSets: Boolean
+        get() = session.value?.sets?.any { it.completed } == true
+
+    /**
+     * @param onDiscarded called instead of showing a summary when nothing was confirmed:
+     *        an empty session would pollute the history, the streak and the comeback detector.
+     */
+    fun finishWorkout(onDiscarded: () -> Unit = {}) {
         stopSetTimer()
         skipRest()
         viewModelScope.launch {
             val current = session.value
             val sets = current?.sets ?: emptyList()
+            if (sets.none { it.completed }) {
+                repo.deleteSession(sessionId)
+                onDiscarded()
+                return@launch
+            }
             val bw = repo.getProfile()?.bodyweightKg ?: 75.0
             val now = repo.now()
             repo.finishSession(sessionId)
@@ -429,19 +577,42 @@ class WorkoutViewModel(
                 kcal = finished?.let { WorkoutMath.caloriesKcal(it, sets, bw) } ?: 0,
                 volumeKg = WorkoutMath.volumeKg(sets),
                 sets = completed,
-                prs = prLog.toList()
+                prs = prLog.toList(),
+                comeback = detectComeback(finished?.startedAt ?: now, completed)
             )
         }
+    }
+
+    /**
+     * Works out whether this session is a comeback after a gap. Persisted so re-running
+     * finish never awards it twice, and so History can show it later.
+     */
+    private suspend fun detectComeback(startedAt: Long, completedSets: Int): ComebackBonus? {
+        if (repo.comebackDays(sessionId) != null) return null
+        // The limit counts sessions, not distinct days: ask for more than the cadence window.
+        val starts = repo.loggedSessionStartsBefore(sessionId, CADENCE_WINDOW * 2)
+        val count = repo.loggedSessionCountBefore(sessionId)
+        val bonus = evaluate(
+            today = epochToLocalDate(startedAt),
+            priorSessionDates = starts.map { epochToLocalDate(it) },
+            priorSessionCount = count,
+            weeklyTarget = weeklyTargetFor(repo.activeRoutine()),
+            completedSetsToday = completedSets,
+            firstSeenAtDate = epochToLocalDate(firstSeenAt)
+        ) ?: return null
+        repo.markComeback(sessionId, bonus.days)
+        return bonus
     }
 
     companion object {
         const val DEFAULT_REST_SECONDS = 90
         const val WARMUP_REST_SECONDS = 45
+        const val DEFAULT_FREE_SETS = 3
 
         /** RIR 0 means RPE 10, RIR 3 means RPE 7, etc. */
         const val RIR_MAX_RPE = 10.0
 
-        fun factory(repo: GymRepository, bell: RestBell, sessionId: Long) =
-            viewModelFactory { initializer { WorkoutViewModel(repo, bell, sessionId) } }
+        fun factory(repo: GymRepository, bell: RestBell, sessionId: Long, firstSeenAt: Long) =
+            viewModelFactory { initializer { WorkoutViewModel(repo, bell, sessionId, firstSeenAt) } }
     }
 }

@@ -73,6 +73,9 @@ interface ExerciseDao {
 
     @Query("UPDATE exercises SET loadPoints = :points WHERE id = :id")
     suspend fun updateLoadPoints(id: String, points: Int)
+
+    @Query("UPDATE exercises SET defaultRestSeconds = :seconds WHERE id = :id")
+    suspend fun updateRest(id: String, seconds: Int)
 }
 
 @Dao
@@ -234,6 +237,36 @@ interface WorkoutDao {
 
     @Query("SELECT DISTINCT exerciseId FROM set_logs")
     fun loggedExerciseIdsFlow(): Flow<List<String>>
+
+    /** Every set of a session, read directly: safe even with no collectors on the flow. */
+    @Query("SELECT * FROM set_logs WHERE sessionId = :sessionId ORDER BY id")
+    suspend fun setsForSession(sessionId: Long): List<SetLogEntity>
+
+    /** Start dates of past sessions that were actually trained (finished, with a confirmed set). */
+    @Query(
+        """
+        SELECT s.startedAt FROM sessions s
+        WHERE s.id != :exceptSessionId AND s.finishedAt IS NOT NULL
+          AND EXISTS (SELECT 1 FROM set_logs sl WHERE sl.sessionId = s.id AND sl.completed = 1)
+        ORDER BY s.startedAt DESC LIMIT :limit
+        """
+    )
+    suspend fun recentLoggedSessionStarts(exceptSessionId: Long, limit: Int): List<Long>
+
+    @Query(
+        """
+        SELECT COUNT(*) FROM sessions s
+        WHERE s.id != :exceptSessionId AND s.finishedAt IS NOT NULL
+          AND EXISTS (SELECT 1 FROM set_logs sl WHERE sl.sessionId = s.id AND sl.completed = 1)
+        """
+    )
+    suspend fun loggedSessionCount(exceptSessionId: Long): Int
+
+    @Query("UPDATE sessions SET comebackDays = :days WHERE id = :id")
+    suspend fun markComeback(id: Long, days: Int)
+
+    @Query("SELECT comebackDays FROM sessions WHERE id = :id")
+    suspend fun comebackDays(id: Long): Int?
 
     /** Every logged set, flattened with session and exercise data, for the CSV export. */
     @Query(

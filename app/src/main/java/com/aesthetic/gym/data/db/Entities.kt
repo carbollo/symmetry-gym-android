@@ -52,7 +52,9 @@ data class ExerciseEntity(
     val lastReps: Int? = null,
     val measure: MeasureType = MeasureType.REPS,
     /** Spots where plates go: 2 = normal barbell (one per side), 4 = four-post leg press. */
-    val loadPoints: Int = 2
+    val loadPoints: Int = 2,
+    /** Rest chosen for this exercise in a free workout, where there is no routine item. */
+    val defaultRestSeconds: Int? = null
 )
 
 @Entity(tableName = "routines")
@@ -118,7 +120,9 @@ data class WorkoutSessionEntity(
     val name: String,
     val startedAt: Long,
     val finishedAt: Long? = null,
-    val notes: String? = null
+    val notes: String? = null,
+    /** Days away rewarded in this session; null = no comeback bonus. */
+    val comebackDays: Int? = null
 )
 
 @Entity(

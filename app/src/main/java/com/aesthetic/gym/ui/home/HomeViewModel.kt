@@ -8,23 +8,24 @@ import com.aesthetic.gym.data.db.RoutineWithDays
 import com.aesthetic.gym.data.db.WorkoutSessionEntity
 import com.aesthetic.gym.data.repo.GymRepository
 import com.aesthetic.gym.domain.model.Rank
+import com.aesthetic.gym.domain.streak.WeeklyStreak
+import com.aesthetic.gym.domain.streak.computeWeeklyStreak
+import com.aesthetic.gym.domain.streak.weeklyTargetFor
 import com.aesthetic.gym.domain.model.Sex
 import com.aesthetic.gym.domain.rank.RankCalculator
 import com.aesthetic.gym.util.WorkoutMath
-import com.aesthetic.gym.util.epochToLocalDate
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import java.time.LocalDate
 import kotlin.math.roundToInt
 
 data class HomeUiState(
     val name: String = "",
     val overallScore: Int = 0,
     val overallRank: Rank = Rank.SILVER_I,
-    val streak: Int = 0,
+    val weekly: WeeklyStreak = WeeklyStreak(),
     val totalWorkouts: Int = 0,
     val activeRoutine: RoutineWithDays? = null,
     val recent: List<WorkoutSessionEntity> = emptyList(),
@@ -42,6 +43,12 @@ class HomeViewModel(private val repo: GymRepository) : ViewModel() {
         repo.sessionsWithSetsHot,
         repo.setMuscleRowsHot
     ) { profile, active, sessionsWithSets, rows ->
+        // Días de entreno reales: una sesión sin ninguna serie confirmada no cuenta.
+        val trainingDays = sessionsWithSets
+            .filter { sw -> sw.sets.any { it.completed } }
+            .map { it.session.startedAt }
+        val weekly = computeWeeklyStreak(trainingDays, weeklyTargetFor(active))
+
         val bw = profile?.bodyweightKg ?: 75.0
         val sex = profile?.sex ?: Sex.MALE
         val summary = RankCalculator.compute(rows, bw, sex)
@@ -62,7 +69,7 @@ class HomeViewModel(private val repo: GymRepository) : ViewModel() {
             name = profile?.name?.takeIf { it.isNotBlank() } ?: "Atleta",
             overallScore = summary.overallScore,
             overallRank = summary.overallRank,
-            streak = computeStreak(sessions.map { it.startedAt }),
+            weekly = weekly,
             totalWorkouts = sessions.size,
             activeRoutine = active,
             recent = sessions.take(5),
@@ -79,23 +86,6 @@ class HomeViewModel(private val repo: GymRepository) : ViewModel() {
         }
     }
 
-    private fun computeStreak(starts: List<Long>): Int {
-        if (starts.isEmpty()) return 0
-        val days = starts.map { epochToLocalDate(it) }.toSortedSet().toList().reversed()
-        val today = LocalDate.now()
-        var cursor = when {
-            days.first() == today -> today
-            days.first() == today.minusDays(1) -> today.minusDays(1)
-            else -> return 0
-        }
-        val set = days.toHashSet()
-        var streak = 0
-        while (set.contains(cursor)) {
-            streak++
-            cursor = cursor.minusDays(1)
-        }
-        return streak
-    }
 
     companion object {
         fun factory(repo: GymRepository) = viewModelFactory {

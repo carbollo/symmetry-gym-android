@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- La marca de instalacion no se restaura: si volviera con el backup, la app creeria
+     que este dispositivo ya tenia historial y premiaria un regreso que no existio. -->
+<full-backup-content>
+    <exclude domain="sharedpref" path="zenit_install.xml" />
+</full-backup-content>
