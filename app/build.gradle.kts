@@ -12,8 +12,8 @@ android {
         applicationId = "com.aesthetic.gym"
         minSdk = 26
         targetSdk = 34
-        versionCode = 27
-        versionName = "1.26"
+        versionCode = 29
+        versionName = "1.28"
         vectorDrawables { useSupportLibrary = true }
     }
 
@@ -90,6 +90,7 @@ dependencies {
     implementation(libs.pdfbox.android)
     implementation(libs.kotlinx.coroutines.android)
     implementation(libs.play.services.ads)
+    implementation(libs.androidx.work.runtime.ktx)
 
     debugImplementation(libs.androidx.ui.tooling)
     testImplementation(libs.junit)

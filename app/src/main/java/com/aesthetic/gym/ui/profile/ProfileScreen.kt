@@ -2,6 +2,7 @@ package com.aesthetic.gym.ui.profile
 
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import android.Manifest
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -15,6 +16,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -25,6 +27,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
@@ -52,7 +55,11 @@ import androidx.navigation.NavController
 import com.aesthetic.gym.data.db.ProfileEntity
 import com.aesthetic.gym.domain.model.Sex
 import com.aesthetic.gym.domain.model.WeightUnit
+import com.aesthetic.gym.reminder.ReminderCopy
+import com.aesthetic.gym.reminder.ReminderScheduler
 import com.aesthetic.gym.ui.rememberRepository
+import com.aesthetic.gym.util.Notifications
+import com.aesthetic.gym.util.openAppNotificationSettings
 import com.aesthetic.gym.ui.theme.Outline
 import com.aesthetic.gym.ui.theme.Surface
 import com.aesthetic.gym.ui.theme.SurfaceVariant
@@ -61,6 +68,7 @@ import com.aesthetic.gym.ui.theme.TextSecondary
 import com.aesthetic.gym.ui.theme.Violet
 import com.aesthetic.gym.util.epochToLocalDate
 import kotlinx.coroutines.launch
+import java.time.DayOfWeek
 
 @Composable
 fun ProfileScreen(navController: NavController) {
@@ -76,6 +84,7 @@ fun ProfileScreen(navController: NavController) {
     var experience by remember { mutableStateOf(1) }
     var showRpe by remember { mutableStateOf(false) }
     var adsTestMode by remember { mutableStateOf(false) }
+    var soundEnabled by remember { mutableStateOf(true) }
     var loaded by remember { mutableStateOf(false) }
     var saved by remember { mutableStateOf(false) }
 
@@ -99,7 +108,7 @@ fun ProfileScreen(navController: NavController) {
             name = p.name; sex = p.sex
             weight = trimDouble(p.bodyweightKg); height = trimDouble(p.heightCm)
             unit = p.unit; experience = p.experienceLevel
-            showRpe = p.showRpe; adsTestMode = p.adsTestMode
+            showRpe = p.showRpe; adsTestMode = p.adsTestMode; soundEnabled = p.soundEnabled
             loaded = true
         }
     }
@@ -229,6 +238,37 @@ fun ProfileScreen(navController: NavController) {
                     }
                 }
 
+                Spacer(Modifier.height(12.dp))
+                Row(
+                    Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp))
+                        .background(SurfaceVariant)
+                        .clickable { soundEnabled = !soundEnabled; saved = false }
+                        .padding(horizontal = 14.dp, vertical = 13.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(Modifier.weight(1f)) {
+                        Text(
+                            "Sonido y vibración",
+                            color = Color.White, fontWeight = FontWeight.Bold, fontSize = 13.sp
+                        )
+                        Text(
+                            "La campana de descanso y la celebración de récord",
+                            color = TextMuted, fontSize = 10.sp
+                        )
+                    }
+                    Spacer(Modifier.width(10.dp))
+                    Box(
+                        Modifier.width(46.dp).height(26.dp).clip(RoundedCornerShape(50))
+                            .background(if (soundEnabled) Violet else Outline),
+                        contentAlignment = if (soundEnabled) Alignment.CenterEnd else Alignment.CenterStart
+                    ) {
+                        Box(
+                            Modifier.padding(horizontal = 3.dp).size(20.dp)
+                                .clip(CircleShape).background(Color.White)
+                        )
+                    }
+                }
+
                 Spacer(Modifier.height(14.dp))
                 Row(verticalAlignment = Alignment.Top) {
                     Icon(Icons.Filled.Info, null, tint = TextMuted, modifier = Modifier.size(13.dp))
@@ -257,7 +297,8 @@ fun ProfileScreen(navController: NavController) {
                                     onboarded = true,
                                     createdAt = profile?.createdAt ?: 0L,
                                     showRpe = showRpe,
-                                    adsTestMode = adsTestMode
+                                    adsTestMode = adsTestMode,
+                                    soundEnabled = soundEnabled
                                 )
                             )
                             saved = true
@@ -309,8 +350,26 @@ fun ProfileScreen(navController: NavController) {
                     Spacer(Modifier.height(10.dp))
                     Text(it, color = Violet, fontSize = 12.sp, fontWeight = FontWeight.Bold)
                 }
+
+                // Honest privacy note. Precise about the one network exception (the ad SDK),
+                // so the "no tracking" claim doesn't become a dark pattern by omission.
+                Spacer(Modifier.height(16.dp))
+                Row(verticalAlignment = Alignment.Top) {
+                    Icon(Icons.Filled.Lock, null, tint = TextMuted, modifier = Modifier.size(13.dp))
+                    Spacer(Modifier.width(6.dp))
+                    Text(
+                        "Tus entrenos viven solo en este teléfono. Sin cuentas, sin nube: por eso " +
+                            "puedes exportarlos y llevártelos cuando quieras. La app no te rastrea; " +
+                            "el anuncio usa internet y su proveedor (Google) puede recopilar datos.",
+                        color = TextMuted, fontSize = 10.sp, lineHeight = 14.sp
+                    )
+                }
             }
         }
+
+        // ---------- REMINDERS ----------
+        Spacer(Modifier.height(16.dp))
+        ReminderSection(profile) { vm.updateReminders(it) }
 
         // ---------- ADS ----------
         Spacer(Modifier.height(16.dp))
@@ -356,6 +415,163 @@ fun ProfileScreen(navController: NavController) {
                     "Acuérdate de guardar el perfil para aplicar el cambio.",
                     color = TextMuted, fontSize = 10.sp
                 )
+            }
+        }
+    }
+}
+
+private val DEFAULT_DAYS = setOf(DayOfWeek.MONDAY, DayOfWeek.WEDNESDAY, DayOfWeek.FRIDAY)
+private val DAY_CHIPS = listOf(
+    DayOfWeek.MONDAY to "L", DayOfWeek.TUESDAY to "M", DayOfWeek.WEDNESDAY to "X",
+    DayOfWeek.THURSDAY to "J", DayOfWeek.FRIDAY to "V", DayOfWeek.SATURDAY to "S",
+    DayOfWeek.SUNDAY to "D"
+)
+private val HOUR_OPTIONS = listOf(6, 7, 8, 9, 12, 17, 18, 19, 20, 21)
+
+@Composable
+private fun ReminderSection(profile: ProfileEntity?, onPersist: (ProfileEntity) -> Unit) {
+    val context = LocalContext.current
+    var enabled by remember { mutableStateOf(false) }
+    var days by remember { mutableStateOf(setOf<DayOfWeek>()) }
+    var hour by remember { mutableStateOf(19) }
+    var blocked by remember { mutableStateOf(false) }
+    var loaded by remember { mutableStateOf(false) }
+
+    LaunchedEffect(profile) {
+        val p = profile
+        if (!loaded && p != null) {
+            enabled = p.reminderEnabled
+            days = ReminderScheduler.parseDays(p.reminderDays)
+            hour = p.reminderHour
+            loaded = true
+        }
+    }
+
+    fun persist() {
+        val updated = (profile ?: ProfileEntity()).copy(
+            id = 1,
+            reminderEnabled = enabled,
+            reminderDays = ReminderScheduler.formatDays(days),
+            reminderHour = hour,
+            reminderMinute = 0
+        )
+        onPersist(updated)
+        ReminderScheduler.sync(context.applicationContext, updated)
+    }
+
+    val permLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        // Two refusals = permanent denial: we don't relaunch, we link to Settings instead.
+        if (granted) { enabled = true; blocked = false } else { enabled = false; blocked = true }
+        persist()
+    }
+
+    fun onToggle(on: Boolean) {
+        if (!on) { enabled = false; persist(); return }
+        if (days.isEmpty()) days = DEFAULT_DAYS
+        if (Notifications.hasRuntimePermission(context)) {
+            enabled = true; blocked = false; persist()
+        } else {
+            permLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+        }
+    }
+
+    Box(
+        Modifier.fillMaxWidth().clip(RoundedCornerShape(20.dp)).background(Surface)
+            .border(1.dp, Outline, RoundedCornerShape(20.dp)).padding(16.dp)
+    ) {
+        Column {
+            FieldLabel("RECORDATORIOS")
+            Row(
+                Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(SurfaceVariant)
+                    .clickable { onToggle(!enabled) }
+                    .padding(horizontal = 14.dp, vertical = 13.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(Modifier.weight(1f)) {
+                    Text("Avísame de entrenar", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                    Text(
+                        "Un aviso los días y la hora que tú fijes. Puedes apagarlo cuando quieras.",
+                        color = TextMuted, fontSize = 10.sp, lineHeight = 14.sp
+                    )
+                }
+                Spacer(Modifier.width(10.dp))
+                Box(
+                    Modifier.width(46.dp).height(26.dp).clip(RoundedCornerShape(50))
+                        .background(if (enabled) Violet else Outline),
+                    contentAlignment = if (enabled) Alignment.CenterEnd else Alignment.CenterStart
+                ) {
+                    Box(Modifier.padding(horizontal = 3.dp).size(20.dp).clip(CircleShape).background(Color.White))
+                }
+            }
+
+            if (blocked) {
+                Spacer(Modifier.height(10.dp))
+                Text(ReminderCopy.PERM_BLOCKED, color = TextMuted, fontSize = 10.sp, lineHeight = 14.sp)
+                Spacer(Modifier.height(8.dp))
+                Text(
+                    "Abrir ajustes de notificaciones", color = Violet, fontSize = 12.sp,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.clickable { openAppNotificationSettings(context) }
+                )
+            }
+
+            if (enabled) {
+                Spacer(Modifier.height(14.dp))
+                FieldLabel("DÍAS")
+                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    DAY_CHIPS.forEach { (day, label) ->
+                        val sel = day in days
+                        Box(
+                            Modifier.weight(1f).clip(RoundedCornerShape(10.dp))
+                                .background(if (sel) Violet else SurfaceVariant)
+                                .clickable {
+                                    // Persist even when the last day is removed, or the visible
+                                    // state and the scheduled work would diverge (a reminder on a
+                                    // day the user just cleared). sync() cancels the work if empty.
+                                    days = if (sel) days - day else days + day
+                                    persist()
+                                }
+                                .padding(vertical = 10.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                label, color = if (sel) Color.White else TextSecondary,
+                                fontSize = 12.sp, fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
+                }
+
+                Spacer(Modifier.height(14.dp))
+                FieldLabel("HORA")
+                Row(
+                    Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    HOUR_OPTIONS.forEach { h ->
+                        val sel = h == hour
+                        Box(
+                            Modifier.clip(RoundedCornerShape(50))
+                                .background(if (sel) Violet else SurfaceVariant)
+                                .clickable { hour = h; persist() }
+                                .padding(horizontal = 14.dp, vertical = 8.dp)
+                        ) {
+                            Text(
+                                "%02d:00".format(h), color = if (sel) Color.White else TextSecondary,
+                                fontSize = 12.sp, fontWeight = FontWeight.Bold, maxLines = 1, softWrap = false
+                            )
+                        }
+                    }
+                }
+
+                Spacer(Modifier.height(12.dp))
+                Row(verticalAlignment = Alignment.Top) {
+                    Icon(Icons.Filled.Info, null, tint = TextMuted, modifier = Modifier.size(13.dp))
+                    Spacer(Modifier.width(6.dp))
+                    Text(ReminderCopy.OEM_WARNING, color = TextMuted, fontSize = 10.sp, lineHeight = 14.sp)
+                }
             }
         }
     }

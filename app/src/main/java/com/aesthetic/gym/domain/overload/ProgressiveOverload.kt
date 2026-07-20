@@ -60,7 +60,8 @@ object ProgressiveOverload {
                 weightKg = next,
                 repsLow = repsLow,
                 repsHigh = repsHigh,
-                note = "¡Completaste el rango! Sube a ${trim(next)} kg (+${trim(step)})",
+                // Suggests, doesn't order: the same data informs or pressures depending on tone.
+                note = "Completaste el rango. Si te apetece, prueba ${trim(next)} kg (+${trim(step)})",
                 reachedTop = true
             )
         } else {

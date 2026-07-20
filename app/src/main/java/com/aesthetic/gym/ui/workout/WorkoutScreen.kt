@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -30,6 +31,7 @@ import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.StickyNote2
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Bolt
 import androidx.compose.material.icons.filled.Check
@@ -130,6 +132,7 @@ fun WorkoutScreen(navController: NavController, sessionId: Long) {
     var platesFor by remember { mutableStateOf<PlateTarget?>(null) }
     var showPicker by remember { mutableStateOf(false) }
     var removeFor by remember { mutableStateOf<String?>(null) }
+    var noteFor by remember { mutableStateOf<String?>(null) }
     val catalog by repo.exercisesHot.collectAsState()
     val safeIndex = selectedIndex.coerceIn(0, (planned.size - 1).coerceAtLeast(0))
 
@@ -270,6 +273,30 @@ fun WorkoutScreen(navController: NavController, sessionId: Long) {
                         Spacer(Modifier.width(5.dp))
                         Text("DISCOS", color = Cyan, fontSize = 10.sp, fontWeight = FontWeight.Bold)
                     }
+                }
+
+                // Personal note, reappears every time this exercise is trained. Pure utility.
+                val note = item.exercise?.notes
+                Spacer(Modifier.height(12.dp))
+                Row(
+                    Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp))
+                        .background(SurfaceVariant.copy(alpha = 0.5f))
+                        .clickable { noteFor = exId }
+                        .padding(horizontal = 12.dp, vertical = 10.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        Icons.AutoMirrored.Filled.StickyNote2, null,
+                        tint = if (note.isNullOrBlank()) TextMuted else Cyan, modifier = Modifier.size(14.dp)
+                    )
+                    Spacer(Modifier.width(8.dp))
+                    Text(
+                        note?.takeIf { it.isNotBlank() } ?: "Añadir nota (asiento, agarre, molestia…)",
+                        color = if (note.isNullOrBlank()) TextMuted else Color.White,
+                        fontSize = 12.sp, maxLines = 2,
+                        fontStyle = if (note.isNullOrBlank()) FontStyle.Italic else FontStyle.Normal,
+                        modifier = Modifier.weight(1f)
+                    )
                 }
 
                 Spacer(Modifier.height(16.dp))
@@ -442,8 +469,65 @@ fun WorkoutScreen(navController: NavController, sessionId: Long) {
         )
     }
 
+    noteFor?.let { exId ->
+        val exercise = planned.firstOrNull { it.item.exerciseId == exId }?.exercise
+        NoteDialog(
+            exerciseName = exercise?.name ?: "",
+            initial = exercise?.notes ?: "",
+            onSave = { vm.setExerciseNote(exId, it); noteFor = null },
+            onDismiss = { noteFor = null }
+        )
+    }
+
     vm.summary?.let { s ->
         WorkoutSummaryDialog(s) { navController.popBackStack() }
+    }
+}
+
+/** Edits the personal note of an exercise. */
+@Composable
+private fun NoteDialog(
+    exerciseName: String,
+    initial: String,
+    onSave: (String) -> Unit,
+    onDismiss: () -> Unit
+) {
+    var text by remember { mutableStateOf(initial) }
+    Dialog(onDismissRequest = onDismiss) {
+        Column(
+            Modifier.widthIn(max = 360.dp).clip(RoundedCornerShape(22.dp)).background(Surface).padding(20.dp)
+        ) {
+            Text("Nota", color = TextMuted, fontSize = 10.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
+            Spacer(Modifier.height(2.dp))
+            Text(exerciseName, color = Color.White, fontWeight = FontWeight.Bold, fontSize = 16.sp, maxLines = 2)
+            Spacer(Modifier.height(14.dp))
+            Box(
+                Modifier.fillMaxWidth().heightIn(min = 90.dp).clip(RoundedCornerShape(12.dp))
+                    .background(SurfaceVariant).padding(14.dp)
+            ) {
+                if (text.isEmpty()) {
+                    Text(
+                        "Ej.: asiento 4, pin 7, agarre supino, cuidado con el hombro.",
+                        color = TextMuted, fontSize = 13.sp
+                    )
+                }
+                BasicTextField(
+                    value = text,
+                    onValueChange = { if (it.length <= 200) text = it },
+                    textStyle = TextStyle(color = Color.White, fontSize = 13.sp, lineHeight = 18.sp),
+                    cursorBrush = SolidColor(Cyan),
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+            Spacer(Modifier.height(16.dp))
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                TextButton(onClick = onDismiss) { Text("Cancelar", color = TextSecondary) }
+                Spacer(Modifier.width(8.dp))
+                TextButton(onClick = { onSave(text) }) {
+                    Text("Guardar", color = Cyan, fontWeight = FontWeight.Bold)
+                }
+            }
+        }
     }
 }
 
@@ -1270,9 +1354,9 @@ private fun WorkoutSummaryDialog(summary: WorkoutSummary, onDone: () -> Unit) {
                     Icon(Icons.Filled.EmojiEvents, null, tint = Lime, modifier = Modifier.size(32.dp))
                 }
                 Spacer(Modifier.height(12.dp))
-                Text("¡ENTRENO COMPLETADO!", color = Color.White, fontWeight = FontWeight.Black, fontSize = 19.sp)
+                Text("ENTRENO COMPLETADO", color = Color.White, fontWeight = FontWeight.Black, fontSize = 19.sp)
                 Spacer(Modifier.height(4.dp))
-                Text("Buen trabajo 💪", color = TextSecondary, fontSize = 13.sp)
+                Text("Sesión guardada.", color = TextSecondary, fontSize = 13.sp)
                 Spacer(Modifier.height(20.dp))
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                     SummaryTile(formatDuration(summary.durationMin), "duración", Lime, Modifier.weight(1f))
@@ -1280,7 +1364,22 @@ private fun WorkoutSummaryDialog(summary: WorkoutSummary, onDone: () -> Unit) {
                     SummaryTile("${summary.volumeKg.roundToInt()}", "kg volumen", Cyan, Modifier.weight(1f))
                 }
                 Spacer(Modifier.height(10.dp))
-                Text("${summary.sets} series completadas", color = TextSecondary, fontSize = 12.sp)
+                Text(
+                    if (summary.sets == 1) "1 serie completada" else "${summary.sets} series completadas",
+                    color = TextSecondary, fontSize = 12.sp
+                )
+
+                // Process feedback: recognise showing up. Never coloured red, never a "must".
+                if (summary.weekTarget > 0) {
+                    Spacer(Modifier.height(8.dp))
+                    val done = minOf(summary.weekDone, summary.weekTarget)
+                    Text(
+                        if (summary.weekDone >= summary.weekTarget)
+                            "Apareciste $done de ${summary.weekTarget} esta semana. Semana cumplida."
+                        else "Llevas ${summary.weekDone} ${if (summary.weekDone == 1) "día" else "días"} esta semana.",
+                        color = Lime, fontSize = 12.sp, fontWeight = FontWeight.Bold
+                    )
+                }
 
                 summary.comeback?.let { bonus ->
                     Spacer(Modifier.height(16.dp))
@@ -1308,8 +1407,15 @@ private fun WorkoutSummaryDialog(summary: WorkoutSummary, onDone: () -> Unit) {
                     }
                 }
 
-                Spacer(Modifier.height(20.dp))
-                PrimaryButton("Hecho", onDone, Modifier.fillMaxWidth())
+                // A stopping cue: the workout is done, you can put the phone away. No hook,
+                // no "keep going", no ad here — that is the ethical line for this screen.
+                Spacer(Modifier.height(18.dp))
+                Text(
+                    "Ya está por hoy. Toca descansar.",
+                    color = TextMuted, fontSize = 12.sp
+                )
+                Spacer(Modifier.height(14.dp))
+                PrimaryButton("Cerrar", onDone, Modifier.fillMaxWidth())
             }
         }
     }

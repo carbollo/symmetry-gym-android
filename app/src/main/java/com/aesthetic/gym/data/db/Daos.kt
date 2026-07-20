@@ -76,6 +76,9 @@ interface ExerciseDao {
 
     @Query("UPDATE exercises SET defaultRestSeconds = :seconds WHERE id = :id")
     suspend fun updateRest(id: String, seconds: Int)
+
+    @Query("UPDATE exercises SET notes = :notes WHERE id = :id")
+    suspend fun updateNotes(id: String, notes: String?)
 }
 
 @Dao
@@ -237,6 +240,20 @@ interface WorkoutDao {
 
     @Query("SELECT DISTINCT exerciseId FROM set_logs")
     fun loggedExerciseIdsFlow(): Flow<List<String>>
+
+    /** Whether a real workout (finished + a confirmed set) happened within [start, end). */
+    @Query(
+        """
+        SELECT COUNT(*) FROM sessions s
+        WHERE s.finishedAt IS NOT NULL AND s.startedAt >= :start AND s.startedAt < :end
+          AND EXISTS (SELECT 1 FROM set_logs sl WHERE sl.sessionId = s.id AND sl.completed = 1)
+        """
+    )
+    suspend fun trainedBetween(start: Long, end: Long): Int
+
+    /** dayId of the last finished session, to suggest the next day of the routine. */
+    @Query("SELECT dayId FROM sessions WHERE finishedAt IS NOT NULL AND dayId IS NOT NULL ORDER BY startedAt DESC LIMIT 1")
+    suspend fun lastFinishedDayId(): Long?
 
     /** Every set of a session, read directly: safe even with no collectors on the flow. */
     @Query("SELECT * FROM set_logs WHERE sessionId = :sessionId ORDER BY id")

@@ -67,13 +67,17 @@ fun NativeAdCard(
     val ready by Ads.ready.collectAsState()
     var ad by remember { mutableStateOf<NativeAd?>(null) }
     var error by remember { mutableStateOf<String?>(null) }
-    val unitId = if (testMode || BuildConfig.DEBUG) TEST_NATIVE_UNIT else LIVE_NATIVE_UNIT
+    val testUnit = testMode || BuildConfig.DEBUG
+    val unitId = if (testUnit) TEST_NATIVE_UNIT else LIVE_NATIVE_UNIT
+    // Live ads are owned by the Ads cache (reused across visits); test ads are throwaway.
+    val managed = !testUnit
     val holder = remember { AdHolder() }
 
     DisposableEffect(Unit) {
         onDispose {
             holder.disposed = true
-            holder.ad?.destroy()
+            // Cached (live) ads outlive this composable; only destroy the throwaway ones.
+            if (!managed) holder.ad?.destroy()
             holder.ad = null
         }
     }
@@ -86,14 +90,23 @@ fun NativeAdCard(
             error = "esperando a que arranque el SDK de anuncios…"
             return@LaunchedEffect
         }
+        // Reuse a recent live ad instead of over-serving a request on every visit to Home.
+        if (managed) {
+            Ads.cachedOrNull(System.currentTimeMillis())?.let {
+                ad = it
+                error = null
+                return@LaunchedEffect
+            }
+        }
         val loader = AdLoader.Builder(context.applicationContext, unitId)
             .forNativeAd { native ->
                 // The callback can arrive after the screen is gone; leaking it would
                 // hold the ad forever and Google logs it as an unshown impression.
                 if (holder.disposed) {
-                    native.destroy()
+                    if (managed) Ads.cache(native, System.currentTimeMillis()) else native.destroy()
                 } else {
-                    holder.ad?.destroy()
+                    if (managed) Ads.cache(native, System.currentTimeMillis())
+                    else holder.ad?.destroy()
                     holder.ad = native
                     ad = native
                     error = null

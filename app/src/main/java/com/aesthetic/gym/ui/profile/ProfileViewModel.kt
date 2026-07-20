@@ -46,6 +46,11 @@ class ProfileViewModel(private val repo: GymRepository) : ViewModel() {
 
     fun suggestedFileName(): String = CsvExport.suggestedFileName(repo.now())
 
+    /** Persists only the reminder fields (saved instantly, not via the "Save profile" button). */
+    fun updateReminders(profile: ProfileEntity) {
+        viewModelScope.launch { repo.saveProfile(profile.copy(id = 1)) }
+    }
+
     companion object {
         fun factory(repo: GymRepository) = viewModelFactory { initializer { ProfileViewModel(repo) } }
     }

@@ -23,6 +23,7 @@ import com.aesthetic.gym.domain.overload.ProgressiveOverload
 import com.aesthetic.gym.domain.comeback.CADENCE_WINDOW
 import com.aesthetic.gym.domain.comeback.ComebackBonus
 import com.aesthetic.gym.domain.comeback.evaluate
+import com.aesthetic.gym.domain.streak.computeWeeklyStreak
 import com.aesthetic.gym.domain.streak.weeklyTargetFor
 import com.aesthetic.gym.util.PlateCalculator
 import com.aesthetic.gym.util.RestBell
@@ -45,7 +46,10 @@ data class WorkoutSummary(
     val volumeKg: Double,
     val sets: Int,
     val prs: List<String> = emptyList(),
-    val comeback: ComebackBonus? = null
+    val comeback: ComebackBonus? = null,
+    /** Distinct training days this week (including today) and the weekly target. */
+    val weekDone: Int = 0,
+    val weekTarget: Int = 0
 )
 
 /** A record broken during the session, shown as a celebration banner. */
@@ -111,6 +115,8 @@ class WorkoutViewModel(
 
     /** User preferences (RIR tracking on/off). */
     val profile = repo.profileHot
+
+    private val soundOn: Boolean get() = profile.value?.soundEnabled != false
 
     /** Latest record broken, shown as a banner until dismissed. */
     var prEvent by mutableStateOf<PrEvent?>(null)
@@ -249,6 +255,19 @@ class WorkoutViewModel(
 
     fun createCustomExercise(rawName: String, onCreated: (ExerciseEntity) -> Unit) {
         viewModelScope.launch { repo.createCustomExercise(rawName)?.let(onCreated) }
+    }
+
+    /** Personal note for an exercise, remembered for next time. Patches both modes in memory. */
+    fun setExerciseNote(exerciseId: String, note: String) {
+        val trimmed = note.trim().take(200).ifBlank { null }
+        viewModelScope.launch {
+            repo.updateExerciseNotes(exerciseId, trimmed)
+            freeExercises[exerciseId]?.let { freeExercises[exerciseId] = it.copy(notes = trimmed) }
+            plannedItems = plannedItems.map {
+                if (it.item.exerciseId == exerciseId) it.copy(exercise = it.exercise?.copy(notes = trimmed))
+                else it
+            }
+        }
     }
 
     private suspend fun seedSets(item: RoutineItemWithExercise, sugg: OverloadSuggestion?) {
@@ -412,7 +431,7 @@ class WorkoutViewModel(
         prSetIds = prSetIds + set.id
         prLog += "$name — $text"
         prEvent = PrEvent(set.id, name, text, kind)
-        bell.celebrate()
+        if (soundOn) bell.celebrate()
     }
 
     fun dismissPr() {
@@ -503,7 +522,7 @@ class WorkoutViewModel(
             setTimerSetId = null
             // Only if the set still exists: it may have been deleted mid-countdown.
             val current = session.value?.sets?.firstOrNull { it.id == set.id } ?: return@launch
-            bell.ring()
+            if (soundOn) bell.ring()
             if (!current.completed) toggleCompleted(current)
         }
     }
@@ -527,7 +546,7 @@ class WorkoutViewModel(
                 left--
             }
             restLeft = 0
-            bell.ring()
+            if (soundOn) bell.ring()
         }
     }
 
@@ -577,13 +596,22 @@ class WorkoutViewModel(
             repo.finishSession(sessionId)
             val finished = (current?.session ?: repo.sessionById(sessionId))?.copy(finishedAt = now)
             val completed = sets.count { it.completed }
+            val startedAt = finished?.startedAt ?: now
+            val comeback = detectComeback(startedAt, completed)
+            // Process feedback: recognise showing up, not only beating a record. In a plateau
+            // there is no PR, and the absence of one should not read as failure.
+            val target = weeklyTargetFor(repo.activeRoutine())
+            val weekDates = repo.loggedSessionStartsBefore(sessionId, 30).toMutableList().apply { add(startedAt) }
+            val weekly = computeWeeklyStreak(weekDates, target)
             summary = WorkoutSummary(
                 durationMin = finished?.let { WorkoutMath.durationMinutes(it, completed).roundToInt() } ?: 0,
                 kcal = finished?.let { WorkoutMath.caloriesKcal(it, sets, bw) } ?: 0,
                 volumeKg = WorkoutMath.volumeKg(sets),
                 sets = completed,
                 prs = prLog.toList(),
-                comeback = detectComeback(finished?.startedAt ?: now, completed)
+                comeback = comeback,
+                weekDone = weekly.doneThisWeek,
+                weekTarget = weekly.target
             )
         }
     }

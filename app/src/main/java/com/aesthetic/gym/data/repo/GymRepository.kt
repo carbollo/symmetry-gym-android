@@ -70,6 +70,7 @@ class GymRepository(private val db: AppDatabase) {
     suspend fun updateExerciseLoadPoints(id: String, points: Int) =
         exerciseDao.updateLoadPoints(id, points)
     suspend fun updateExerciseRest(id: String, seconds: Int) = exerciseDao.updateRest(id, seconds)
+    suspend fun updateExerciseNotes(id: String, notes: String?) = exerciseDao.updateNotes(id, notes)
 
     /**
      * Creates a user-defined exercise with a unique id, guessing muscle and equipment
@@ -97,6 +98,12 @@ class GymRepository(private val db: AppDatabase) {
     suspend fun ensureSeeded() {
         if (exerciseDao.count() == 0) {
             exerciseDao.upsertAll(ExerciseCatalog.entities)
+        }
+        // Materialise the profile row up front. Otherwise the first instant write (a reminder or
+        // sound toggle) creates it from defaults and re-triggers the Perfil form's lazy load,
+        // wiping whatever the user had typed but not yet saved.
+        if (profileDao.getProfile() == null) {
+            profileDao.upsert(ProfileEntity(id = 1, createdAt = now()))
         }
     }
 
@@ -150,6 +157,8 @@ class GymRepository(private val db: AppDatabase) {
         workoutDao.loggedSessionCount(exceptSessionId)
     suspend fun markComeback(id: Long, days: Int) = workoutDao.markComeback(id, days)
     suspend fun comebackDays(id: Long) = workoutDao.comebackDays(id)
+    suspend fun trainedBetween(start: Long, end: Long) = workoutDao.trainedBetween(start, end)
+    suspend fun lastFinishedDayId() = workoutDao.lastFinishedDayId()
 
     suspend fun exportRows() = workoutDao.exportRows()
 

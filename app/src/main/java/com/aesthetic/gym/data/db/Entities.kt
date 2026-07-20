@@ -35,7 +35,20 @@ data class ProfileEntity(
     /** Plates the user's gym has, in grams, comma separated. See PlateCalculator. */
     val plateSetGrams: String = "1250,2500,5000,10000,15000,20000,25000",
     /** Forces Google test ad units, so the integration can be checked on a real phone. */
-    val adsTestMode: Boolean = false
+    val adsTestMode: Boolean = false,
+    /** Play the bell and vibration for rest end and records. Off = silent. */
+    val soundEnabled: Boolean = true,
+    // ---- Optional local training reminders (v11). Off by default: ethical requirement. ----
+    /** Master switch. Never on without the runtime permission granted (API 33+). */
+    val reminderEnabled: Boolean = false,
+    /** Chosen days as a CSV of DayOfWeek codes: "MON,WED,FRI". Empty = none. */
+    val reminderDays: String = "",
+    val reminderHour: Int = 19,
+    val reminderMinute: Int = 0,
+    /** Reminders shown in a row with no workout after them (decreasing rule). Reset on training. */
+    val reminderIgnoredStreak: Int = 0,
+    /** epoch ms of the last reminder actually posted (reconciles the streak, caps to 1/day). */
+    val reminderLastShownAt: Long = 0L
 )
 
 @Entity(tableName = "exercises")
@@ -54,7 +67,9 @@ data class ExerciseEntity(
     /** Spots where plates go: 2 = normal barbell (one per side), 4 = four-post leg press. */
     val loadPoints: Int = 2,
     /** Rest chosen for this exercise in a free workout, where there is no routine item. */
-    val defaultRestSeconds: Int? = null
+    val defaultRestSeconds: Int? = null,
+    /** Personal note ("seat 4, pin 7", "elbow hurts") that reappears when training this exercise. */
+    val notes: String? = null
 )
 
 @Entity(tableName = "routines")

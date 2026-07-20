@@ -105,7 +105,7 @@ fun HomeScreen(navController: NavController) {
             Text("Hola, ${state.name}", color = Color.White, fontWeight = FontWeight.SemiBold, fontSize = 15.sp)
             Spacer(Modifier.height(2.dp))
             Text(
-                "Hoy es un gran día para superar tus límites.",
+                "Cada sesión cuenta. Entrena a tu ritmo.",
                 color = TextSecondary, fontSize = 12.sp
             )
         }
