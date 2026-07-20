@@ -29,6 +29,7 @@ import androidx.compose.material.icons.filled.MilitaryTech
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Schedule
+import androidx.compose.material.icons.filled.UploadFile
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -203,6 +204,28 @@ fun HomeScreen(navController: NavController) {
                     Text("Crea una rutina o impórtala desde un PDF.", color = TextSecondary, fontSize = 12.sp)
                     Spacer(Modifier.height(14.dp))
                     PrimaryButton("Crear rutina", { navController.navigate(Routes.CREATE_ROUTINE) }, Modifier.fillMaxWidth())
+                    Spacer(Modifier.height(10.dp))
+                    // La importación existía pero solo se mencionaba en el texto de arriba,
+                    // sin ninguna forma de llegar a ella desde aquí.
+                    Row(
+                        Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp))
+                            .background(SurfaceVariant)
+                            .border(1.dp, Outline, RoundedCornerShape(14.dp))
+                            .clickable { navController.navigate(Routes.IMPORT) }
+                            .padding(vertical = 13.dp),
+                        horizontalArrangement = Arrangement.Center,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            Icons.Filled.UploadFile, null,
+                            tint = Color.White, modifier = Modifier.size(16.dp)
+                        )
+                        Spacer(Modifier.width(8.dp))
+                        Text(
+                            "Importar desde PDF", color = Color.White,
+                            fontSize = 14.sp, fontWeight = FontWeight.SemiBold
+                        )
+                    }
                 }
             }
         }
