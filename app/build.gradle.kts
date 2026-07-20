@@ -12,8 +12,8 @@ android {
         applicationId = "com.aesthetic.gym"
         minSdk = 26
         targetSdk = 34
-        versionCode = 22
-        versionName = "1.21"
+        versionCode = 23
+        versionName = "1.22"
         vectorDrawables { useSupportLibrary = true }
     }
 
@@ -51,6 +51,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
     composeOptions {
         kotlinCompilerExtensionVersion = "1.5.14"
@@ -88,6 +89,7 @@ dependencies {
     implementation(libs.coil.compose)
     implementation(libs.pdfbox.android)
     implementation(libs.kotlinx.coroutines.android)
+    implementation(libs.play.services.ads)
 
     debugImplementation(libs.androidx.ui.tooling)
     testImplementation(libs.junit)

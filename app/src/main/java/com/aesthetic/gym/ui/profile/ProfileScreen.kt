@@ -131,7 +131,7 @@ fun ProfileScreen(navController: NavController) {
             }
             Spacer(Modifier.height(12.dp))
             Text(
-                name.ifBlank { "Atleta Symmetry" },
+                name.ifBlank { "Atleta Zenit" },
                 color = Color.White, fontWeight = FontWeight.Black, fontSize = 20.sp
             )
             Spacer(Modifier.height(3.dp))

@@ -52,6 +52,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.aesthetic.gym.data.db.DayWithItems
 import com.aesthetic.gym.domain.model.Rank
+import com.aesthetic.gym.ui.ads.NativeAdCard
 import com.aesthetic.gym.ui.components.PrimaryButton
 import com.aesthetic.gym.ui.components.RankLadderDialog
 import com.aesthetic.gym.ui.nav.Routes
@@ -88,7 +89,7 @@ fun HomeScreen(navController: NavController) {
         // ---------- WORDMARK ----------
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
             Text(
-                "SYMMETRY",
+                "ZENIT",
                 color = Color.White, fontWeight = FontWeight.Black,
                 fontSize = 20.sp, letterSpacing = 3.sp, modifier = Modifier.weight(1f)
             )
@@ -232,6 +233,10 @@ fun HomeScreen(navController: NavController) {
                 }
             }
         }
+
+        // Ad at the very bottom of the home screen, and nowhere else: never during a
+        // workout, and never next to a button that could be tapped by accident.
+        NativeAdCard()
     }
 }
 

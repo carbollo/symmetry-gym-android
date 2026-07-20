@@ -8,6 +8,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
+import android.os.SystemClock
+import com.aesthetic.gym.data.db.ProfileEntity
 import com.aesthetic.gym.data.db.RoutineItemWithExercise
 import com.aesthetic.gym.data.db.SessionWithSets
 import com.aesthetic.gym.data.db.SetLogEntity
@@ -26,6 +28,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlin.math.ceil
 import kotlin.math.roundToInt
 
 data class WorkoutSummary(
@@ -58,6 +61,15 @@ class WorkoutViewModel(
     var restTotal by mutableIntStateOf(0)
         private set
     private var restJob: Job? = null
+
+    /** Countdown of a timed set (seconds left); [setTimerSetId] says which set is running. */
+    var setTimerLeft by mutableIntStateOf(0)
+        private set
+    var setTimerTotal by mutableIntStateOf(0)
+        private set
+    var setTimerSetId by mutableStateOf<Long?>(null)
+        private set
+    private var setTimerJob: Job? = null
 
     val session: StateFlow<SessionWithSets?> =
         repo.sessionWithSetsFlow(sessionId)
@@ -207,6 +219,8 @@ class WorkoutViewModel(
     }
 
     fun toggleCompleted(set: SetLogEntity) {
+        // Confirming by hand while its countdown runs stops the countdown.
+        if (setTimerSetId == set.id) stopSetTimer()
         viewModelScope.launch {
             val nowCompleted = !set.completed
             repo.updateSet(set.copy(completed = nowCompleted))
@@ -277,6 +291,21 @@ class WorkoutViewModel(
     }
 
     /**
+     * Plates the gym has, stored in the profile as grams.
+     * There is no onboarding, so a user who never opened Perfil has no profile row yet:
+     * it has to be created here, or the selection would be dropped without a word.
+     */
+    fun setPlates(gramsSet: Collection<Int>) {
+        if (gramsSet.isEmpty()) return // never leave the calculator with nothing to work with
+        viewModelScope.launch {
+            val current = repo.getProfile() ?: ProfileEntity()
+            repo.saveProfile(
+                current.copy(id = 1, plateSetGrams = PlateCalculator.formatPlates(gramsSet))
+            )
+        }
+    }
+
+    /**
      * Loading points of an exercise (barbell = 2, four-post press = 4), remembered per exercise.
      * [plannedItems] is a snapshot taken in init, so it has to be patched by hand exactly like
      * [setRest] does — otherwise the dialog would keep showing the old value.
@@ -308,6 +337,44 @@ class WorkoutViewModel(
         }
     }
 
+    /**
+     * Countdown for a set measured in seconds (planks, dead hangs...). When it reaches zero the
+     * bell rings and the set is confirmed on its own, so the user never has to touch the phone
+     * mid-hold.
+     */
+    fun startSetTimer(set: SetLogEntity) {
+        if (set.measure != MeasureType.SECONDS || set.reps <= 0) return
+        skipRest()
+        setTimerJob?.cancel()
+        setTimerSetId = set.id
+        setTimerTotal = set.reps
+        setTimerJob = viewModelScope.launch {
+            // Counted against the real clock, not by adding up delays: elapsedRealtime keeps
+            // running while the device sleeps, so a screen that turns off mid-plank doesn't
+            // freeze the countdown (and there is no drift either).
+            val endAt = SystemClock.elapsedRealtime() + set.reps * 1000L
+            while (true) {
+                val remainingMs = endAt - SystemClock.elapsedRealtime()
+                if (remainingMs <= 0L) break
+                setTimerLeft = ceil(remainingMs / 1000.0).toInt()
+                delay(minOf(1000L, remainingMs))
+            }
+            setTimerLeft = 0
+            setTimerSetId = null
+            // Only if the set still exists: it may have been deleted mid-countdown.
+            val current = session.value?.sets?.firstOrNull { it.id == set.id } ?: return@launch
+            bell.ring()
+            if (!current.completed) toggleCompleted(current)
+        }
+    }
+
+    fun stopSetTimer() {
+        setTimerJob?.cancel()
+        setTimerJob = null
+        setTimerSetId = null
+        setTimerLeft = 0
+    }
+
     fun startRest(seconds: Int) {
         if (seconds <= 0) return
         restJob?.cancel()
@@ -330,11 +397,15 @@ class WorkoutViewModel(
     }
 
     fun deleteSet(set: SetLogEntity) {
+        // A countdown for a set that no longer exists would ring for nothing.
+        if (setTimerSetId == set.id) stopSetTimer()
         viewModelScope.launch { repo.deleteSet(set.id) }
     }
 
     /** Switches an exercise between rep-based and time-based, updating its existing sets. */
     fun setMeasure(exerciseId: String, sets: List<SetLogEntity>, measure: MeasureType) {
+        // Switching to reps kills the countdown: there would be no button left to stop it.
+        if (sets.any { it.id == setTimerSetId }) stopSetTimer()
         viewModelScope.launch {
             repo.updateExerciseMeasure(exerciseId, measure)
             sets.forEach { repo.updateSet(it.copy(measure = measure)) }
@@ -343,6 +414,8 @@ class WorkoutViewModel(
 
     /** Finishes the session and produces a summary (duration, calories, volume) to show the user. */
     fun finishWorkout() {
+        stopSetTimer()
+        skipRest()
         viewModelScope.launch {
             val current = session.value
             val sets = current?.sets ?: emptyList()

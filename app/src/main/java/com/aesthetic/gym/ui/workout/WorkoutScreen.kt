@@ -40,6 +40,8 @@ import androidx.compose.material.icons.filled.FitnessCenter
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.LocalFireDepartment
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Stop
 import androidx.compose.material.icons.filled.Timer
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -49,6 +51,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -72,6 +75,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
+import android.view.WindowManager
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.aesthetic.gym.data.db.SetLogEntity
@@ -123,6 +127,13 @@ fun WorkoutScreen(navController: NavController, sessionId: Long) {
 
     // Locked during the workout: back minimizes instead of closing/leaving.
     BackHandler { activity?.moveTaskToBack(true) }
+
+    // The phone spends the workout on the floor or on a bench: if the screen slept, the
+    // countdowns would freeze with it and the bell would ring late.
+    DisposableEffect(activity) {
+        activity?.window?.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+        onDispose { activity?.window?.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON) }
+    }
 
     Column(Modifier.fillMaxSize().background(Background)) {
 
@@ -251,10 +262,14 @@ fun WorkoutScreen(navController: NavController, sessionId: Long) {
                         set = set,
                         isPr = set.id in vm.prSetIds,
                         showRir = profile?.showRpe == true,
+                        timerLeft = if (vm.setTimerSetId == set.id) vm.setTimerLeft else null,
                         onWeightSet = { vm.setWeight(set, it) },
                         onRepsSet = { vm.setReps(set, it) },
                         onToggle = { vm.toggleCompleted(set) },
                         onRirSet = { vm.setRir(set, it) },
+                        onTimer = {
+                            if (vm.setTimerSetId == set.id) vm.stopSetTimer() else vm.startSetTimer(set)
+                        },
                         onLongPress = { optionsFor = set }
                     )
                     Spacer(Modifier.height(10.dp))
@@ -340,7 +355,9 @@ fun WorkoutScreen(navController: NavController, sessionId: Long) {
             initialKg = target.kg,
             points = exercise?.loadPoints ?: PlateCalculator.DEFAULT_POINTS,
             isDumbbell = exercise?.equipment == Equipment.DUMBBELL,
+            plates = PlateCalculator.parsePlates(profile?.plateSetGrams),
             onPointsChange = { vm.setLoadPoints(target.exerciseId, it) },
+            onPlatesChange = { vm.setPlates(it) },
             onDismiss = { platesFor = null }
         )
     }
@@ -442,16 +459,23 @@ private fun PlateDialog(
     initialKg: Double,
     points: Int,
     isDumbbell: Boolean,
+    plates: List<Int>,
     onPointsChange: (Int) -> Unit,
+    onPlatesChange: (List<Int>) -> Unit,
     onDismiss: () -> Unit
 ) {
     // The typed text is the single source of truth, so the user can just write "3.75".
     var targetText by remember { mutableStateOf(if (initialKg > 0) formatKg(initialKg) else "") }
     val target = targetText.replace(',', '.').toDoubleOrNull() ?: 0.0
-    val result = remember(target, points) { PlateCalculator.compute(target, points) }
+    // Local copy of the selection: saving goes through the database, and two quick taps
+    // would otherwise both read the same stale list and the first one would be lost.
+    var owned by remember(plates) { mutableStateOf(plates.toSet()) }
+    val ownedList = remember(owned) { owned.sorted() }
+    val result = remember(target, points, ownedList) {
+        PlateCalculator.compute(target, points, ownedList)
+    }
     val word = PlateCalculator.pointWord(points)
     val unitWord = if (points == 1) "sitio" else if (points == 2) "lado" else "palo"
-    val step = result.stepKg
 
     Dialog(onDismissRequest = onDismiss) {
         Column(
@@ -471,8 +495,13 @@ private fun PlateDialog(
             // ---- Target weight: typed directly, or nudged in reachable steps ----
             Spacer(Modifier.height(16.dp))
             Row(verticalAlignment = Alignment.CenterVertically) {
-                StepChip("-${formatKg(step)}") {
-                    targetText = formatKg((result.best.totalKg - step).coerceAtLeast(0.0))
+                // The steps follow the plates the user owns: with only 10s and 25s
+                // there is no such thing as "2.5 kg less".
+                StepChip(
+                    result.stepDownKg?.let { "-${formatKg(it)}" } ?: "−",
+                    enabled = result.nextDown != null
+                ) {
+                    result.nextDown?.let { targetText = formatKg(it.totalKg) }
                 }
                 Spacer(Modifier.width(10.dp))
                 Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
@@ -503,8 +532,11 @@ private fun PlateDialog(
                     Text("kg de discos que quieres cargar", color = TextMuted, fontSize = 10.sp)
                 }
                 Spacer(Modifier.width(10.dp))
-                StepChip("+${formatKg(step)}") {
-                    targetText = formatKg(result.best.totalKg + step)
+                StepChip(
+                    result.stepUpKg?.let { "+${formatKg(it)}" } ?: "+",
+                    enabled = result.nextUp != null
+                ) {
+                    result.nextUp?.let { targetText = formatKg(it.totalKg) }
                 }
             }
 
@@ -562,11 +594,12 @@ private fun PlateDialog(
             )
             Spacer(Modifier.height(8.dp))
 
-            if (result.best.perPoint.isEmpty()) {
+            val best = result.best
+            if (best == null || best.perPoint.isEmpty()) {
                 Text("Sin discos.", color = Color.White, fontSize = 15.sp, fontWeight = FontWeight.Bold)
             } else {
                 Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                    PlateCalculator.grouped(result.best.perPoint).forEach { (plate, count) ->
+                    PlateCalculator.grouped(best.perPoint).forEach { (plate, count) ->
                         Row(
                             Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp))
                                 .background(SurfaceVariant).padding(horizontal = 14.dp, vertical = 10.dp),
@@ -583,13 +616,13 @@ private fun PlateDialog(
                 Spacer(Modifier.height(8.dp))
                 Text(
                     if (points == 1)
-                        "${formatKg(result.best.totalKg)} kg de discos en un solo sitio."
+                        "${formatKg(best.totalKg)} kg de discos en un solo sitio."
                     else
-                        "$points $word × ${formatKg(result.best.perPointKg)} kg = " +
-                            "${formatKg(result.best.totalKg)} kg de discos",
+                        "$points $word × ${formatKg(best.perPointKg)} kg = " +
+                            "${formatKg(best.totalKg)} kg de discos",
                     color = Cyan, fontSize = 11.sp, fontWeight = FontWeight.Bold
                 )
-                if (result.best.perPoint.size > 7) {
+                if (best.perPoint.size > 7) {
                     Spacer(Modifier.height(4.dp))
                     Text(
                         "Son muchos discos por $unitWord; comprueba que caben.",
@@ -607,7 +640,7 @@ private fun PlateDialog(
             }
 
             // ---- When the target isn't reachable ----
-            if (!result.isExact) {
+            if (!result.isExact && best != null) {
                 Spacer(Modifier.height(14.dp))
                 Text(
                     "NO SALE EXACTO", color = Gold, fontSize = 10.sp,
@@ -617,11 +650,11 @@ private fun PlateDialog(
                 Text(
                     if (result.diffKg < 0)
                         "Lo más cerca de ${formatKg(result.targetKg)} kg son " +
-                            "${formatKg(result.best.totalKg)} kg (te quedas a " +
+                            "${formatKg(best.totalKg)} kg (te quedas a " +
                             "${formatKg(-result.diffKg)} kg)."
                     else
                         "Lo más cerca de ${formatKg(result.targetKg)} kg son " +
-                            "${formatKg(result.best.totalKg)} kg (" +
+                            "${formatKg(best.totalKg)} kg (" +
                             "${formatKg(result.diffKg)} kg de más).",
                     color = Gold, fontSize = 11.sp, lineHeight = 15.sp
                 )
@@ -631,25 +664,67 @@ private fun PlateDialog(
                     horizontalArrangement = Arrangement.spacedBy(6.dp),
                     verticalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
-                    if (result.below.totalKg > 0.0) {
-                        AdjustChip("Poner ${formatKg(result.below.totalKg)} kg") {
-                            targetText = formatKg(result.below.totalKg)
+                    result.below?.takeIf { it.totalKg > 0.0 }?.let { low ->
+                        AdjustChip("Poner ${formatKg(low.totalKg)} kg") {
+                            targetText = formatKg(low.totalKg)
                         }
                     }
-                    AdjustChip("Poner ${formatKg(result.above.totalKg)} kg") {
-                        targetText = formatKg(result.above.totalKg)
+                    result.above?.let { high ->
+                        AdjustChip("Poner ${formatKg(high.totalKg)} kg") {
+                            targetText = formatKg(high.totalKg)
+                        }
                     }
                 }
-                Spacer(Modifier.height(6.dp))
-                Text(
-                    if (points == 1)
-                        "Con 1 sitio solo se puede subir de ${formatKg(step)} en ${formatKg(step)} kg."
-                    else
-                        "Con $points $word solo se puede subir de ${formatKg(step)} " +
-                            "en ${formatKg(step)} kg.",
-                    color = TextMuted, fontSize = 10.sp, lineHeight = 14.sp
-                )
+                result.stepUpKg?.let { jump ->
+                    Spacer(Modifier.height(6.dp))
+                    Text(
+                        "Con tus discos y $points $word, el salto más pequeño desde aquí " +
+                            "es de ${formatKg(jump)} kg.",
+                        color = TextMuted, fontSize = 10.sp, lineHeight = 14.sp
+                    )
+                }
             }
+
+            // ---- Which plates the gym actually has ----
+            Spacer(Modifier.height(18.dp))
+            Text(
+                "DISCOS QUE TENGO", color = TextMuted, fontSize = 9.sp,
+                fontWeight = FontWeight.Bold, letterSpacing = 1.sp
+            )
+            Spacer(Modifier.height(8.dp))
+            FlowRow(
+                Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                verticalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                PlateCalculator.ALL_PLATES_G.forEach { plateG ->
+                    val ticked = plateG in owned
+                    Box(
+                        Modifier.clip(RoundedCornerShape(50))
+                            .background(if (ticked) Cyan else SurfaceVariant)
+                            .clickable {
+                                val updated = if (ticked) owned - plateG else owned + plateG
+                                // Never end up with nothing: the last one can't be unticked.
+                                if (updated.isNotEmpty()) {
+                                    owned = updated
+                                    onPlatesChange(updated.sorted())
+                                }
+                            }
+                            .padding(horizontal = 12.dp, vertical = 7.dp)
+                    ) {
+                        Text(
+                            "${formatKg(plateG / 1000.0)} kg",
+                            color = if (ticked) OnLime else TextMuted,
+                            fontSize = 11.sp, fontWeight = FontWeight.Bold, maxLines = 1, softWrap = false
+                        )
+                    }
+                }
+            }
+            Spacer(Modifier.height(6.dp))
+            Text(
+                "Marca solo los que haya en tu gimnasio: el cálculo se hace únicamente con esos.",
+                color = TextMuted, fontSize = 10.sp, lineHeight = 14.sp
+            )
 
             Spacer(Modifier.height(18.dp))
             PrimaryButton("Cerrar", onDismiss, Modifier.fillMaxWidth())
@@ -670,13 +745,16 @@ private fun AdjustChip(label: String, onClick: () -> Unit) {
 }
 
 @Composable
-private fun StepChip(label: String, onClick: () -> Unit) {
+private fun StepChip(label: String, enabled: Boolean = true, onClick: () -> Unit) {
     Box(
         Modifier.size(52.dp).clip(RoundedCornerShape(14.dp)).background(SurfaceVariant)
-            .clickable(onClick = onClick),
+            .clickable(enabled = enabled, onClick = onClick),
         contentAlignment = Alignment.Center
     ) {
-        Text(label, color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Black)
+        Text(
+            label, color = if (enabled) Color.White else TextMuted,
+            fontSize = 12.sp, fontWeight = FontWeight.Black, maxLines = 1, softWrap = false
+        )
     }
 }
 
@@ -888,10 +966,12 @@ private fun SetRow(
     set: SetLogEntity,
     isPr: Boolean,
     showRir: Boolean,
+    timerLeft: Int?,
     onWeightSet: (Double) -> Unit,
     onRepsSet: (Int) -> Unit,
     onToggle: () -> Unit,
     onRirSet: (Int) -> Unit,
+    onTimer: () -> Unit,
     onLongPress: () -> Unit
 ) {
     var weightText by remember(set.id) { mutableStateOf(formatWeightValue(set.weightKg, WeightUnit.KG)) }
@@ -899,6 +979,8 @@ private fun SetRow(
     val done = set.completed
     val warmup = set.isWarmup
     val accent = if (warmup) Gold else Lime
+    val timed = set.measure == MeasureType.SECONDS
+    val running = timerLeft != null
 
     Column(
         Modifier.fillMaxWidth()
@@ -955,12 +1037,52 @@ private fun SetRow(
                 it.replace(',', '.').toDoubleOrNull()?.let { w -> onWeightSet(w) }
             }
             Spacer(Modifier.width(8.dp))
-            NumberBox(
-                if (set.measure == MeasureType.SECONDS) "SEG" else "REPS",
-                repsText, done, Modifier.weight(1f)
-            ) {
-                repsText = it
-                it.toIntOrNull()?.let { r -> onRepsSet(r) }
+            if (running) {
+                // While the countdown runs, the seconds box becomes the countdown itself.
+                Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text("QUEDAN", color = Cyan, fontSize = 8.sp, fontWeight = FontWeight.Bold)
+                    Spacer(Modifier.height(3.dp))
+                    Box(
+                        Modifier.fillMaxWidth().height(38.dp).clip(RoundedCornerShape(10.dp))
+                            .background(Cyan.copy(alpha = 0.14f))
+                            .border(BorderStroke(1.dp, Cyan), RoundedCornerShape(10.dp)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            "$timerLeft", color = Cyan, fontSize = 18.sp,
+                            fontWeight = FontWeight.Black, maxLines = 1
+                        )
+                    }
+                }
+            } else {
+                NumberBox(
+                    if (timed) "SEG" else "REPS",
+                    repsText, done, Modifier.weight(1f)
+                ) {
+                    repsText = it
+                    it.toIntOrNull()?.let { r -> onRepsSet(r) }
+                }
+            }
+            if (timed || running) {
+                Spacer(Modifier.width(8.dp))
+                if (done && !running) {
+                    // Space kept so the KG/SEG columns line up across the sets of an exercise.
+                    Spacer(Modifier.width(38.dp))
+                } else {
+                    Box(
+                        Modifier.size(38.dp).clip(CircleShape)
+                            .background(if (running) Cyan else SurfaceVariant)
+                            .clickable(onClick = onTimer),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            if (running) Icons.Filled.Stop else Icons.Filled.PlayArrow,
+                            if (running) "Parar cronómetro" else "Empezar cronómetro",
+                            tint = if (running) OnLime else Cyan,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+                }
             }
             Spacer(Modifier.width(10.dp))
             Box(

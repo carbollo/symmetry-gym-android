@@ -16,7 +16,7 @@ object CsvExport {
         "fecha;entreno;ejercicio;musculo;serie;tipo;medida;peso_kg;reps;rir;completada"
 
     fun suggestedFileName(nowMillis: Long): String =
-        "symmetry-${format(nowMillis, fileStamp)}.csv"
+        "zenit-${format(nowMillis, fileStamp)}.csv"
 
     fun build(rows: List<ExportRow>): String {
         val sb = StringBuilder(HEADER.length + rows.size * 64)

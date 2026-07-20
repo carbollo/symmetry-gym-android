@@ -19,5 +19,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "Symmetry"
+rootProject.name = "Zenit"
 include(":app")

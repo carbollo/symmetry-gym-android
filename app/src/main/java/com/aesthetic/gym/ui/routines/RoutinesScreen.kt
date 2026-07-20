@@ -58,7 +58,7 @@ fun RoutinesScreen(navController: NavController) {
 
     Column(Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(bottom = 28.dp)) {
 
-        AppTopBar("Symmetry") { navController.navigate(Routes.PROFILE) }
+        AppTopBar("Zenit") { navController.navigate(Routes.PROFILE) }
 
         Column(Modifier.padding(horizontal = 16.dp)) {
             Spacer(Modifier.height(6.dp))

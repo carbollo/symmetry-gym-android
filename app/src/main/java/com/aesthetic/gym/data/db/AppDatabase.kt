@@ -19,7 +19,7 @@ import androidx.room.TypeConverters
         BodyMetricEntity::class,
         GoalEntity::class
     ],
-    version = 6,
+    version = 7,
     exportSchema = true
 )
 @TypeConverters(Converters::class)
@@ -40,6 +40,8 @@ abstract class AppDatabase : RoomDatabase() {
                 INSTANCE ?: Room.databaseBuilder(
                     context.applicationContext,
                     AppDatabase::class.java,
+                    // Do NOT rename with the app: the file name IS the user's database.
+                    // Calling it "zenit.db" would silently start from an empty one.
                     "symmetry.db"
                 )
                     .addMigrations(*ALL_MIGRATIONS)

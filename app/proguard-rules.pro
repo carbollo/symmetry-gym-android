@@ -18,3 +18,9 @@
 # Coil / OkIO
 -dontwarn okio.**
 -dontwarn okhttp3.**
+
+# AdMob (play-services-ads). Estas clases son de la plataforma en Android 15 (API 35);
+# con compileSdk 34 no están en el classpath de compilación, pero sí existen en los
+# dispositivos que las usan, así que basta con silenciar el aviso.
+-dontwarn android.media.LoudnessCodecController
+-dontwarn android.media.LoudnessCodecController$OnLoudnessCodecUpdateListener

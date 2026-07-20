@@ -9,7 +9,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
 
-private val SymmetryColors = darkColorScheme(
+private val ZenitColors = darkColorScheme(
     primary = Accent,
     onPrimary = OnAccent,
     primaryContainer = Accent,
@@ -28,7 +28,7 @@ private val SymmetryColors = darkColorScheme(
 )
 
 @Composable
-fun SymmetryTheme(content: @Composable () -> Unit) {
+fun ZenitTheme(content: @Composable () -> Unit) {
     val view = LocalView.current
     if (!view.isInEditMode) {
         SideEffect {
@@ -39,8 +39,8 @@ fun SymmetryTheme(content: @Composable () -> Unit) {
         }
     }
     MaterialTheme(
-        colorScheme = SymmetryColors,
-        typography = SymmetryTypography,
+        colorScheme = ZenitColors,
+        typography = ZenitTypography,
         content = content
     )
 }

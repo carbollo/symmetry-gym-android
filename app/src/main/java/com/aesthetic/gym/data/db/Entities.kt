@@ -31,7 +31,9 @@ data class ProfileEntity(
      */
     val barWeightKg: Double = 20.0,
     /** Whether to ask for RIR/RPE after confirming a set. */
-    val showRpe: Boolean = false
+    val showRpe: Boolean = false,
+    /** Plates the user's gym has, in grams, comma separated. See PlateCalculator. */
+    val plateSetGrams: String = "1250,2500,5000,10000,15000,20000,25000"
 )
 
 @Entity(tableName = "exercises")

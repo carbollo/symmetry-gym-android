@@ -38,7 +38,7 @@ import com.aesthetic.gym.ui.routines.RoutinesScreen
 import com.aesthetic.gym.ui.workout.WorkoutScreen
 
 @Composable
-fun SymmetryRoot() {
+fun ZenitRoot() {
     val navController = rememberNavController()
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = backStackEntry?.destination?.route
@@ -48,7 +48,7 @@ fun SymmetryRoot() {
         containerColor = Background,
         bottomBar = {
             if (showBottomBar) {
-                SymmetryBottomBar(navController, currentRoute)
+                ZenitBottomBar(navController, currentRoute)
             }
         }
     ) { padding ->
@@ -96,7 +96,7 @@ fun SymmetryRoot() {
 }
 
 @Composable
-private fun SymmetryBottomBar(navController: NavHostController, currentRoute: String?) {
+private fun ZenitBottomBar(navController: NavHostController, currentRoute: String?) {
     NavigationBar(containerColor = Surface, tonalElevation = 0.dp) {
         bottomDestinations.forEach { dest ->
             val selected = currentRoute == dest.route
