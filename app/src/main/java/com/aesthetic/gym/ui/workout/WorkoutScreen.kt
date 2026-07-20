@@ -34,6 +34,7 @@ import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.EmojiEvents
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.Timer
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -72,6 +73,7 @@ import com.aesthetic.gym.domain.model.MeasureType
 import com.aesthetic.gym.domain.model.WeightUnit
 import com.aesthetic.gym.ui.components.MuscleIcons
 import com.aesthetic.gym.ui.components.PrimaryButton
+import com.aesthetic.gym.ui.rememberBell
 import com.aesthetic.gym.ui.rememberRepository
 import com.aesthetic.gym.ui.theme.Background
 import com.aesthetic.gym.ui.theme.Cyan
@@ -92,7 +94,8 @@ import kotlin.math.roundToInt
 @Composable
 fun WorkoutScreen(navController: NavController, sessionId: Long) {
     val repo = rememberRepository()
-    val vm: WorkoutViewModel = viewModel(factory = WorkoutViewModel.factory(repo, sessionId))
+    val bell = rememberBell()
+    val vm: WorkoutViewModel = viewModel(factory = WorkoutViewModel.factory(repo, bell, sessionId))
     val session by vm.session.collectAsState()
     val planned = vm.plannedItems
     val records = vm.records
@@ -206,6 +209,12 @@ fun WorkoutScreen(navController: NavController, sessionId: Long) {
                 Spacer(Modifier.height(16.dp))
                 MeasureToggle(measure) { vm.setMeasure(exId, sets, it) }
 
+                Spacer(Modifier.height(12.dp))
+                RestSelector(
+                    seconds = item.item.restSeconds ?: WorkoutViewModel.DEFAULT_REST_SECONDS,
+                    onChange = { vm.setRest(item, it) }
+                )
+
                 Spacer(Modifier.height(16.dp))
                 sets.forEach { set ->
                     SetRow(
@@ -230,6 +239,11 @@ fun WorkoutScreen(navController: NavController, sessionId: Long) {
                 }
                 Spacer(Modifier.height(8.dp))
             }
+        }
+
+        // ---------- REST COUNTDOWN ----------
+        if (vm.restLeft > 0) {
+            RestBanner(vm.restLeft, vm.restTotal) { vm.skipRest() }
         }
 
         // ---------- TIME / INTENSITY ----------
@@ -357,6 +371,104 @@ private fun Bubble(icon: ImageVector, selected: Boolean, complete: Boolean, onCl
         )
     }
 }
+
+/** Rest-time picker for the current exercise (saved in the routine). */
+@Composable
+private fun RestSelector(seconds: Int, onChange: (Int) -> Unit) {
+    val presets = listOf(30, 45, 60, 90, 120, 180)
+    Column {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Icon(Icons.Filled.Timer, null, tint = Lime, modifier = Modifier.size(14.dp))
+            Spacer(Modifier.width(6.dp))
+            Text(
+                "DESCANSO ENTRE SERIES", color = TextMuted, fontSize = 9.sp,
+                fontWeight = FontWeight.Bold, letterSpacing = 1.sp, modifier = Modifier.weight(1f)
+            )
+            Text(
+                formatRest(seconds), color = Lime,
+                fontSize = 12.sp, fontWeight = FontWeight.Black
+            )
+        }
+        Spacer(Modifier.height(8.dp))
+        Row(
+            Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+            horizontalArrangement = Arrangement.spacedBy(6.dp)
+        ) {
+            presets.forEach { p ->
+                val selected = p == seconds
+                Box(
+                    Modifier.clip(RoundedCornerShape(50))
+                        .background(if (selected) Lime else SurfaceVariant)
+                        .clickable { onChange(p) }
+                        .padding(horizontal = 14.dp, vertical = 7.dp)
+                ) {
+                    Text(
+                        formatRest(p),
+                        color = if (selected) OnLime else TextSecondary,
+                        fontSize = 11.sp, fontWeight = FontWeight.Bold,
+                        maxLines = 1, softWrap = false
+                    )
+                }
+            }
+            // Fine adjustment
+            Box(
+                Modifier.clip(RoundedCornerShape(50)).background(SurfaceVariant)
+                    .clickable { onChange((seconds - 15).coerceAtLeast(0)) }
+                    .padding(horizontal = 12.dp, vertical = 7.dp)
+            ) { Text("-15s", color = TextSecondary, fontSize = 11.sp, fontWeight = FontWeight.Bold) }
+            Box(
+                Modifier.clip(RoundedCornerShape(50)).background(SurfaceVariant)
+                    .clickable { onChange(seconds + 15) }
+                    .padding(horizontal = 12.dp, vertical = 7.dp)
+            ) { Text("+15s", color = TextSecondary, fontSize = 11.sp, fontWeight = FontWeight.Bold) }
+        }
+    }
+}
+
+/** Countdown shown while resting; rings a boxing bell when it reaches zero. */
+@Composable
+private fun RestBanner(left: Int, total: Int, onSkip: () -> Unit) {
+    Column(Modifier.padding(horizontal = 16.dp).padding(bottom = 10.dp)) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Icon(Icons.Filled.Timer, null, tint = Lime, modifier = Modifier.size(16.dp))
+            Spacer(Modifier.width(8.dp))
+            Text(
+                "DESCANSO", color = Lime, fontSize = 11.sp,
+                fontWeight = FontWeight.Black, letterSpacing = 1.5.sp
+            )
+            Spacer(Modifier.weight(1f))
+            Text(
+                formatRest(left), color = Color.White,
+                fontSize = 20.sp, fontWeight = FontWeight.Black
+            )
+            Spacer(Modifier.width(12.dp))
+            Box(
+                Modifier.clip(RoundedCornerShape(50)).background(SurfaceVariant)
+                    .clickable(onClick = onSkip)
+                    .padding(horizontal = 12.dp, vertical = 6.dp)
+            ) {
+                Text("Saltar", color = TextSecondary, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+            }
+        }
+        Spacer(Modifier.height(8.dp))
+        Box(
+            Modifier.fillMaxWidth().height(5.dp).clip(RoundedCornerShape(50)).background(SurfaceVariant)
+        ) {
+            Box(
+                Modifier
+                    .fillMaxWidth(if (total > 0) left / total.toFloat() else 0f)
+                    .height(5.dp).clip(RoundedCornerShape(50)).background(Lime)
+            )
+        }
+    }
+}
+
+private fun formatRest(seconds: Int): String =
+    if (seconds >= 60) {
+        val m = seconds / 60
+        val s = seconds % 60
+        if (s == 0) "${m}:00" else "%d:%02d".format(m, s)
+    } else "${seconds}s"
 
 @Composable
 private fun MeasureToggle(current: MeasureType, onSelect: (MeasureType) -> Unit) {

@@ -254,7 +254,8 @@ private fun Chip(text: String, selected: Boolean, modifier: Modifier = Modifier,
         Text(
             text,
             color = if (selected) Color.White else TextSecondary,
-            fontWeight = FontWeight.SemiBold, fontSize = 13.sp
+            fontWeight = FontWeight.SemiBold, fontSize = 13.sp,
+            maxLines = 1, softWrap = false
         )
     }
 }

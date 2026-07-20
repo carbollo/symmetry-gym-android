@@ -6,6 +6,8 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -42,6 +44,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -271,13 +274,16 @@ private fun StatCard(
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun DayCard(day: DayWithItems, index: Int, highlighted: Boolean, onStart: () -> Unit) {
     val muscles = day.sortedItems.mapNotNull { it.exercise?.primaryMuscle?.displayName }.distinct().take(3)
     val minutes = day.items.sumOf { it.item.targetSets } * 3
+    // Ancho proporcional a la pantalla en vez de fijo.
+    val cardWidth = (LocalConfiguration.current.screenWidthDp.dp * 0.72f).coerceIn(210.dp, 320.dp)
 
     Box(
-        Modifier.width(230.dp).clip(RoundedCornerShape(20.dp))
+        Modifier.width(cardWidth).clip(RoundedCornerShape(20.dp))
             .background(if (highlighted) Violet.copy(alpha = 0.13f) else Surface)
             .border(
                 1.dp,
@@ -308,7 +314,12 @@ private fun DayCard(day: DayWithItems, index: Int, highlighted: Boolean, onStart
             }
             if (muscles.isNotEmpty()) {
                 Spacer(Modifier.height(12.dp))
-                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                // FlowRow: si un chip no cabe, salta a la línea siguiente entero
+                // en vez de comprimirse y partir la palabra.
+                FlowRow(
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    verticalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
                     muscles.forEach { m ->
                         Box(
                             Modifier.clip(RoundedCornerShape(8.dp)).background(SurfaceVariant)
@@ -316,7 +327,8 @@ private fun DayCard(day: DayWithItems, index: Int, highlighted: Boolean, onStart
                         ) {
                             Text(
                                 m.uppercase(), color = TextSecondary, fontSize = 8.sp,
-                                fontWeight = FontWeight.Bold, letterSpacing = 0.5.sp
+                                fontWeight = FontWeight.Bold, letterSpacing = 0.5.sp,
+                                maxLines = 1, softWrap = false
                             )
                         }
                     }

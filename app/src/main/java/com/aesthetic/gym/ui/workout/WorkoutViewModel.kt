@@ -1,6 +1,7 @@
 package com.aesthetic.gym.ui.workout
 
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
@@ -14,7 +15,10 @@ import com.aesthetic.gym.data.repo.GymRepository
 import com.aesthetic.gym.domain.model.MeasureType
 import com.aesthetic.gym.domain.overload.OverloadSuggestion
 import com.aesthetic.gym.domain.overload.ProgressiveOverload
+import com.aesthetic.gym.util.RestBell
 import com.aesthetic.gym.util.WorkoutMath
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
@@ -30,8 +34,16 @@ data class WorkoutSummary(
 
 class WorkoutViewModel(
     private val repo: GymRepository,
+    private val bell: RestBell,
     private val sessionId: Long
 ) : ViewModel() {
+
+    /** Rest countdown (seconds left, 0 = not resting). */
+    var restLeft by mutableIntStateOf(0)
+        private set
+    var restTotal by mutableIntStateOf(0)
+        private set
+    private var restJob: Job? = null
 
     val session: StateFlow<SessionWithSets?> =
         repo.sessionWithSetsFlow(sessionId)
@@ -172,8 +184,46 @@ class WorkoutViewModel(
             if (nowCompleted) {
                 repo.updateExerciseLastWeight(set.exerciseId, set.weightKg)
                 repo.updateExerciseLastReps(set.exerciseId, set.reps)
+                startRest(restSecondsFor(set.exerciseId))
             }
         }
+    }
+
+    /** Configured rest for an exercise (defaults to 90s when the routine doesn't set one). */
+    fun restSecondsFor(exerciseId: String): Int =
+        plannedItems.firstOrNull { it.item.exerciseId == exerciseId }?.item?.restSeconds
+            ?: DEFAULT_REST_SECONDS
+
+    /** Persists a new rest time for this routine exercise. */
+    fun setRest(item: RoutineItemWithExercise, seconds: Int) {
+        val value = seconds.coerceIn(0, 600)
+        viewModelScope.launch {
+            repo.updateItemRest(item.item.id, value)
+            plannedItems = plannedItems.map {
+                if (it.item.id == item.item.id) it.copy(item = it.item.copy(restSeconds = value)) else it
+            }
+        }
+    }
+
+    fun startRest(seconds: Int) {
+        if (seconds <= 0) return
+        restJob?.cancel()
+        restTotal = seconds
+        restJob = viewModelScope.launch {
+            var left = seconds
+            while (left > 0) {
+                restLeft = left
+                delay(1000)
+                left--
+            }
+            restLeft = 0
+            bell.ring()
+        }
+    }
+
+    fun skipRest() {
+        restJob?.cancel()
+        restLeft = 0
     }
 
     fun deleteSet(set: SetLogEntity) {
@@ -208,7 +258,9 @@ class WorkoutViewModel(
     }
 
     companion object {
-        fun factory(repo: GymRepository, sessionId: Long) =
-            viewModelFactory { initializer { WorkoutViewModel(repo, sessionId) } }
+        const val DEFAULT_REST_SECONDS = 90
+
+        fun factory(repo: GymRepository, bell: RestBell, sessionId: Long) =
+            viewModelFactory { initializer { WorkoutViewModel(repo, bell, sessionId) } }
     }
 }

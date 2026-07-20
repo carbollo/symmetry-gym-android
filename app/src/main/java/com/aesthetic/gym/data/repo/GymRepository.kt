@@ -88,6 +88,7 @@ class GymRepository(private val db: AppDatabase) {
     suspend fun insertRoutine(routine: RoutineEntity): Long = routineDao.insertRoutine(routine)
     suspend fun insertDay(day: RoutineDayEntity): Long = routineDao.insertDay(day)
     suspend fun insertItem(item: RoutineItemEntity): Long = routineDao.insertItem(item)
+    suspend fun updateItemRest(itemId: Long, seconds: Int) = routineDao.updateItemRest(itemId, seconds)
 
     // ---- Workout sessions ----
     suspend fun startSession(routineId: Long?, dayId: Long?, name: String): Long =

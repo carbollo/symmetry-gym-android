@@ -80,6 +80,9 @@ interface RoutineDao {
     @Query("DELETE FROM routines WHERE id = :id")
     suspend fun deleteRoutine(id: Long)
 
+    @Query("UPDATE routine_items SET restSeconds = :seconds WHERE id = :itemId")
+    suspend fun updateItemRest(itemId: Long, seconds: Int)
+
     @Query("SELECT * FROM routines ORDER BY createdAt DESC")
     fun routinesFlow(): Flow<List<RoutineEntity>>
 

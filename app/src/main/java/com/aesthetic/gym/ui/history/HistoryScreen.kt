@@ -6,9 +6,13 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -158,6 +162,7 @@ fun HistoryScreen(navController: NavController) {
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun SessionCard(s: SessionSummary, accent: Color) {
     Box(
@@ -165,8 +170,8 @@ private fun SessionCard(s: SessionSummary, accent: Color) {
             .clip(RoundedCornerShape(16.dp)).background(Surface)
             .border(1.dp, Outline, RoundedCornerShape(16.dp))
     ) {
-        Row(Modifier.fillMaxWidth()) {
-            Box(Modifier.width(4.dp).height(96.dp).background(accent))
+        Row(Modifier.fillMaxWidth().height(IntrinsicSize.Min)) {
+            Box(Modifier.width(4.dp).fillMaxHeight().background(accent))
             Column(Modifier.weight(1f).padding(14.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
@@ -182,7 +187,10 @@ private fun SessionCard(s: SessionSummary, accent: Color) {
                     color = TextMuted, fontSize = 10.sp, fontWeight = FontWeight.Medium
                 )
                 Spacer(Modifier.height(10.dp))
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                FlowRow(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
                     Pill("${s.kcal} KCAL", Violet)
                     Pill("${s.sets} SERIES", Cyan)
                     Pill("${s.volumeKg.roundToInt()} KG", accent)
@@ -199,6 +207,9 @@ private fun Pill(text: String, color: Color) {
             .border(1.dp, color.copy(alpha = 0.5f), RoundedCornerShape(50))
             .padding(horizontal = 9.dp, vertical = 4.dp)
     ) {
-        Text(text, color = color, fontSize = 9.sp, fontWeight = FontWeight.Black, maxLines = 1)
+        Text(
+            text, color = color, fontSize = 9.sp, fontWeight = FontWeight.Black,
+            maxLines = 1, softWrap = false
+        )
     }
 }

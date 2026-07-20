@@ -6,6 +6,7 @@ import com.aesthetic.gym.SymmetryApp
 import com.aesthetic.gym.data.repo.GymRepository
 import com.aesthetic.gym.di.AppContainer
 import com.aesthetic.gym.pdf.RoutineImporter
+import com.aesthetic.gym.util.RestBell
 
 @Composable
 fun appContainer(): AppContainer {
@@ -18,3 +19,6 @@ fun rememberRepository(): GymRepository = appContainer().repository
 
 @Composable
 fun rememberImporter(): RoutineImporter = appContainer().importer
+
+@Composable
+fun rememberBell(): RestBell = appContainer().bell
