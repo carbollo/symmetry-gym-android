@@ -1,0 +1,17 @@
+{
+  "name": "gym-admob-ssv",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Servidor de verificacion por servidor (SSV) de AdMob para recompensas del app Gym.",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "pg": "^8.12.0"
+  }
+}

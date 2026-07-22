@@ -57,9 +57,13 @@ import com.aesthetic.gym.domain.model.Sex
 import com.aesthetic.gym.domain.model.WeightUnit
 import com.aesthetic.gym.reminder.ReminderCopy
 import com.aesthetic.gym.reminder.ReminderScheduler
+import com.aesthetic.gym.social.AccountManager
+import com.aesthetic.gym.social.SessionState
+import com.aesthetic.gym.ui.nav.Routes
 import com.aesthetic.gym.ui.rememberRepository
 import com.aesthetic.gym.util.Notifications
 import com.aesthetic.gym.util.openAppNotificationSettings
+import com.aesthetic.gym.ui.theme.Danger
 import com.aesthetic.gym.ui.theme.Outline
 import com.aesthetic.gym.ui.theme.Surface
 import com.aesthetic.gym.ui.theme.SurfaceVariant
@@ -150,6 +154,10 @@ fun ProfileScreen(navController: NavController) {
                 color = TextMuted, fontSize = 11.sp
             )
         }
+
+        // ---------- CUENTA (social, opcional) ----------
+        Spacer(Modifier.height(22.dp))
+        AccountCard(navController)
 
         // ---------- FORM ----------
         Spacer(Modifier.height(22.dp))
@@ -571,6 +579,102 @@ private fun ReminderSection(profile: ProfileEntity?, onPersist: (ProfileEntity) 
                     Icon(Icons.Filled.Info, null, tint = TextMuted, modifier = Modifier.size(13.dp))
                     Spacer(Modifier.width(6.dp))
                     Text(ReminderCopy.OEM_WARNING, color = TextMuted, fontSize = 10.sp, lineHeight = 14.sp)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun AccountCard(navController: NavController) {
+    val session by AccountManager.state.collectAsState()
+
+    Box(
+        Modifier.fillMaxWidth().clip(RoundedCornerShape(20.dp)).background(Surface)
+            .border(1.dp, Outline, RoundedCornerShape(20.dp)).padding(16.dp)
+    ) {
+        Column {
+            FieldLabel("CUENTA")
+            when (val s = session) {
+                is SessionState.LoggedIn -> {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Box(
+                            Modifier.size(42.dp).clip(CircleShape).background(Violet.copy(alpha = 0.20f))
+                                .border(1.dp, Violet, CircleShape),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                s.account.displayName.take(1).uppercase().ifBlank { "Z" },
+                                color = Violet, fontWeight = FontWeight.Black, fontSize = 18.sp
+                            )
+                        }
+                        Spacer(Modifier.width(12.dp))
+                        Column(Modifier.weight(1f)) {
+                            Text(
+                                s.account.displayName.ifBlank { s.account.username },
+                                color = Color.White, fontWeight = FontWeight.Bold, fontSize = 15.sp,
+                                maxLines = 1
+                            )
+                            Text("@${s.account.username}", color = Violet, fontSize = 11.sp, maxLines = 1)
+                            if (s.account.email.isNotBlank()) {
+                                Text(s.account.email, color = TextMuted, fontSize = 10.sp, maxLines = 1)
+                            }
+                        }
+                    }
+                    Spacer(Modifier.height(14.dp))
+                    Box(
+                        Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(Violet)
+                            .clickable { navController.navigate(Routes.FRIENDS) }
+                            .padding(vertical = 13.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text("Amigos", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                    }
+                    Spacer(Modifier.height(10.dp))
+                    Box(
+                        Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(SurfaceVariant)
+                            .clickable { navController.navigate(Routes.ACCOUNT_SETTINGS) }
+                            .padding(vertical = 13.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text("Ajustes de cuenta", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                    }
+                    Spacer(Modifier.height(10.dp))
+                    Box(
+                        Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(SurfaceVariant)
+                            .clickable { AccountManager.logout() }
+                            .padding(vertical = 13.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text("Cerrar sesión", color = Danger, fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                    }
+                }
+
+                SessionState.LoggedOut -> {
+                    Text(
+                        "Crea una cuenta para conectar con amigos y compartir rutinas. " +
+                            "Es opcional: la app funciona igual sin ella.",
+                        color = TextSecondary, fontSize = 12.sp, lineHeight = 17.sp
+                    )
+                    Spacer(Modifier.height(14.dp))
+                    Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                        Box(
+                            Modifier.weight(1f).clip(RoundedCornerShape(12.dp)).background(SurfaceVariant)
+                                .clickable { navController.navigate(Routes.auth("login")) }
+                                .padding(vertical = 13.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text("Iniciar sesión", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                        }
+                        Box(
+                            Modifier.weight(1f).clip(RoundedCornerShape(12.dp)).background(Violet)
+                                .clickable { navController.navigate(Routes.auth("register")) }
+                                .padding(vertical = 13.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text("Crear cuenta", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                        }
+                    }
                 }
             }
         }

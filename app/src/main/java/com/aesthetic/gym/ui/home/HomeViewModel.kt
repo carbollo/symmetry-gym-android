@@ -1,5 +1,6 @@
 package com.aesthetic.gym.ui.home
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
@@ -8,15 +9,20 @@ import com.aesthetic.gym.data.db.RoutineWithDays
 import com.aesthetic.gym.data.db.WorkoutSessionEntity
 import com.aesthetic.gym.data.repo.GymRepository
 import com.aesthetic.gym.domain.model.Rank
+import com.aesthetic.gym.domain.planet.PlanetEngine
+import com.aesthetic.gym.domain.planet.PlanetPrefs
+import com.aesthetic.gym.domain.planet.PlanetState
 import com.aesthetic.gym.domain.streak.WeeklyStreak
 import com.aesthetic.gym.domain.streak.computeWeeklyStreak
 import com.aesthetic.gym.domain.streak.weeklyTargetFor
 import com.aesthetic.gym.domain.model.Sex
 import com.aesthetic.gym.domain.rank.RankCalculator
 import com.aesthetic.gym.util.WorkoutMath
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
@@ -32,10 +38,15 @@ data class HomeUiState(
     val volumeChangePct: Int? = null,
     val loading: Boolean = true,
     /** Diagnostics switch for the ad slot (Perfil > Anuncios). */
-    val adsTestMode: Boolean = false
+    val adsTestMode: Boolean = false,
+    /** Estado del planeta (sistema de motivación): tarjeta "Tu planeta". */
+    val planet: PlanetState = PlanetState()
 )
 
-class HomeViewModel(private val repo: GymRepository) : ViewModel() {
+class HomeViewModel(
+    private val repo: GymRepository,
+    private val appContext: Context
+) : ViewModel() {
 
     val state: StateFlow<HomeUiState> = combine(
         repo.profileHot,
@@ -65,6 +76,16 @@ class HomeViewModel(private val repo: GymRepository) : ViewModel() {
             .sumOf { WorkoutMath.volumeKg(it.sets) }
         val changePct = if (volPrev > 0.0) (((volThis - volPrev) / volPrev) * 100).roundToInt() else null
 
+        // Planeta: derivado del mismo historial; persistir congela la semilla y sube la
+        // marca de agua aunque el usuario nunca abra la pantalla de galaxia.
+        val planet = PlanetEngine.compute(
+            sessions = sessionsWithSets,
+            muscleRows = rows,
+            baseSeed = PlanetPrefs.baseSeed(appContext),
+            highWaterXp = PlanetPrefs.highWater(appContext)
+        )
+        PlanetPrefs.persist(appContext, planet.baseSeed, planet.totalXp)
+
         HomeUiState(
             name = profile?.name?.takeIf { it.isNotBlank() } ?: "Atleta",
             overallScore = summary.overallScore,
@@ -75,9 +96,13 @@ class HomeViewModel(private val repo: GymRepository) : ViewModel() {
             recent = sessions.take(5),
             volumeChangePct = changePct,
             loading = false,
-            adsTestMode = profile?.adsTestMode == true
+            adsTestMode = profile?.adsTestMode == true,
+            planet = planet
         )
-    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), HomeUiState())
+    }
+        // Rank + planeta iteran el historial completo: fuera del hilo principal.
+        .flowOn(Dispatchers.Default)
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), HomeUiState())
 
     fun startSession(routineId: Long?, dayId: Long?, name: String, onReady: (Long) -> Unit) {
         viewModelScope.launch {
@@ -88,8 +113,8 @@ class HomeViewModel(private val repo: GymRepository) : ViewModel() {
 
 
     companion object {
-        fun factory(repo: GymRepository) = viewModelFactory {
-            initializer { HomeViewModel(repo) }
+        fun factory(repo: GymRepository, context: Context) = viewModelFactory {
+            initializer { HomeViewModel(repo, context.applicationContext) }
         }
     }
 }

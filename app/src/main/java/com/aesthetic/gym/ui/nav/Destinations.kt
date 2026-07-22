@@ -20,6 +20,13 @@ object Routes {
     const val PROFILE = "profile"
     const val GOALS = "goals"
     const val HISTORY = "history"
+    const val GALAXY = "galaxy"
+    const val GALAXY_MAP = "galaxy_map"
+    const val AUTH = "auth?mode={mode}"
+    const val ACCOUNT_SETTINGS = "account_settings"
+    const val FRIENDS = "friends"
+    const val USER_PROFILE = "user/{username}"
+    const val IMPORT_LINK = "importlink/{code}"
     const val ROUTINE_DETAIL = "routine/{routineId}"
     const val WORKOUT = "workout/{sessionId}"
     const val EXERCISE_DETAIL = "exercise/{exerciseId}"
@@ -29,6 +36,8 @@ object Routes {
     fun workout(sessionId: Long) = "workout/$sessionId"
     fun exerciseDetail(exerciseId: String) = "exercise/$exerciseId"
     fun sessionDetail(sessionId: Long) = "session/$sessionId"
+    fun auth(mode: String = "login") = "auth?mode=$mode"
+    fun userProfile(username: String) = "user/$username"
 }
 
 data class BottomDest(val route: String, val label: String, val icon: ImageVector)

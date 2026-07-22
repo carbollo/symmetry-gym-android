@@ -31,6 +31,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import com.aesthetic.gym.BuildConfig
 import com.aesthetic.gym.R
+import com.aesthetic.gym.premium.Premium
 import com.aesthetic.gym.ui.theme.Gold
 import com.aesthetic.gym.ui.theme.Outline
 import com.aesthetic.gym.ui.theme.Surface
@@ -64,6 +65,13 @@ fun NativeAdCard(
     showDiagnostics: Boolean = false
 ) {
     val context = LocalContext.current
+
+    // Premium = sin anuncios: si esta activo, no se pide ni se muestra nada. Cubre AMBOS caminos:
+    // premium por anuncios (dispositivo, [Premium]) y premium de pago (cuenta, Whop).
+    val premiumUntil by Premium.premiumUntil.collectAsState()
+    val accountPremium by com.aesthetic.gym.social.AccountManager.premiumUntil.collectAsState()
+    if (maxOf(premiumUntil, accountPremium) > System.currentTimeMillis()) return
+
     val ready by Ads.ready.collectAsState()
     var ad by remember { mutableStateOf<NativeAd?>(null) }
     var error by remember { mutableStateOf<String?>(null) }

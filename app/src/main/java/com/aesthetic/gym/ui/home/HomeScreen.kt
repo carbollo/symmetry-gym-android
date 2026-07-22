@@ -47,6 +47,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -54,7 +55,10 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.aesthetic.gym.data.db.DayWithItems
 import com.aesthetic.gym.domain.model.Rank
+import com.aesthetic.gym.domain.planet.PlanetState
+import com.aesthetic.gym.ui.galaxy.PlanetCanvas
 import com.aesthetic.gym.ui.ads.NativeAdCard
+import com.aesthetic.gym.premium.PremiumCard
 import com.aesthetic.gym.ui.components.PrimaryButton
 import com.aesthetic.gym.ui.components.RankLadderDialog
 import com.aesthetic.gym.ui.nav.Routes
@@ -72,7 +76,8 @@ import com.aesthetic.gym.ui.theme.Violet
 @Composable
 fun HomeScreen(navController: NavController) {
     val repo = rememberRepository()
-    val vm: HomeViewModel = viewModel(factory = HomeViewModel.factory(repo))
+    val context = LocalContext.current
+    val vm: HomeViewModel = viewModel(factory = HomeViewModel.factory(repo, context))
     val state by vm.state.collectAsState()
     var showLadder by remember { mutableStateOf(false) }
 
@@ -181,6 +186,9 @@ fun HomeScreen(navController: NavController) {
             )
         }
 
+        // ---------- TU PLANETA ----------
+        PlanetHomeCard(state.planet) { navController.navigate(Routes.GALAXY) }
+
         // ---------- ACTIVE ROUTINE ----------
         val routine = state.activeRoutine
         if (routine != null && routine.sortedDays.isNotEmpty()) {
@@ -267,6 +275,8 @@ fun HomeScreen(navController: NavController) {
         // no sabemos si el modo de prueba esta activo, y pediriamos contra la unidad real
         // una peticion que habria que repetir acto seguido.
         if (!state.loading) {
+            PremiumCard()
+            Spacer(Modifier.height(12.dp))
             NativeAdCard(
                 testMode = state.adsTestMode,
                 showDiagnostics = state.adsTestMode
@@ -396,6 +406,62 @@ private fun IconLabel(icon: ImageVector, text: String) {
         Icon(icon, null, tint = TextMuted, modifier = Modifier.size(13.dp))
         Spacer(Modifier.width(5.dp))
         Text(text, color = TextSecondary, fontSize = 11.sp)
+    }
+}
+
+/** Tu planeta: el mundo que crece con cada entreno. Toca para verlo en grande. */
+@Composable
+private fun PlanetHomeCard(planet: PlanetState, onClick: () -> Unit) {
+    Row(
+        Modifier.fillMaxWidth().clip(RoundedCornerShape(20.dp)).background(Surface)
+            .border(1.dp, Outline, RoundedCornerShape(20.dp))
+            .clickable(onClick = onClick)
+            .padding(14.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        PlanetCanvas(
+            seed = planet.seed,
+            stage = planet.stage,
+            progressQ = planet.progressQ,
+            species = planet.species,
+            animated = false,
+            mini = true,
+            modifier = Modifier.size(72.dp)
+        )
+        Spacer(Modifier.width(14.dp))
+        Column(Modifier.weight(1f)) {
+            Text(
+                "TU PLANETA", color = Violet, fontSize = 9.sp,
+                fontWeight = FontWeight.Bold, letterSpacing = 1.5.sp
+            )
+            Spacer(Modifier.height(2.dp))
+            Text(
+                planet.stage.displayName, color = Color.White,
+                fontWeight = FontWeight.Bold, fontSize = 15.sp
+            )
+            Spacer(Modifier.height(6.dp))
+            Box(
+                Modifier.fillMaxWidth().height(5.dp).clip(CircleShape).background(SurfaceVariant)
+            ) {
+                Box(
+                    Modifier.fillMaxWidth(planet.stageFraction).fillMaxHeight()
+                        .clip(CircleShape)
+                        .background(Brush.horizontalGradient(listOf(Violet, Cyan)))
+                )
+            }
+            Spacer(Modifier.height(6.dp))
+            val next = planet.nextStage
+            Text(
+                when {
+                    !planet.hasHistory -> "Tu primer entreno lo despertará"
+                    next == null -> "Completo: un mundo nuevo te espera"
+                    else -> "A ~${planet.daysToNextStage} entrenos de ${next.displayName}"
+                },
+                color = TextSecondary, fontSize = 11.sp
+            )
+        }
+        Spacer(Modifier.width(6.dp))
+        Icon(Icons.Filled.PlayArrow, null, tint = Violet, modifier = Modifier.size(18.dp))
     }
 }
 

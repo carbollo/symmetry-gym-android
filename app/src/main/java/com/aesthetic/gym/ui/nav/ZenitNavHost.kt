@@ -1,5 +1,7 @@
 package com.aesthetic.gym.ui.nav
 
+import android.content.Intent
+import androidx.activity.ComponentActivity
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
@@ -8,10 +10,13 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.core.util.Consumer
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -19,6 +24,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import androidx.navigation.navDeepLink
 import com.aesthetic.gym.ui.theme.Background
 import com.aesthetic.gym.ui.theme.Surface
 import com.aesthetic.gym.ui.theme.TextMuted
@@ -29,11 +35,18 @@ import com.aesthetic.gym.ui.exercises.ExercisesScreen
 import com.aesthetic.gym.ui.goals.GoalsScreen
 import com.aesthetic.gym.ui.history.HistoryScreen
 import com.aesthetic.gym.ui.history.SessionDetailScreen
+import com.aesthetic.gym.ui.account.AccountSettingsScreen
+import com.aesthetic.gym.ui.account.AuthScreen
+import com.aesthetic.gym.ui.friends.FriendsScreen
+import com.aesthetic.gym.ui.friends.PublicProfileScreen
+import com.aesthetic.gym.ui.galaxy.GalaxyMapScreen
+import com.aesthetic.gym.ui.galaxy.GalaxyScreen
 import com.aesthetic.gym.ui.home.HomeScreen
 import com.aesthetic.gym.ui.profile.ProfileScreen
 import com.aesthetic.gym.ui.progress.ProgressScreen
 import com.aesthetic.gym.ui.routines.CreateRoutineScreen
 import com.aesthetic.gym.ui.routines.ImportScreen
+import com.aesthetic.gym.ui.routines.ImportLinkScreen
 import com.aesthetic.gym.ui.routines.RoutineDetailScreen
 import com.aesthetic.gym.ui.routines.RoutinesScreen
 import com.aesthetic.gym.ui.workout.WorkoutScreen
@@ -44,6 +57,16 @@ fun ZenitRoot() {
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = backStackEntry?.destination?.route
     val showBottomBar = currentRoute in bottomRoutes
+
+    // Enlaces de rutina que llegan con la app ya abierta (singleTop → onNewIntent). El arranque en
+    // frío lo maneja el NavHost solo; esto cubre el caso en caliente sin recrear la Activity.
+    val context = LocalContext.current
+    DisposableEffect(navController, context) {
+        val activity = context as? ComponentActivity
+        val listener = Consumer<Intent> { intent -> navController.handleDeepLink(intent) }
+        activity?.addOnNewIntentListener(listener)
+        onDispose { activity?.removeOnNewIntentListener(listener) }
+    }
 
     Scaffold(
         containerColor = Background,
@@ -64,8 +87,36 @@ fun ZenitRoot() {
             composable(Routes.BODY) { BodyScreen(navController) }
             composable(Routes.PROGRESS) { ProgressScreen(navController) }
             composable(Routes.PROFILE) { ProfileScreen(navController) }
+            composable(
+                Routes.AUTH,
+                arguments = listOf(navArgument("mode") {
+                    type = NavType.StringType
+                    defaultValue = "login"
+                })
+            ) { entry ->
+                AuthScreen(navController, entry.arguments?.getString("mode") ?: "login")
+            }
             composable(Routes.GOALS) { GoalsScreen(navController) }
             composable(Routes.HISTORY) { HistoryScreen(navController) }
+            composable(Routes.GALAXY) { GalaxyScreen(navController) }
+            composable(Routes.GALAXY_MAP) { GalaxyMapScreen(navController) }
+            composable(Routes.FRIENDS) { FriendsScreen(navController) }
+            composable(Routes.ACCOUNT_SETTINGS) { AccountSettingsScreen(navController) }
+            composable(
+                Routes.USER_PROFILE,
+                arguments = listOf(navArgument("username") { type = NavType.StringType })
+            ) { entry ->
+                PublicProfileScreen(navController, entry.arguments?.getString("username") ?: "")
+            }
+            composable(
+                Routes.IMPORT_LINK,
+                arguments = listOf(navArgument("code") { type = NavType.StringType }),
+                deepLinks = listOf(navDeepLink {
+                    uriPattern = "https://social-api-production-8ff7.up.railway.app/r/{code}"
+                })
+            ) { entry ->
+                ImportLinkScreen(navController, entry.arguments?.getString("code") ?: "")
+            }
             composable(Routes.IMPORT) { ImportScreen(navController) }
             composable(Routes.CREATE_ROUTINE) { CreateRoutineScreen(navController) }
             composable(

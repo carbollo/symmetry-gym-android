@@ -13,6 +13,8 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             ZenitTheme {
+                // El deep link del arranque en frío lo procesa el NavHost automáticamente; los que
+                // llegan con la app abierta (singleTop → onNewIntent) los engancha ZenitRoot.
                 ZenitRoot()
             }
         }

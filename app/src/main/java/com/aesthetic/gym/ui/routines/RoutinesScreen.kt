@@ -16,31 +16,47 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ListAlt
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ChevronRight
+import androidx.compose.material.icons.filled.CloudDownload
 import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.FitnessCenter
+import androidx.compose.material.icons.filled.Inbox
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.aesthetic.gym.domain.model.RoutineSource
+import com.aesthetic.gym.social.IncomingShare
 import com.aesthetic.gym.ui.components.AppTopBar
 import com.aesthetic.gym.ui.nav.Routes
 import com.aesthetic.gym.ui.rememberRepository
+import com.aesthetic.gym.ui.theme.Danger
 import com.aesthetic.gym.ui.theme.Outline
 import com.aesthetic.gym.ui.theme.Surface
 import com.aesthetic.gym.ui.theme.SurfaceVariant
@@ -55,6 +71,14 @@ fun RoutinesScreen(navController: NavController) {
     val vm: RoutinesViewModel = viewModel(factory = RoutinesViewModel.factory(repo))
     val routines by vm.routines.collectAsState()
     val efficiency by vm.efficiency.collectAsState()
+    val incoming by vm.incoming.collectAsState()
+    val shareMsg by vm.shareMsg.collectAsState()
+
+    // Cada vez que se abre Rutinas, refrescamos la bandeja por si llegaron rutinas nuevas.
+    LaunchedEffect(Unit) { vm.refreshIncoming() }
+    LaunchedEffect(shareMsg) {
+        if (shareMsg != null) { kotlinx.coroutines.delay(2600); vm.clearShareMsg() }
+    }
 
     Column(Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(bottom = 28.dp)) {
 
@@ -69,6 +93,20 @@ fun RoutinesScreen(navController: NavController) {
                 color = TextSecondary, fontSize = 12.sp, lineHeight = 17.sp
             )
             Spacer(Modifier.height(18.dp))
+
+            // ---------- BANDEJA: rutinas que me han compartido ----------
+            if (incoming.isNotEmpty()) {
+                IncomingSharesCard(
+                    shares = incoming,
+                    onAccept = { vm.accept(it) },
+                    onDecline = { vm.decline(it) }
+                )
+                Spacer(Modifier.height(14.dp))
+            }
+            shareMsg?.let {
+                Text(it, color = Violet, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                Spacer(Modifier.height(14.dp))
+            }
 
             // Primary + secondary actions
             Row(
@@ -191,6 +229,47 @@ fun RoutinesScreen(navController: NavController) {
                             )
                         }
                     }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun IncomingSharesCard(
+    shares: List<IncomingShare>,
+    onAccept: (IncomingShare) -> Unit,
+    onDecline: (IncomingShare) -> Unit
+) {
+    Box(
+        Modifier.fillMaxWidth().clip(RoundedCornerShape(18.dp)).background(Surface)
+            .border(1.dp, Violet, RoundedCornerShape(18.dp)).padding(16.dp)
+    ) {
+        Column {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(Icons.Filled.Inbox, null, tint = Violet, modifier = Modifier.size(18.dp))
+                Spacer(Modifier.width(8.dp))
+                Text(
+                    "RUTINAS COMPARTIDAS CONTIGO", color = Violet, fontSize = 10.sp,
+                    fontWeight = FontWeight.Black, letterSpacing = 1.sp
+                )
+            }
+            shares.forEach { share ->
+                Spacer(Modifier.height(12.dp))
+                Text(share.name, color = Color.White, fontWeight = FontWeight.Bold, fontSize = 14.sp, maxLines = 1)
+                Text("de @${share.fromUsername}", color = TextMuted, fontSize = 11.sp)
+                Spacer(Modifier.height(8.dp))
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Box(
+                        Modifier.weight(1f).clip(RoundedCornerShape(10.dp)).background(Violet)
+                            .clickable { onAccept(share) }.padding(vertical = 10.dp),
+                        contentAlignment = Alignment.Center
+                    ) { Text("Aceptar", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 13.sp) }
+                    Box(
+                        Modifier.weight(1f).clip(RoundedCornerShape(10.dp)).background(SurfaceVariant)
+                            .clickable { onDecline(share) }.padding(vertical = 10.dp),
+                        contentAlignment = Alignment.Center
+                    ) { Text("Rechazar", color = TextSecondary, fontWeight = FontWeight.Bold, fontSize = 13.sp) }
                 }
             }
         }

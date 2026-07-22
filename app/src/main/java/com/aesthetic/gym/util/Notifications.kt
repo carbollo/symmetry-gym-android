@@ -17,20 +17,35 @@ import androidx.core.content.ContextCompat
 
 object Notifications {
     const val CHANNEL_REMINDERS = "training_reminders"
+    const val CHANNEL_SOCIAL = "social_updates"
 
     /** Creates the channel if missing. minSdk 26 => NotificationChannel always available. */
     fun ensureChannel(context: Context) {
         val manager = context.getSystemService(NotificationManager::class.java) ?: return
-        if (manager.getNotificationChannel(CHANNEL_REMINDERS) != null) return
-        val channel = NotificationChannel(
-            CHANNEL_REMINDERS,
-            "Recordatorios de entreno",
-            NotificationManager.IMPORTANCE_DEFAULT // not HIGH (intrusive), not LOW (silent)
-        ).apply {
-            description = "Un aviso los días y a la hora que tú elijas. Puedes apagarlo cuando quieras."
-            setShowBadge(false)
+        if (manager.getNotificationChannel(CHANNEL_REMINDERS) == null) {
+            manager.createNotificationChannel(
+                NotificationChannel(
+                    CHANNEL_REMINDERS,
+                    "Recordatorios de entreno",
+                    NotificationManager.IMPORTANCE_DEFAULT // not HIGH (intrusive), not LOW (silent)
+                ).apply {
+                    description = "Un aviso los días y a la hora que tú elijas. Puedes apagarlo cuando quieras."
+                    setShowBadge(false)
+                }
+            )
         }
-        manager.createNotificationChannel(channel)
+        if (manager.getNotificationChannel(CHANNEL_SOCIAL) == null) {
+            manager.createNotificationChannel(
+                NotificationChannel(
+                    CHANNEL_SOCIAL,
+                    "Novedades sociales",
+                    NotificationManager.IMPORTANCE_DEFAULT
+                ).apply {
+                    description = "Avisos de solicitudes de amistad y rutinas compartidas contigo."
+                    setShowBadge(true)
+                }
+            )
+        }
     }
 
     /** Runtime permission gate (to decide whether to launch the system dialog). */

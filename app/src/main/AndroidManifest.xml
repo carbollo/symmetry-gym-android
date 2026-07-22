@@ -26,11 +26,23 @@
             android:name=".MainActivity"
             android:exported="true"
             android:label="@string/app_name"
+            android:launchMode="singleTop"
             android:theme="@style/Theme.Zenit"
             android:windowSoftInputMode="adjustResize">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+            <!-- Enlaces de rutina: https://<social-api>/r/CODE abre la app y carga la rutina.
+                 autoVerify usa /.well-known/assetlinks.json del servidor para abrir sin preguntar. -->
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data
+                    android:scheme="https"
+                    android:host="social-api-production-8ff7.up.railway.app"
+                    android:pathPrefix="/r/" />
             </intent-filter>
         </activity>
 
