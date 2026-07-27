@@ -95,6 +95,19 @@ interface RoutineDao {
     @Update
     suspend fun updateRoutine(routine: RoutineEntity)
 
+    @Update
+    suspend fun updateDay(day: RoutineDayEntity)
+
+    @Update
+    suspend fun updateItem(item: RoutineItemEntity)
+
+    /** Borrar un día arrastra sus ejercicios (FK ON DELETE CASCADE). */
+    @Query("DELETE FROM routine_days WHERE id = :id")
+    suspend fun deleteDay(id: Long)
+
+    @Query("DELETE FROM routine_items WHERE id = :id")
+    suspend fun deleteItem(id: Long)
+
     @Query("UPDATE routines SET isActive = 0")
     suspend fun clearActive()
 

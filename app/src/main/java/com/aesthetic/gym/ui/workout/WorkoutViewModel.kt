@@ -143,7 +143,15 @@ class WorkoutViewModel(
     private suspend fun initRoutine(s: WorkoutSessionEntity) {
         val routine = s.routineId?.let { repo.routineWithDays(it) }
         val day = routine?.days?.firstOrNull { it.day.id == s.dayId }
-        val items = day?.sortedItems ?: emptyList()
+        // El día ya no existe: lo editaron o borraron desde Rutinas con la sesión abierta. Se
+        // sigue como entreno libre, reconstruido desde las series ya registradas, en lugar de
+        // mostrar una sesión vacía que aparentaría haber perdido el trabajo.
+        if (day == null) {
+            freeMode = true
+            initFree()
+            return
+        }
+        val items = day.sortedItems
         plannedItems = items
 
         val map = HashMap<String, OverloadSuggestion>()

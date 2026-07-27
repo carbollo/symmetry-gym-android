@@ -48,6 +48,7 @@ import com.aesthetic.gym.ui.routines.CreateRoutineScreen
 import com.aesthetic.gym.ui.routines.ImportScreen
 import com.aesthetic.gym.ui.routines.ImportLinkScreen
 import com.aesthetic.gym.ui.routines.RoutineDetailScreen
+import com.aesthetic.gym.ui.routines.RoutineEditorScreen
 import com.aesthetic.gym.ui.routines.RoutinesScreen
 import com.aesthetic.gym.ui.workout.WorkoutScreen
 
@@ -119,6 +120,12 @@ fun ZenitRoot() {
             }
             composable(Routes.IMPORT) { ImportScreen(navController) }
             composable(Routes.CREATE_ROUTINE) { CreateRoutineScreen(navController) }
+            composable(
+                Routes.EDIT_ROUTINE,
+                arguments = listOf(navArgument("routineId") { type = NavType.LongType })
+            ) { entry ->
+                RoutineEditorScreen(navController, entry.arguments?.getLong("routineId") ?: 0L)
+            }
             composable(
                 Routes.EXERCISE_DETAIL,
                 arguments = listOf(navArgument("exerciseId") { type = NavType.StringType })

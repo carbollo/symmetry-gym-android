@@ -24,6 +24,7 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.CloudDownload
 import androidx.compose.material.icons.filled.Description
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.FitnessCenter
 import androidx.compose.material.icons.filled.Inbox
 import androidx.compose.material3.AlertDialog
@@ -195,6 +196,18 @@ fun RoutinesScreen(navController: NavController) {
                             }
                             Spacer(Modifier.width(6.dp))
                         }
+                        // Atajo directo al editor sin pasar por el detalle.
+                        Box(
+                            Modifier.size(32.dp).clip(CircleShape).background(SurfaceVariant)
+                                .clickable { navController.navigate(Routes.editRoutine(routine.id)) },
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                Icons.Filled.Edit, "Editar rutina",
+                                tint = TextSecondary, modifier = Modifier.size(16.dp)
+                            )
+                        }
+                        Spacer(Modifier.width(4.dp))
                         Icon(Icons.Filled.ChevronRight, null, tint = TextMuted, modifier = Modifier.size(20.dp))
                     }
                 }

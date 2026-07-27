@@ -21,6 +21,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.DeleteOutline
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.AlertDialog
@@ -94,6 +95,9 @@ fun RoutineDetailScreen(navController: NavController, routineId: Long) {
                 Icon(Icons.AutoMirrored.Filled.ArrowBack, "Volver", tint = Color.White)
             }
             Spacer(Modifier.weight(1f))
+            IconButton(onClick = { navController.navigate(Routes.editRoutine(routineId)) }) {
+                Icon(Icons.Filled.Edit, "Editar rutina", tint = Color.White)
+            }
             IconButton(onClick = { vm.openShare() }) {
                 Icon(Icons.Filled.Share, "Compartir", tint = Color.White)
             }

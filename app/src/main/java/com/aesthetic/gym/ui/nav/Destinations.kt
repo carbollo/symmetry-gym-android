@@ -17,6 +17,7 @@ object Routes {
 
     const val IMPORT = "import"
     const val CREATE_ROUTINE = "create_routine"
+    const val EDIT_ROUTINE = "routine/{routineId}/edit"
     const val PROFILE = "profile"
     const val GOALS = "goals"
     const val HISTORY = "history"
@@ -33,6 +34,7 @@ object Routes {
     const val SESSION_DETAIL = "session/{sessionId}"
 
     fun routineDetail(routineId: Long) = "routine/$routineId"
+    fun editRoutine(routineId: Long) = "routine/$routineId/edit"
     fun workout(sessionId: Long) = "workout/$sessionId"
     fun exerciseDetail(exerciseId: String) = "exercise/$exerciseId"
     fun sessionDetail(sessionId: Long) = "session/$sessionId"

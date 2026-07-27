@@ -57,7 +57,8 @@ fun ExercisePickerDialog(
     exercises: List<ExerciseEntity>,
     onPick: (ExerciseEntity) -> Unit,
     onCreate: (String) -> Unit,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
+    title: String = "Añadir ejercicio"
 ) {
     var query by remember { mutableStateOf("") }
     val nq = normalizeText(query)
@@ -67,7 +68,7 @@ fun ExercisePickerDialog(
     Dialog(onDismissRequest = onDismiss) {
         Box(Modifier.clip(RoundedCornerShape(22.dp)).background(Surface).padding(16.dp)) {
             Column {
-                Text("Añadir ejercicio", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                Text(title, color = Color.White, fontWeight = FontWeight.Bold, fontSize = 18.sp)
                 Spacer(Modifier.height(12.dp))
                 Row(
                     Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(SurfaceVariant)

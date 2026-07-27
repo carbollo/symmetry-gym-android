@@ -1,5 +1,6 @@
 package com.aesthetic.gym.data.repo
 
+import androidx.room.withTransaction
 import com.aesthetic.gym.data.db.AppDatabase
 import com.aesthetic.gym.data.db.BodyMetricEntity
 import com.aesthetic.gym.data.db.BodyPhotoEntity
@@ -24,6 +25,20 @@ import com.aesthetic.gym.data.db.WorkoutSessionEntity
 import com.aesthetic.gym.data.seed.ExerciseCatalog
 import com.aesthetic.gym.pdf.MuscleGuesser
 import com.aesthetic.gym.util.normalizeText
+
+/** Un ejercicio de un día tal y como queda tras editarlo. `id = 0` → fila nueva. */
+data class EditedItem(
+    val id: Long,
+    val exerciseId: String,
+    val name: String,
+    val sets: Int,
+    val repsMin: Int,
+    val repsMax: Int,
+    val weightKg: Double?
+)
+
+/** Un día de la rutina tras editarlo. `id = 0` → día nuevo. */
+data class EditedDay(val id: Long, val name: String, val items: List<EditedItem>)
 
 /** Single point of access to the database for the rest of the app. */
 class GymRepository(private val db: AppDatabase) {
@@ -124,6 +139,89 @@ class GymRepository(private val db: AppDatabase) {
     suspend fun insertDay(day: RoutineDayEntity): Long = routineDao.insertDay(day)
     suspend fun insertItem(item: RoutineItemEntity): Long = routineDao.insertItem(item)
     suspend fun updateItemRest(itemId: Long, seconds: Int) = routineDao.updateItemRest(itemId, seconds)
+
+    /**
+     * Guarda una edición completa de una rutina en UNA transacción: renombra, y crea, actualiza
+     * o borra días y ejercicios según lo que quede en [days].
+     *
+     * Las filas que ya existían CONSERVAN su id, y con él lo que no se edita aquí (descanso por
+     * ejercicio, notas, AMRAP) y las series del historial que las referencian: solo se borra lo
+     * que el usuario quitó de verdad. `id = 0` marca "fila nueva". Los días que se quedan sin
+     * ejercicios se eliminan, igual que al crear una rutina.
+     */
+    suspend fun applyRoutineEdits(routineId: Long, name: String, days: List<EditedDay>) {
+        db.withTransaction {
+            val current = routineDao.routineWithDays(routineId) ?: return@withTransaction
+            routineDao.updateRoutine(
+                current.routine.copy(name = name.trim().ifBlank { current.routine.name })
+            )
+
+            val kept = days.filter { it.items.isNotEmpty() }
+            val keptDayIds = kept.map { it.id }.filter { it != 0L }.toSet()
+            current.days.forEach { existing ->
+                if (existing.day.id !in keptDayIds) routineDao.deleteDay(existing.day.id)
+            }
+
+            kept.forEachIndexed { dayIndex, day ->
+                val existingDay = current.days.firstOrNull { it.day.id == day.id && day.id != 0L }
+                val dayName = day.name.trim().ifBlank { "Día ${dayIndex + 1}" }
+                val dayId = if (existingDay != null) {
+                    routineDao.updateDay(existingDay.day.copy(name = dayName, orderIndex = dayIndex))
+                    existingDay.day.id
+                } else {
+                    routineDao.insertDay(
+                        RoutineDayEntity(routineId = routineId, name = dayName, orderIndex = dayIndex)
+                    )
+                }
+
+                val existingItems = existingDay?.items.orEmpty().associateBy { it.item.id }
+                val keptItemIds = day.items.map { it.id }.toSet()
+                existingItems.keys.forEach { id ->
+                    if (id !in keptItemIds) routineDao.deleteItem(id)
+                }
+
+                day.items.forEachIndexed { itemIndex, item ->
+                    val old = existingItems[item.id]?.item
+                    if (old != null) {
+                        // Al cambiar de ejercicio, lo que colgaba del anterior deja de valer:
+                        // el descanso y la nota eran suyos, y el texto de reserva también.
+                        val sameExercise = old.exerciseId == item.exerciseId
+                        // El editor no tiene interruptor de AMRAP: escribir repeticiones ES
+                        // decir "estas son las reps", así que deja de ser al fallo. Si no se
+                        // tocaron, el ejercicio sigue siendo AMRAP como estaba.
+                        val repsUntouched = old.repsMin == item.repsMin && old.repsMax == item.repsMax
+                        routineDao.updateItem(
+                            old.copy(
+                                exerciseId = item.exerciseId,
+                                orderIndex = itemIndex,
+                                targetSets = item.sets,
+                                repsMin = item.repsMin,
+                                repsMax = item.repsMax,
+                                targetWeightKg = item.weightKg,
+                                amrap = old.amrap && repsUntouched && sameExercise,
+                                restSeconds = if (sameExercise) old.restSeconds else null,
+                                notes = if (sameExercise) old.notes else null,
+                                rawText = if (sameExercise) old.rawText else item.name
+                            )
+                        )
+                    } else {
+                        routineDao.insertItem(
+                            RoutineItemEntity(
+                                dayId = dayId,
+                                exerciseId = item.exerciseId,
+                                orderIndex = itemIndex,
+                                targetSets = item.sets,
+                                repsMin = item.repsMin,
+                                repsMax = item.repsMax,
+                                targetWeightKg = item.weightKg,
+                                rawText = item.name
+                            )
+                        )
+                    }
+                }
+            }
+        }
+    }
 
     // ---- Workout sessions ----
     suspend fun startSession(routineId: Long?, dayId: Long?, name: String): Long =
